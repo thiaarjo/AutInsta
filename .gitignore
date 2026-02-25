@@ -1,0 +1,21 @@
+# Virtual environment
+venv/
+env/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Banco de Dados SQLite (Dados locais)
+*.db
+*.sqlite3
+
+# Pastas de Arquivos Dinâmicos / Mídia
+prints_instagram/
+uploads_postagens/
+
+# Arquivos de Sistema
+.DS_Store
+
+# Variáveis de Ambiente
+.env
