@@ -12,19 +12,19 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse, StreamingResponse
 import meta_api
 
-# --- Importação do Relógio (Scheduler) ---
+# Scheduler
 from apscheduler.schedulers.background import BackgroundScheduler
 
-# --- Nossas importações modulares (ATUALIZADO COM O GERENCIADOR) ---
+# Modulos locais
 import database
 from config import ConfigBot, DIRETORIO_BASE, PASTA_PRINTS, gerenciador_tarefas
 from scraper import rodar_robo
 
-# --- Pasta para guardar as fotos que serão postadas ---
+# Diretorio de uploads
 PASTA_UPLOADS = os.path.join(DIRETORIO_BASE, "uploads_postagens")
 os.makedirs(PASTA_UPLOADS, exist_ok=True)
 
-# --- API STRUCTURE ---
+# API Config
 app = FastAPI(title="API Instagram Monitor V30 (Modularizado)")
 
 app.add_middleware(
@@ -38,15 +38,13 @@ app.add_middleware(
 app.mount("/fotos", StaticFiles(directory=PASTA_PRINTS), name="fotos")
 app.mount("/uploads", StaticFiles(directory=PASTA_UPLOADS), name="uploads")
 
-# =========================================================================
-# --- O VIGIA (BACKGROUND SCHEDULER) ---
-# =========================================================================
+# Background Scheduler
 def verificar_fila_postagens():
     agora_formatado = datetime.now().strftime('%H:%M:%S')
     pendentes = database.buscar_posts_pendentes()
     
     if pendentes:
-        print(f"\n[{agora_formatado}] ⏰ RELÓGIO: Encontrei {len(pendentes)} post(s) na fila para agora!", flush=True)
+        print(f"\n[{agora_formatado}] [SCHEDULER] Encontrei {len(pendentes)} post(s) na fila.", flush=True)
         
         for post in pendentes:
             post_id, caminho_foto, legenda, data_agendada = post
@@ -64,15 +62,11 @@ def verificar_fila_postagens():
 agendador = BackgroundScheduler()
 agendador.add_job(verificar_fila_postagens, 'interval', minutes=1)
 
-# =========================================================================
-# --- INICIALIZAÇÃO DO PAINEL E HTML ---
-# =========================================================================
+# Startup / Shutdown Hooks
 @app.on_event("startup")
 async def iniciar_painel():
-    print("\n=======================================================", flush=True)
-    print("🚀 IG MONITOR PRO LIGADO!")
-    print("Acesse o painel em: http://localhost:8000")
-    print("=======================================================\n", flush=True)
+    print("\n[INFO] IG Monitor iniciado.")
+    print("[INFO] Painel: http://localhost:8000\n", flush=True)
     
     agendador.start()
     print("[*] Vigia de postagens ativado (Rodando a cada 1 minuto).", flush=True)
@@ -94,9 +88,7 @@ async def painel_html():
     else:
         return HTMLResponse(content=f"<h1>ERRO 404: Arquivo index.html não encontrado!</h1><p>Verifique a pasta: <b>{DIRETORIO_BASE}</b></p>")
 
-# =========================================================================
-# --- ROTAS DE AGENDAMENTO E GESTÃO ---
-# =========================================================================
+# Rotas de Agendamento
 @app.post("/api/agendar")
 async def receber_agendamento(
     foto: UploadFile = File(...), 
@@ -132,23 +124,19 @@ async def excluir_agendamento(post_id: int):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# =========================================================================
-# --- ROTA DO ESPIÃO DE PROGRESSO (NOVO) ---
-# =========================================================================
+# Status Tracker
 @app.get("/api/status_tarefa/{task_id}")
 async def status_tarefa(task_id: str):
-    # O HTML chama essa rota a cada segundo para atualizar a barra animada
+    # Atualiza o status do frontend
     tarefa = gerenciador_tarefas.get(task_id, {"progresso": 0, "mensagem": "Aguardando inicialização..."})
     return {"progresso": tarefa.get("progresso", 0), "mensagem": tarefa.get("mensagem", "")}
 
-# =========================================================================
-# --- ROTAS DA API DE EXTRAÇÃO ---
-# =========================================================================
+# Rotas de Extracao
 @app.post("/executar_bot")
 async def executar_bot(request: ConfigBot):
-    print("\n🚨 [API] O BOTÃO FOI CLICADO! INICIANDO MOTOR... 🚨", flush=True)
+    print("\n[API] Execucao do bot solicitada.", flush=True)
     
-    # Registra a tarefa isolada no cofre geral
+    # Registra tarefa
     task_id = request.task_id
     gerenciador_tarefas[task_id] = {"cancelar": False, "progresso": 5, "mensagem": "Preparando motor de extração...", "pid": None}
     
@@ -165,7 +153,7 @@ async def executar_bot(request: ConfigBot):
         
         request.alvo = perfil_atual
         
-        # Envia o robô para rodar em uma "Thread" separada para não travar a API
+        # Executa em thread separada
         try:
             resultado = await asyncio.to_thread(rodar_robo, request)
             resultados_em_lote.append(resultado)
@@ -175,9 +163,9 @@ async def executar_bot(request: ConfigBot):
         if gerenciador_tarefas[task_id]["cancelar"]: break
             
     database.salvar_lote(resultados_em_lote)
-    print("\n✅ [API] Lote de perfis salvo no Banco de Dados!", flush=True)
+    print("\n[API] Lote finalizado no DB.", flush=True)
     
-    # Limpa a tarefa do cofre ao finalizar para não vazar memória
+    # Limpa memoria
     if task_id in gerenciador_tarefas:
         del gerenciador_tarefas[task_id]
         
@@ -185,7 +173,7 @@ async def executar_bot(request: ConfigBot):
 
 @app.post("/cancelar_bot/{task_id}")
 async def cancelar_bot(task_id: str):
-    # Cancela APENAS o robô do usuário que clicou, deixando os outros ilesos
+    # Cancela execucao especifica
     if task_id in gerenciador_tarefas:
         gerenciador_tarefas[task_id]["cancelar"] = True
     return {"status": "Cancelamento solicitado!"}
@@ -197,9 +185,7 @@ async def estatisticas_ultimo_lote():
         return {"erro": "Nenhum dado encontrado no banco."}
     return {"dados": dados}
 
-# =========================================================================
-# --- ROTAS DO DASHBOARD E RELATÓRIOS ---
-# =========================================================================
+# Rotas Analiticas
 @app.get("/api/historico_graficos")
 async def historico_graficos():
     try:
@@ -211,7 +197,6 @@ async def historico_graficos():
 @app.get("/api/ranking_horarios/{perfil}")
 async def ranking_horarios(perfil: str):
     try:
-        # Puxa o cálculo inteligente do database.py
         dados = database.obter_ranking_horarios(perfil)
         return {"ranking": dados}
     except Exception as e:

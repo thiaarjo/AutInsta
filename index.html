@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,18 +8,43 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    
+
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
-        body { font-family: 'Inter', sans-serif; }
-        .bg-ig-gradient { background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%); }
-        .text-ig-gradient { background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        ::-webkit-scrollbar { width: 5px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #d4d4d8; border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: #a1a1aa; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .bg-ig-gradient {
+            background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+        }
+
+        .text-ig-gradient {
+            background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        ::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #d4d4d8;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a1a1aa;
+        }
     </style>
 </head>
+
 <body class="bg-zinc-50 text-zinc-800 antialiased selection:bg-pink-500 selection:text-white">
 
     <header class="bg-white border-b border-zinc-200 sticky top-0 z-50 shadow-sm">
@@ -28,21 +54,35 @@
                     <i data-lucide="instagram" class="w-5 h-5"></i>
                 </div>
                 <div>
-                    <h1 class="text-xl font-bold tracking-tight text-zinc-900 leading-none">IG Monitor <span class="font-normal text-zinc-400">Pro</span></h1>
-                    <span class="text-[10px] font-semibold text-zinc-400 uppercase tracking-widest mt-1 block">Data Extraction & Publishing Engine</span>
+                    <h1 class="text-xl font-bold tracking-tight text-zinc-900 leading-none">IG Monitor <span
+                            class="font-normal text-zinc-400">Pro</span></h1>
+                    <span class="text-[10px] font-semibold text-zinc-400 uppercase tracking-widest mt-1 block">Data
+                        Extraction & Publishing Engine</span>
                 </div>
             </div>
-            <div id="badge-status" class="flex items-center gap-2 text-xs px-3 py-1.5 bg-zinc-100 text-zinc-600 rounded-md font-medium border border-zinc-200 transition-all">
+            <div id="badge-status"
+                class="flex items-center gap-2 text-xs px-3 py-1.5 bg-zinc-100 text-zinc-600 rounded-md font-medium border border-zinc-200 transition-all">
                 <i data-lucide="activity" class="w-3.5 h-3.5"></i>
                 <span>Sistema Pronto</span>
             </div>
         </div>
-        
+
         <div class="max-w-[1400px] mx-auto px-6 flex gap-6 mt-2 overflow-x-auto">
-            <button id="btn-tab-monitor" class="pb-3 text-sm font-bold text-pink-600 border-b-2 border-pink-600 flex items-center gap-2 transition-all whitespace-nowrap"><i data-lucide="search" class="w-4 h-4"></i> Extração de Dados</button>
-            <button id="btn-tab-agendar" class="pb-3 text-sm font-bold text-zinc-400 hover:text-zinc-800 border-b-2 border-transparent hover:border-zinc-300 flex items-center gap-2 transition-all whitespace-nowrap"><i data-lucide="calendar-plus" class="w-4 h-4"></i> Agendar Publicação</button>
-            <button id="btn-tab-lista" class="pb-3 text-sm font-bold text-zinc-400 hover:text-zinc-800 border-b-2 border-transparent hover:border-zinc-300 flex items-center gap-2 transition-all whitespace-nowrap"><i data-lucide="list-todo" class="w-4 h-4"></i> Fila de Posts</button>
-            <button id="btn-tab-comparativo" class="pb-3 text-sm font-bold text-zinc-400 hover:text-zinc-800 border-b-2 border-transparent hover:border-zinc-300 flex items-center gap-2 transition-all whitespace-nowrap"><i data-lucide="line-chart" class="w-4 h-4"></i> Relatórios & Gráficos</button>
+            <button id="btn-tab-monitor"
+                class="pb-3 text-sm font-bold text-pink-600 border-b-2 border-pink-600 flex items-center gap-2 transition-all whitespace-nowrap"><i
+                    data-lucide="search" class="w-4 h-4"></i> Extração de Dados</button>
+            <button id="btn-tab-agendar"
+                class="pb-3 text-sm font-bold text-zinc-400 hover:text-zinc-800 border-b-2 border-transparent hover:border-zinc-300 flex items-center gap-2 transition-all whitespace-nowrap"><i
+                    data-lucide="calendar-plus" class="w-4 h-4"></i> Agendar Publicação</button>
+            <button id="btn-tab-lista"
+                class="pb-3 text-sm font-bold text-zinc-400 hover:text-zinc-800 border-b-2 border-transparent hover:border-zinc-300 flex items-center gap-2 transition-all whitespace-nowrap"><i
+                    data-lucide="list-todo" class="w-4 h-4"></i> Fila de Posts</button>
+            <button id="btn-tab-comparativo"
+                class="pb-3 text-sm font-bold text-zinc-400 hover:text-zinc-800 border-b-2 border-transparent hover:border-zinc-300 flex items-center gap-2 transition-all whitespace-nowrap"><i
+                    data-lucide="line-chart" class="w-4 h-4"></i> Relatórios & Gráficos</button>
+            <button id="btn-tab-config"
+                class="pb-3 text-sm font-bold text-zinc-400 hover:text-zinc-800 border-b-2 border-transparent hover:border-zinc-300 flex items-center gap-2 transition-all whitespace-nowrap"><i
+                    data-lucide="settings" class="w-4 h-4"></i> Configurações Globais</button>
         </div>
     </header>
 
@@ -53,64 +93,147 @@
                     <i data-lucide="sliders-horizontal" class="w-4 h-4 text-zinc-400"></i>
                     <h2 class="text-sm font-bold text-zinc-900 uppercase tracking-wider">Parâmetros</h2>
                 </div>
-                
-                <form id="bot-form" class="space-y-5">
-                    <div class="space-y-4">
-                        <div>
-                            <label class="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1">Perfis Alvo (Separar por vírgula)</label>
-                            <input type="text" id="alvo" required class="w-full bg-zinc-50 border border-zinc-200 text-sm rounded-md px-3 py-2.5 focus:ring-1 focus:ring-pink-500 focus:border-pink-500 outline-none transition-all placeholder:text-zinc-300" placeholder="@neymarjr, @anitta">
-                        </div>
-                        <div class="grid grid-cols-2 gap-3">
-                            <div>
-                                <label class="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1">Usuário Logado</label>
-                                <input type="text" id="usuario" required class="w-full bg-zinc-50 border border-zinc-200 text-sm rounded-md px-3 py-2 focus:ring-1 focus:ring-pink-500 outline-none transition-all">
-                            </div>
-                            <div>
-                                <label class="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1">Senha</label>
-                                <input type="password" id="senha" required class="w-full bg-zinc-50 border border-zinc-200 text-sm rounded-md px-3 py-2 focus:ring-1 focus:ring-pink-500 outline-none transition-all">
-                            </div>
+
+                <form id="bot-form" class="space-y-6">
+                    <div>
+                        <label
+                            class="flex items-center gap-2 text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-2"><i
+                                data-lucide="crosshair" class="w-3.5 h-3.5"></i> Perfis
+                            Alvo (Separar por vírgula)</label>
+                        <div class="relative">
+                            <input type="text" id="alvo" required
+                                class="w-full bg-zinc-50 border border-zinc-200 text-sm font-medium rounded-lg pl-10 pr-4 py-3 focus:ring-1 focus:ring-pink-500 focus:border-pink-500 focus:bg-white outline-none transition-all placeholder:text-zinc-400 shadow-sm"
+                                placeholder="@neymarjr, @anitta">
+                            <i data-lucide="users" class="w-4 h-4 text-zinc-400 absolute left-3.5 top-3.5"></i>
                         </div>
                     </div>
 
                     <div class="border-t border-zinc-100 pt-5">
-                        <label class="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-3">Módulos de Ação</label>
-                        <div class="space-y-2">
-                            <label class="flex items-center gap-3 p-2 hover:bg-zinc-50 rounded-md cursor-pointer transition border border-transparent hover:border-zinc-200"><input type="checkbox" id="modo_oculto" class="w-4 h-4 text-pink-500 bg-zinc-100 border-zinc-300 rounded focus:ring-pink-500"><span class="text-xs font-medium text-zinc-700">Modo Invisível (Headless)</span></label>
-                            <label class="flex items-center gap-3 p-2 hover:bg-zinc-50 rounded-md cursor-pointer transition border border-transparent hover:border-zinc-200"><input type="checkbox" id="seguir_alvo" class="w-4 h-4 text-pink-500 bg-zinc-100 border-zinc-300 rounded focus:ring-pink-500"><span class="text-xs font-medium text-zinc-700">Auto-Seguir Alvos</span></label>
-                            <label class="flex items-center gap-3 p-2 hover:bg-zinc-50 rounded-md cursor-pointer transition border border-transparent hover:border-zinc-200"><input type="checkbox" id="coletar_stories" checked class="w-4 h-4 text-pink-500 bg-zinc-100 border-zinc-300 rounded focus:ring-pink-500"><span class="text-xs font-medium text-zinc-700">Extrair Stories</span></label>
-                            <label class="flex items-center gap-3 p-2 hover:bg-zinc-50 rounded-md cursor-pointer transition border border-transparent hover:border-zinc-200"><input type="checkbox" id="coletar_feed" checked class="w-4 h-4 text-pink-500 bg-zinc-100 border-zinc-300 rounded focus:ring-pink-500"><span class="text-xs font-medium text-zinc-700">Extrair Feed</span></label>
+                        <label
+                            class="flex items-center gap-2 text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-3"><i
+                                data-lucide="blocks" class="w-3.5 h-3.5"></i> Módulos
+                            de Ação</label>
+                        <div class="space-y-3">
+                            <label
+                                class="flex items-center justify-between p-3 bg-zinc-50 hover:bg-zinc-100 border border-zinc-200 rounded-lg cursor-pointer transition-colors shadow-sm">
+                                <div class="flex items-center gap-3">
+                                    <div
+                                        class="w-7 h-7 rounded bg-white flex items-center justify-center border border-zinc-200 shadow-sm">
+                                        <i data-lucide="user-plus" class="w-3.5 h-3.5 text-zinc-600"></i>
+                                    </div>
+                                    <span class="text-xs font-bold text-zinc-700">Auto-Seguir Alvos</span>
+                                </div>
+                                <div class="relative flex items-center">
+                                    <input type="checkbox" id="seguir_alvo" class="peer sr-only">
+                                    <div
+                                        class="w-9 h-5 bg-zinc-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-pink-500 shadow-inner">
+                                    </div>
+                                </div>
+                            </label>
+
+                            <label
+                                class="flex items-center justify-between p-3 bg-zinc-50 hover:bg-zinc-100 border border-zinc-200 rounded-lg cursor-pointer transition-colors shadow-sm">
+                                <div class="flex items-center gap-3">
+                                    <div
+                                        class="w-7 h-7 rounded bg-white flex items-center justify-center border border-zinc-200 shadow-sm">
+                                        <i data-lucide="play-square" class="w-3.5 h-3.5 text-zinc-600"></i>
+                                    </div>
+                                    <span class="text-xs font-bold text-zinc-700">Extrair Stories</span>
+                                </div>
+                                <div class="relative flex items-center">
+                                    <input type="checkbox" id="coletar_stories" checked class="peer sr-only">
+                                    <div
+                                        class="w-9 h-5 bg-zinc-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-pink-500 shadow-inner">
+                                    </div>
+                                </div>
+                            </label>
+
+                            <label
+                                class="flex items-center justify-between p-3 bg-zinc-50 hover:bg-zinc-100 border border-zinc-200 rounded-lg cursor-pointer transition-colors shadow-sm">
+                                <div class="flex items-center gap-3">
+                                    <div
+                                        class="w-7 h-7 rounded bg-white flex items-center justify-center border border-zinc-200 shadow-sm">
+                                        <i data-lucide="layout-grid" class="w-3.5 h-3.5 text-zinc-600"></i>
+                                    </div>
+                                    <span class="text-xs font-bold text-zinc-700">Extrair Face Feed</span>
+                                </div>
+                                <div class="relative flex items-center">
+                                    <input type="checkbox" id="coletar_feed" checked class="peer sr-only">
+                                    <div
+                                        class="w-9 h-5 bg-zinc-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-pink-500 shadow-inner">
+                                    </div>
+                                </div>
+                            </label>
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-2 gap-3 border-t border-zinc-100 pt-5">
-                        <div><label class="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1">Posts/Perfil</label><input type="number" id="limite_posts" value="3" min="1" max="10" class="w-full bg-zinc-50 border border-zinc-200 text-sm font-semibold text-center rounded-md px-3 py-2 outline-none focus:border-zinc-400"></div>
-                        <div><label class="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1">Comentários</label><input type="number" id="qtd_comentarios" value="2" min="0" max="10" class="w-full bg-zinc-50 border border-zinc-200 text-sm font-semibold text-center rounded-md px-3 py-2 outline-none focus:border-zinc-400"></div>
-                        <div class="col-span-2"><label class="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1 flex items-center justify-between">Delay Base <span class="text-zinc-400 font-normal normal-case">Segundos</span></label><input type="number" id="tempo_espera" value="4" min="1" class="w-full bg-zinc-50 border border-zinc-200 text-sm font-semibold text-center rounded-md px-3 py-2 outline-none focus:border-zinc-400"></div>
+                    <div class="grid grid-cols-2 gap-4 border-t border-zinc-100 pt-5">
+                        <div>
+                            <label
+                                class="flex items-center gap-1.5 text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-2"><i
+                                    data-lucide="layers" class="w-3 h-3"></i> Máximo
+                                Posts</label>
+                            <input type="number" id="limite_posts" value="3" min="1" max="10"
+                                class="w-full bg-zinc-50 border border-zinc-200 text-sm font-black text-pink-600 text-center rounded-lg px-3 py-2.5 outline-none focus:bg-white focus:border-pink-500 transition-colors shadow-sm">
+                        </div>
+                        <div>
+                            <label
+                                class="flex items-center gap-1.5 text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-2"><i
+                                    data-lucide="message-square" class="w-3 h-3"></i>
+                                Comentários</label>
+                            <input type="number" id="qtd_comentarios" value="2" min="0" max="10"
+                                class="w-full bg-zinc-50 border border-zinc-200 text-sm font-black text-pink-600 text-center rounded-lg px-3 py-2.5 outline-none focus:bg-white focus:border-pink-500 transition-colors shadow-sm">
+                        </div>
                     </div>
 
                     <div class="pt-4">
-                        <button type="submit" id="btn-executar" class="w-full bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-bold uppercase tracking-widest py-3.5 rounded-md transition-all flex justify-center items-center gap-2"><i data-lucide="play" class="w-4 h-4"></i> Iniciar Extração</button>
-                        <button type="button" id="btn-cancelar" class="hidden w-full bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 text-xs font-bold uppercase tracking-widest py-3.5 rounded-md transition-all flex justify-center items-center gap-2"><i data-lucide="square" class="w-4 h-4"></i> Abortar</button>
+                        <button type="submit" id="btn-executar"
+                            class="w-full bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-bold uppercase tracking-widest py-3.5 rounded-lg transition-all flex justify-center items-center gap-2 shadow-md hover:shadow-lg">
+                            <i data-lucide="play" class="w-4 h-4 fill-current"></i> Iniciar Extração</button>
+                        <button type="button" id="btn-cancelar"
+                            class="hidden w-full bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 text-xs font-bold uppercase tracking-widest py-3.5 rounded-lg transition-all flex justify-center items-center gap-2 shadow-sm">
+                            <i data-lucide="square" class="w-4 h-4 fill-current"></i> Abortar</button>
                     </div>
                 </form>
             </div>
         </section>
 
         <section class="lg:col-span-9 flex flex-col min-h-[700px]">
-            <div class="flex items-center justify-between border-b border-zinc-200 pb-4 mb-6"><h2 class="text-xl font-bold text-zinc-900 flex items-center gap-2"><i data-lucide="layout-dashboard" class="w-5 h-5 text-zinc-400"></i> Workspace Analítico</h2><div class="text-xs text-zinc-400 font-medium font-mono" id="data-atualizacao">Aguardando Dados...</div></div>
-            <div id="info-legenda" class="hidden bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6 text-sm text-blue-800 flex items-start gap-3"><i data-lucide="info" class="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5"></i><div><strong>Como ler o Engajamento:</strong> O sistema calcula a força do post dividindo as curtidas pelo número total de seguidores.<ul class="flex gap-4 mt-2 font-medium text-xs"><li class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-green-500"></span> Acima de 3%: Viral</li><li class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-amber-500"></span> 1% a 3%: Média Ideal</li><li class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-red-500"></span> Abaixo de 1%: Baixo</li></ul></div></div>
-            
-            <div id="loading-screen" class="hidden flex-1 flex-col items-center justify-center text-zinc-400 bg-white rounded-xl border border-zinc-200 border-dashed p-10">
+            <div class="flex items-center justify-between border-b border-zinc-200 pb-4 mb-6">
+                <h2 class="text-xl font-bold text-zinc-900 flex items-center gap-2"><i data-lucide="layout-dashboard"
+                        class="w-5 h-5 text-zinc-400"></i> Workspace Analítico</h2>
+                <div class="text-xs text-zinc-400 font-medium font-mono" id="data-atualizacao">Aguardando Dados...</div>
+            </div>
+            <div id="info-legenda"
+                class="hidden bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6 text-sm text-blue-800 flex items-start gap-3">
+                <i data-lucide="info" class="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5"></i>
+                <div><strong>Como ler o Engajamento:</strong> O sistema calcula a força do post dividindo as curtidas
+                    pelo número total de seguidores.<ul class="flex gap-4 mt-2 font-medium text-xs">
+                        <li class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-green-500"></span>
+                            Acima de 3%: Viral</li>
+                        <li class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-amber-500"></span> 1% a
+                            3%: Média Ideal</li>
+                        <li class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-red-500"></span> Abaixo
+                            de 1%: Baixo</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div id="loading-screen"
+                class="hidden flex-1 flex-col items-center justify-center text-zinc-400 bg-white rounded-xl border border-zinc-200 border-dashed p-10">
                 <i data-lucide="bot" class="w-12 h-12 text-pink-500 mb-6 animate-bounce"></i>
                 <p class="text-sm font-black text-zinc-900 tracking-wide uppercase mb-8">Robô Extrator em Execução</p>
-                
+
                 <div class="w-full max-w-lg relative">
                     <div class="flex justify-between text-xs font-bold mb-2">
                         <span id="texto-status-robo" class="text-pink-600 uppercase tracking-widest">Iniciando...</span>
                         <span id="texto-porcentagem" class="text-zinc-500">0%</span>
                     </div>
-                    <div class="w-full bg-zinc-100 rounded-full h-3 border border-zinc-200 overflow-hidden shadow-inner">
-                        <div id="barra-progresso" class="bg-ig-gradient h-3 rounded-full transition-all duration-700 ease-out" style="width: 0%"></div>
+                    <div
+                        class="w-full bg-zinc-100 rounded-full h-3 border border-zinc-200 overflow-hidden shadow-inner">
+                        <div id="barra-progresso"
+                            class="bg-ig-gradient h-3 rounded-full transition-all duration-700 ease-out"
+                            style="width: 0%"></div>
                     </div>
                 </div>
             </div>
@@ -119,26 +242,93 @@
         </section>
     </main>
 
-    <main id="view-agendar" class="hidden max-w-[800px] mx-auto py-12 px-6">
+    <main id="view-agendar" class="hidden max-w-[1000px] mx-auto py-12 px-6">
         <div class="bg-white rounded-xl shadow-sm border border-zinc-200 overflow-hidden">
             <div class="p-6 border-b border-zinc-100 bg-zinc-50 flex items-center gap-3">
-                <div class="w-10 h-10 rounded-full bg-pink-100 text-pink-600 flex items-center justify-center"><i data-lucide="send" class="w-5 h-5"></i></div>
-                <div><h2 class="text-lg font-bold text-zinc-900 tracking-tight">Agendar Nova Publicação</h2></div>
-            </div>
-            <form id="formAgendamento" class="p-6 space-y-6">
+                <div class="w-10 h-10 rounded-full bg-pink-100 text-pink-600 flex items-center justify-center"><i
+                        data-lucide="send" class="w-5 h-5"></i></div>
                 <div>
-                    <label class="block text-xs font-bold text-zinc-700 uppercase tracking-wider mb-2">1. Selecione o Arquivo</label>
-                    <div class="relative border-2 border-dashed border-zinc-300 rounded-lg h-56 flex flex-col items-center justify-center hover:bg-zinc-50 hover:border-pink-300 cursor-pointer overflow-hidden group" id="dropzone">
-                        <div id="dropzone-content" class="flex flex-col items-center pointer-events-none"><i data-lucide="upload-cloud" class="w-8 h-8 text-zinc-400 mb-2"></i><span class="text-sm font-medium text-zinc-600">Clique para selecionar</span></div>
-                        <img id="preview_img" class="hidden absolute inset-0 w-full h-full object-cover pointer-events-none" src="">
-                        <input type="file" id="foto_upload" required class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20">
+                    <h2 class="text-lg font-bold text-zinc-900 tracking-tight">Agendar Nova Publicação</h2>
+                </div>
+            </div>
+
+            <form id="formAgendamento" class="p-8 grid grid-cols-1 md:grid-cols-2 gap-10 bg-zinc-50/50">
+
+                <!-- PREVIEW COLUMN -->
+                <div class="flex flex-col items-center justify-center">
+                    <p class="text-xs font-bold text-zinc-400 uppercase tracking-widest mb-4"><i data-lucide="eye"
+                            class="w-3.5 h-3.5 inline mr-1"></i> Prévia do Feed</p>
+                    <div
+                        class="w-full max-w-[320px] bg-white border border-zinc-200 rounded-xl overflow-hidden shadow-sm flex flex-col pointer-events-none">
+                        <!-- Post Header -->
+                        <div class="px-3 py-2.5 flex items-center gap-2 border-b border-zinc-100">
+                            <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-yellow-400 to-pink-600 p-[2px]">
+                                <div
+                                    class="w-full h-full bg-white rounded-full border border-white overflow-hidden flex items-center justify-center">
+                                    <i data-lucide="user" class="w-4 h-4 text-zinc-400"></i>
+                                </div>
+                            </div>
+                            <span class="text-xs font-bold text-zinc-800" id="preview-username">seu_perfil</span>
+                            <i data-lucide="more-horizontal" class="w-4 h-4 ml-auto text-zinc-400"></i>
+                        </div>
+
+                        <!-- Image Dropzone Area -->
+                        <div class="relative bg-zinc-100 aspect-[4/5] flex flex-col items-center justify-center hover:bg-zinc-200 transition-colors cursor-pointer group pointer-events-auto"
+                            id="dropzone_area">
+                            <div
+                                class="flex flex-col items-center text-center p-6 group-hover:scale-110 transition-transform">
+                                <i data-lucide="image-plus"
+                                    class="w-8 h-8 text-zinc-400 mb-2 group-hover:text-pink-500 transition-colors"></i>
+                                <span
+                                    class="text-sm font-bold text-zinc-600 group-hover:text-pink-600 transition-colors">Selecionar
+                                    Imagem</span>
+                                <span class="text-[10px] text-zinc-400 mt-1 font-medium">Proporção ideal: 4:5</span>
+                            </div>
+                            <img id="preview_img" class="hidden absolute inset-0 w-full h-full object-cover z-10"
+                                src="">
+                            <input type="file" id="foto_upload" required
+                                class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20">
+                        </div>
+
+                        <!-- Post Footer (Icons & Caption) -->
+                        <div class="p-3">
+                            <div class="flex items-center gap-3 mb-2">
+                                <i data-lucide="heart" class="w-5 h-5 text-zinc-800"></i>
+                                <i data-lucide="message-circle" class="w-5 h-5 text-zinc-800"></i>
+                                <i data-lucide="send" class="w-5 h-5 text-zinc-800"></i>
+                                <i data-lucide="bookmark" class="w-5 h-5 ml-auto text-zinc-800"></i>
+                            </div>
+                            <div class="text-[11px] text-zinc-800 leading-snug">
+                                <span class="font-bold mr-1" id="preview-username-caption">seu_perfil</span>
+                                <span id="preview-legenda-texto" class="text-zinc-500">Sua legenda aparecerá
+                                    aqui...</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div><label class="block text-xs font-bold text-zinc-700 uppercase tracking-wider mb-2">2. Escreva a Legenda</label><textarea id="legenda_post" rows="4" required class="w-full bg-zinc-50 border border-zinc-200 text-sm rounded-md px-4 py-3 outline-none resize-none"></textarea></div>
-                <div><label class="block text-xs font-bold text-zinc-700 uppercase tracking-wider mb-2">3. Horário de Publicação</label><input type="datetime-local" id="data_agendada" required class="w-full bg-zinc-50 border border-zinc-200 text-sm font-semibold rounded-md px-4 py-3 outline-none"></div>
-                <div class="pt-2">
-                    <div id="mensagem-agendamento" class="hidden mb-4 p-3 rounded-md text-sm font-medium border text-center"></div>
-                    <button type="submit" id="btn-salvar-post" class="w-full bg-pink-600 hover:bg-pink-700 text-white text-sm font-bold uppercase tracking-widest py-4 rounded-md transition-all shadow-sm flex justify-center items-center gap-2"><i data-lucide="calendar-check" class="w-5 h-5"></i> Confirmar Agendamento</button>
+
+                <!-- FORM COLUMN -->
+                <div class="space-y-6 flex flex-col justify-center">
+                    <div>
+                        <label class="block text-xs font-bold text-zinc-700 uppercase tracking-wider mb-2">1. Legenda da
+                            Publicação</label>
+                        <textarea id="legenda_post" rows="5" required
+                            class="w-full bg-white border border-zinc-200 text-sm rounded-md px-4 py-3 outline-none resize-none placeholder:text-zinc-300 focus:border-pink-500 focus:ring-1 focus:ring-pink-500 transition-all shadow-sm"
+                            placeholder="Escreva algo cativante..."></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-zinc-700 uppercase tracking-wider mb-2">2. Horário de
+                            Publicação</label>
+                        <input type="datetime-local" id="data_agendada" required
+                            class="w-full bg-white border border-zinc-200 text-sm font-semibold rounded-md px-4 py-3 outline-none focus:border-pink-500 focus:ring-1 focus:ring-pink-500 transition-all text-zinc-700 shadow-sm">
+                    </div>
+                    <div class="pt-2 mt-auto">
+                        <div id="mensagem-agendamento"
+                            class="hidden mb-4 p-3 rounded-md text-sm font-medium border text-center"></div>
+                        <button type="submit" id="btn-salvar-post"
+                            class="w-full bg-pink-600 hover:bg-pink-700 text-white text-sm font-bold uppercase tracking-widest py-4 rounded-md transition-all shadow-md flex justify-center items-center gap-2"><i
+                                data-lucide="calendar-check" class="w-5 h-5"></i> Confirmar Agendamento</button>
+                    </div>
                 </div>
             </form>
         </div>
@@ -146,8 +336,11 @@
 
     <main id="view-lista" class="hidden max-w-[1000px] mx-auto py-12 px-6">
         <div class="flex items-center justify-between mb-6 border-b border-zinc-200 pb-4">
-            <h2 class="text-xl font-bold text-zinc-900 flex items-center gap-2"><i data-lucide="calendar-days" class="w-5 h-5 text-pink-600"></i> Publicações Programadas</h2>
-            <button onclick="carregarAgendamentos()" class="text-xs font-bold bg-white border border-zinc-200 text-zinc-700 px-4 py-2 rounded-md hover:bg-zinc-50 flex items-center gap-2 transition shadow-sm"><i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Atualizar</button>
+            <h2 class="text-xl font-bold text-zinc-900 flex items-center gap-2"><i data-lucide="calendar-days"
+                    class="w-5 h-5 text-pink-600"></i> Publicações Programadas</h2>
+            <button onclick="carregarAgendamentos()"
+                class="text-xs font-bold bg-white border border-zinc-200 text-zinc-700 px-4 py-2 rounded-md hover:bg-zinc-50 flex items-center gap-2 transition shadow-sm"><i
+                    data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Atualizar</button>
         </div>
         <div id="grid-agendamentos" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
     </main>
@@ -155,241 +348,477 @@
     <main id="view-comparativo" class="hidden max-w-[1200px] mx-auto py-12 px-6">
         <div class="flex flex-col md:flex-row items-center justify-between mb-8 border-b border-zinc-200 pb-4 gap-4">
             <div>
-                <h2 class="text-xl font-bold text-zinc-900 flex items-center gap-2"><i data-lucide="line-chart" class="w-5 h-5 text-pink-600"></i> Dashboard de Crescimento</h2>
-                <p class="text-xs text-zinc-500 mt-1">Análise temporal de engajamento baseada no histórico do banco de dados.</p>
+                <h2 class="text-xl font-bold text-zinc-900 flex items-center gap-2"><i data-lucide="line-chart"
+                        class="w-5 h-5 text-pink-600"></i> Dashboard de Crescimento</h2>
+                <p class="text-xs text-zinc-500 mt-1">Análise temporal de engajamento baseada no histórico do banco de
+                    dados.</p>
             </div>
-            <div class="flex items-center gap-3">
-                <select id="seletor-perfil" class="bg-white border border-zinc-300 text-sm font-bold text-zinc-700 rounded-md px-4 py-2 outline-none focus:border-pink-500 shadow-sm cursor-pointer">
+            <div class="flex flex-wrap items-center gap-3">
+                <select id="seletor-mes"
+                    class="bg-white border border-zinc-300 text-sm font-bold text-zinc-700 rounded-md px-3 py-2 outline-none focus:border-pink-500 shadow-sm cursor-pointer">
+                    <option value="">Todos os Meses</option>
+                    <option value="1">Janeiro</option>
+                    <option value="2">Fevereiro</option>
+                    <option value="3">Março</option>
+                    <option value="4">Abril</option>
+                    <option value="5">Maio</option>
+                    <option value="6">Junho</option>
+                    <option value="7">Julho</option>
+                    <option value="8">Agosto</option>
+                    <option value="9">Setembro</option>
+                    <option value="10">Outubro</option>
+                    <option value="11">Novembro</option>
+                    <option value="12">Dezembro</option>
+                </select>
+                <select id="seletor-dia"
+                    class="bg-white border border-zinc-300 text-sm font-bold text-zinc-700 rounded-md px-3 py-2 outline-none focus:border-pink-500 shadow-sm cursor-pointer">
+                    <option value="">Todos os Dias</option>
+                    <option value="0">Domingo</option>
+                    <option value="1">Segunda-feira</option>
+                    <option value="2">Terça-feira</option>
+                    <option value="3">Quarta-feira</option>
+                    <option value="4">Quinta-feira</option>
+                    <option value="5">Sexta-feira</option>
+                    <option value="6">Sábado</option>
+                </select>
+                <select id="seletor-perfil"
+                    class="bg-white border border-zinc-300 text-sm font-bold text-zinc-700 rounded-md px-4 py-2 outline-none focus:border-pink-500 shadow-sm cursor-pointer">
                     <option value="">Carregando perfis...</option>
                 </select>
-                <a href="/api/exportar_csv" download class="text-sm font-bold bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded-md flex items-center gap-2 transition shadow-sm"><i data-lucide="file-spreadsheet" class="w-4 h-4"></i> Excel</a>
+                <a href="/api/exportar_csv" download
+                    class="text-sm font-bold bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded-md flex items-center gap-2 transition shadow-sm"><i
+                        data-lucide="file-spreadsheet" class="w-4 h-4"></i> Excel</a>
             </div>
         </div>
-        
+
         <div id="loading-graficos" class="hidden flex-col items-center justify-center py-20 text-zinc-400">
-            <i data-lucide="loader-2" class="w-8 h-8 animate-spin mb-3"></i><p class="font-medium text-sm">Processando histórico...</p>
+            <i data-lucide="loader-2" class="w-8 h-8 animate-spin mb-3"></i>
+            <p class="font-medium text-sm">Processando histórico...</p>
         </div>
 
         <div id="painel-graficos" class="hidden flex-col gap-6">
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div class="bg-white border border-zinc-200 rounded-xl p-5 shadow-sm">
-                    <p class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1"><i data-lucide="hash" class="w-3 h-3 inline"></i> Total de Posts Lidos</p>
+                    <p class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1"><i data-lucide="hash"
+                            class="w-3 h-3 inline"></i> Total de Posts Lidos</p>
                     <p id="card-total-posts" class="text-2xl font-black text-zinc-900">0</p>
                 </div>
                 <div class="bg-white border border-zinc-200 rounded-xl p-5 shadow-sm">
-                    <p class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1"><i data-lucide="calendar" class="w-3 h-3 inline"></i> Média (Últimos 7 Dias)</p>
+                    <p class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1"><i
+                            data-lucide="calendar" class="w-3 h-3 inline"></i> Média (Últimos 7 Dias)</p>
                     <p id="card-media-7" class="text-2xl font-black text-pink-600">0</p>
                 </div>
                 <div class="bg-white border border-zinc-200 rounded-xl p-5 shadow-sm">
-                    <p class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1"><i data-lucide="calendar-days" class="w-3 h-3 inline"></i> Média (Últimos 30 Dias)</p>
+                    <p class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1"><i
+                            data-lucide="calendar-days" class="w-3 h-3 inline"></i> Média (Últimos 30 Dias)</p>
                     <p id="card-media-30" class="text-2xl font-black text-zinc-900">0</p>
                 </div>
                 <div class="bg-white border border-zinc-200 rounded-xl p-5 shadow-sm">
-                    <p class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1"><i data-lucide="infinity" class="w-3 h-3 inline"></i> Média Histórica (Geral)</p>
+                    <p class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1"><i
+                            data-lucide="infinity" class="w-3 h-3 inline"></i> Média Histórica (Geral)</p>
                     <p id="card-media-geral" class="text-2xl font-black text-zinc-900">0</p>
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div class="bg-white border border-zinc-200 rounded-xl p-5 shadow-sm">
-                    <h3 class="text-sm font-bold text-zinc-800 mb-4 flex items-center gap-2"><i data-lucide="users" class="w-4 h-4 text-zinc-400"></i> Crescimento de Seguidores</h3>
-                    <canvas id="graficoSeguidores" height="180"></canvas>
+            <div class="grid grid-cols-1 gap-6">
+                <div class="bg-white border border-zinc-200 rounded-xl p-5 shadow-sm col-span-full">
+                    <h3 class="text-sm font-bold text-zinc-800 mb-4 flex items-center gap-2"><i data-lucide="users"
+                            class="w-4 h-4 text-zinc-400"></i> Crescimento de Seguidores</h3>
+                    <div class="w-full" style="height: 300px;">
+                        <canvas id="graficoSeguidores"></canvas>
+                    </div>
                 </div>
-                <div class="bg-white border border-zinc-200 rounded-xl p-5 shadow-sm">
-                    <h3 class="text-sm font-bold text-zinc-800 mb-4 flex items-center gap-2"><i data-lucide="heart" class="w-4 h-4 text-zinc-400"></i> Desempenho de Curtidas por Post</h3>
-                    <canvas id="graficoPosts" height="180"></canvas>
+                <div class="bg-white border border-zinc-200 rounded-xl p-5 shadow-sm col-span-full">
+                    <h3 class="text-sm font-bold text-zinc-800 mb-4 flex items-center gap-2"><i data-lucide="heart"
+                            class="w-4 h-4 text-zinc-400"></i> Desempenho de Curtidas por Post</h3>
+                    <div class="w-full" style="height: 250px;">
+                        <canvas id="graficoPosts"></canvas>
+                    </div>
                 </div>
             </div>
         </div>
     </main>
 
+    <main id="view-config" class="hidden max-w-[800px] mx-auto py-12 px-6">
+        <div class="bg-white rounded-xl shadow-sm border border-zinc-200 overflow-hidden">
+            <div class="p-6 border-b border-zinc-100 bg-zinc-50 flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-zinc-200 flex items-center justify-center"><i
+                        data-lucide="settings" class="w-5 h-5 text-zinc-600"></i></div>
+                <div>
+                    <h2 class="text-lg font-bold text-zinc-900 tracking-tight">Configurações Globais</h2>
+                    <p class="text-xs text-zinc-500 mt-1">Configure as credenciais e parâmetros de conexão do sistema.
+                    </p>
+                </div>
+            </div>
+
+            <form id="formConfig" class="p-8 space-y-8 bg-zinc-50/50">
+                <!-- Credenciais -->
+                <div class="bg-white p-6 rounded-lg border border-zinc-200 shadow-sm">
+                    <h3
+                        class="text-sm font-bold text-zinc-800 border-b border-zinc-100 pb-3 mb-5 flex items-center gap-2">
+                        <i data-lucide="key-round" class="w-4 h-4 text-zinc-400"></i> Credenciais de Acesso Instagram
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-xs font-bold text-zinc-600 uppercase tracking-wider mb-2">Usuário
+                                Alvo</label>
+                            <input type="text" id="config_usuario" required
+                                class="w-full bg-zinc-50 border border-zinc-200 text-sm rounded-md px-4 py-3 outline-none focus:border-pink-500 transition-colors shadow-sm"
+                                placeholder="Seu @usuario">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-zinc-600 uppercase tracking-wider mb-2">Senha do
+                                Agente</label>
+                            <input type="password" id="config_senha" required
+                                class="w-full bg-zinc-50 border border-zinc-200 text-sm rounded-md px-4 py-3 outline-none focus:border-pink-500 transition-colors shadow-sm"
+                                placeholder="••••••••">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Parametros -->
+                <div class="bg-white p-6 rounded-lg border border-zinc-200 shadow-sm">
+                    <h3
+                        class="text-sm font-bold text-zinc-800 border-b border-zinc-100 pb-3 mb-5 flex items-center gap-2">
+                        <i data-lucide="cpu" class="w-4 h-4 text-zinc-400"></i> Parâmetros do Robô
+                    </h3>
+                    <div class="space-y-6">
+                        <div>
+                            <label class="block text-xs font-bold text-zinc-600 uppercase tracking-wider mb-2">Delay
+                                Base (Segundos)</label>
+                            <input type="number" id="config_delay" value="4" min="1" required
+                                class="w-full md:w-1/3 bg-zinc-50 border border-zinc-200 text-sm font-semibold rounded-md px-4 py-3 outline-none focus:border-zinc-400 shadow-sm">
+                            <p class="text-[10px] text-zinc-500 mt-2 font-medium">Aumente para evitar bloqueios do
+                                Instagram. O robô sempre adiciona uma variação aleatória extra.</p>
+                        </div>
+
+                        <label
+                            class="flex items-start gap-4 p-4 bg-zinc-50 rounded-lg cursor-pointer border border-zinc-200 select-none hover:bg-zinc-100 transition-colors">
+                            <input type="checkbox" id="config_headless"
+                                class="mt-1 w-5 h-5 text-pink-500 bg-white border-zinc-300 rounded focus:ring-pink-500">
+                            <div>
+                                <span class="text-sm font-bold text-zinc-800 block">Modo Invisível (Headless)</span>
+                                <span class="text-xs text-zinc-500 mt-1 block">O robô rodará silenciosamente no servidor
+                                    sem abrir a janela gráfica do Chrome. Recomendado para maior estabilidade.</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="pt-4 flex items-center justify-end">
+                    <span id="config-salvo-msg"
+                        class="text-green-600 text-sm font-bold mr-4 opacity-0 transition-opacity">Configurações
+                        salvas!</span>
+                    <button type="submit"
+                        class="bg-zinc-900 hover:bg-zinc-800 text-white text-sm font-bold uppercase tracking-widest px-8 py-3.5 rounded-md transition-all shadow-md flex items-center gap-2">
+                        <i data-lucide="save" class="w-4 h-4"></i> Salvar Alterações
+                    </button>
+                </div>
+            </form>
+        </div>
+    </main>
+
     <script>
-        lucide.createIcons();
-
-        // NAVEGAÇÃO DE ABAS
-        const btnTabMonitor = document.getElementById('btn-tab-monitor');
-        const btnTabAgendar = document.getElementById('btn-tab-agendar');
-        const btnTabLista   = document.getElementById('btn-tab-lista');
-        const btnTabComparativo = document.getElementById('btn-tab-comparativo');
-        
-        const viewMonitor = document.getElementById('view-monitor');
-        const viewAgendar = document.getElementById('view-agendar');
-        const viewLista   = document.getElementById('view-lista');
-        const viewComparativo = document.getElementById('view-comparativo');
-
-        function resetarAbas() {
-            viewMonitor.classList.add('hidden'); viewMonitor.classList.remove('grid');
-            viewAgendar.classList.add('hidden');
-            viewLista.classList.add('hidden');
-            viewComparativo.classList.add('hidden');
-            
-            const classeInativa = "pb-3 text-sm font-bold text-zinc-400 hover:text-zinc-800 border-b-2 border-transparent hover:border-zinc-300 flex items-center gap-2 transition-all whitespace-nowrap";
-            btnTabMonitor.className = classeInativa;
-            btnTabAgendar.className = classeInativa;
-            btnTabLista.className = classeInativa;
-            btnTabComparativo.className = classeInativa;
-        }
-
-        btnTabMonitor.addEventListener('click', () => { resetarAbas(); viewMonitor.classList.remove('hidden'); viewMonitor.classList.add('grid'); btnTabMonitor.className = "pb-3 text-sm font-bold text-pink-600 border-b-2 border-pink-600 flex items-center gap-2 transition-all whitespace-nowrap"; });
-        btnTabAgendar.addEventListener('click', () => { resetarAbas(); viewAgendar.classList.remove('hidden'); btnTabAgendar.className = "pb-3 text-sm font-bold text-pink-600 border-b-2 border-pink-600 flex items-center gap-2 transition-all whitespace-nowrap"; });
-        btnTabLista.addEventListener('click', () => { resetarAbas(); viewLista.classList.remove('hidden'); btnTabLista.className = "pb-3 text-sm font-bold text-pink-600 border-b-2 border-pink-600 flex items-center gap-2 transition-all whitespace-nowrap"; carregarAgendamentos(); });
-        btnTabComparativo.addEventListener('click', () => { resetarAbas(); viewComparativo.classList.remove('hidden'); btnTabComparativo.className = "pb-3 text-sm font-bold text-pink-600 border-b-2 border-pink-600 flex items-center gap-2 transition-all whitespace-nowrap"; iniciarDashboard(); });
-
-        // DASHBOARD LOGIC
+        // Store globais
+        let currentTaskId = null;
+        let pollingInterval = null;
         let dadosHistoricosDB = { seguidores: [], posts: [] };
         let chartSeguidores = null; let chartPosts = null;
 
-        function converterDataString(dataStr) {
-            if(!dataStr || dataStr === "Data N/A") return new Date(0);
-            try { let p = dataStr.split(' '); let d = p[0].split('/'); return new Date(d[2], d[1] - 1, d[0]); } catch(e) { return new Date(0); }
-        }
-
-        async function iniciarDashboard() {
-            const loading = document.getElementById('loading-graficos'); const painel = document.getElementById('painel-graficos');
-            loading.classList.remove('hidden'); loading.classList.add('flex'); painel.classList.add('hidden');
-            try {
-                const res = await fetch('/api/historico_graficos'); dadosHistoricosDB = await res.json();
-                let perfisUnicos = new Set([...dadosHistoricosDB.seguidores.map(s => s.perfil), ...dadosHistoricosDB.posts.map(p => p.perfil)]);
-                const seletor = document.getElementById('seletor-perfil'); seletor.innerHTML = '';
-                if (perfisUnicos.size === 0) { seletor.innerHTML = '<option value="">Nenhum dado no banco</option>'; loading.classList.replace('flex', 'hidden'); return; }
-                perfisUnicos.forEach(p => { let opt = document.createElement('option'); opt.value = p; opt.text = '@' + p; seletor.appendChild(opt); });
-                atualizarGraficosTela(seletor.value);
-                seletor.addEventListener('change', (e) => atualizarGraficosTela(e.target.value));
-                loading.classList.replace('flex', 'hidden'); painel.classList.remove('hidden'); painel.classList.add('flex');
-            } catch (erro) { loading.innerHTML = `<i data-lucide="alert-triangle" class="w-8 h-8 mb-3 text-red-500"></i><p class="font-medium text-sm text-red-600">Erro ao buscar histórico do banco.</p>`; lucide.createIcons(); }
-        }
-
-        function atualizarGraficosTela(perfilSelecionado) {
-            let histSeg = dadosHistoricosDB.seguidores.filter(s => s.perfil === perfilSelecionado); let histPosts = dadosHistoricosDB.posts.filter(p => p.perfil === perfilSelecionado);
-            let agora = new Date(); let data7 = new Date(); data7.setDate(agora.getDate() - 7); let data30 = new Date(); data30.setDate(agora.getDate() - 30);
-            let posts7 = histPosts.filter(p => converterDataString(p.data) >= data7); let posts30 = histPosts.filter(p => converterDataString(p.data) >= data30);
-            const calcMedia = (arr) => arr.length === 0 ? 0 : Math.round(arr.reduce((acc, p) => acc + p.curtidas, 0) / arr.length);
-            document.getElementById('card-total-posts').innerText = histPosts.length; document.getElementById('card-media-geral').innerText = calcMedia(histPosts).toLocaleString('pt-BR');
-            document.getElementById('card-media-7').innerText = calcMedia(posts7).toLocaleString('pt-BR'); document.getElementById('card-media-30').innerText = calcMedia(posts30).toLocaleString('pt-BR');
-            if(chartSeguidores) chartSeguidores.destroy(); if(chartPosts) chartPosts.destroy();
-            let ctxSeg = document.getElementById('graficoSeguidores').getContext('2d');
-            chartSeguidores = new Chart(ctxSeg, { type: 'line', data: { labels: histSeg.map(s => s.data.split(' ')[0]), datasets: [{ label: 'Seguidores', data: histSeg.map(s => s.valor), borderColor: '#2563eb', backgroundColor: 'rgba(37, 99, 235, 0.1)', borderWidth: 3, tension: 0.3, fill: true }] }, options: { responsive: true, plugins: { legend: { display: false } } } });
-            let ctxPosts = document.getElementById('graficoPosts').getContext('2d');
-            chartPosts = new Chart(ctxPosts, { type: 'bar', data: { labels: histPosts.map(p => p.data.split(' ')[0]), datasets: [{ label: 'Curtidas no Post', data: histPosts.map(p => p.curtidas), backgroundColor: '#db2777', borderRadius: 4 }] }, options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } } });
-        }
-
-        // AGENDAMENTO LOGIC
-        async function carregarAgendamentos() {
-            const grid = document.getElementById('grid-agendamentos'); grid.innerHTML = '<div class="col-span-full flex flex-col items-center justify-center py-12 text-zinc-400"><i data-lucide="loader-2" class="w-8 h-8 animate-spin mb-3"></i>Carregando...</div>'; lucide.createIcons();
-            try {
-                const res = await fetch('/api/agendamentos'); const data = await res.json();
-                if(data.agendamentos.length === 0) { grid.innerHTML = '<div class="col-span-full text-center py-16 text-zinc-400 border-2 border-dashed border-zinc-200 rounded-xl bg-white"><p>Nenhum post agendado.</p></div>'; return; }
-                grid.innerHTML = '';
-                data.agendamentos.forEach(item => {
-                    let stClass = item.status === 'PUBLICADO' ? 'bg-green-100 text-green-700' : (item.status === 'ERRO' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700');
-                    grid.innerHTML += `<div class="bg-white border border-zinc-200 rounded-xl p-4 flex gap-4"><div class="w-20 h-20 bg-zinc-100 rounded overflow-hidden shrink-0"><img src="/uploads/${item.arquivo}" class="w-full h-full object-cover"></div><div class="flex-1"><div class="flex justify-between"><span class="text-[9px] font-bold px-2 py-0.5 rounded ${stClass}">${item.status}</span><button onclick="deletarAgendamento(${item.id})" class="text-red-500 hover:text-red-700"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div><p class="text-xs text-zinc-500 mt-2 font-bold">${item.data_agendada.replace('T', ' às ')}</p></div></div>`;
-                }); lucide.createIcons();
-            } catch (e) {}
-        }
-        async function deletarAgendamento(id) { if(confirm('Cancelar?')) { await fetch('/api/agendamentos/' + id, { method: 'DELETE' }); carregarAgendamentos(); } }
-
-        document.getElementById('foto_upload').addEventListener('change', function(e) { if(e.target.files[0]) { const reader = new FileReader(); reader.onload = function(evt) { document.getElementById('preview_img').src = evt.target.result; document.getElementById('preview_img').classList.remove('hidden'); }; reader.readAsDataURL(e.target.files[0]); } });
-
-        document.getElementById('formAgendamento').addEventListener('submit', async function(event) {
-            event.preventDefault(); const btn = document.getElementById('btn-salvar-post'); btn.disabled = true; btn.innerHTML = 'Salvando...';
-            const formData = new FormData(); formData.append("foto", document.getElementById('foto_upload').files[0]); formData.append("legenda", document.getElementById('legenda_post').value); formData.append("data_agendada", document.getElementById('data_agendada').value);
-            await fetch('/api/agendar', { method: 'POST', body: formData });
-            document.getElementById('formAgendamento').reset(); document.getElementById('preview_img').classList.add('hidden');
-            btn.innerHTML = 'Confirmar Agendamento'; btn.disabled = false; alert("Agendado!");
-        });
-
-        // ==========================================
-        // 🚀 O NOVO CÉREBRO DA EXTRAÇÃO (COM PROGRESSO REAL E ID ÚNICO)
-        // ==========================================
-        function getTimestamp() { return new Date().toLocaleTimeString('pt-BR') + ' - ' + new Date().toLocaleDateString('pt-BR'); }
-        
-        let currentTaskId = null; // Guarda o ID da tarefa atual para poder cancelar
-        let pollingInterval = null; // Guarda o loop do espião
-
-        document.getElementById('btn-cancelar').onclick = async () => { 
-            document.getElementById('btn-cancelar').innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> INTERROMPENDO...`;
+        document.addEventListener('DOMContentLoaded', () => {
             lucide.createIcons();
-            if(currentTaskId) {
-                // AGORA SIM, ELE MANDA CANCELAR A TAREFA CERTA!
-                await fetch('/cancelar_bot/' + currentTaskId, { method: 'POST' }); 
-            }
-        };
 
-        document.getElementById('bot-form').onsubmit = async (e) => {
-            e.preventDefault();
-            const btnExec = document.getElementById('btn-executar'), btnCanc = document.getElementById('btn-cancelar');
-            const load = document.getElementById('loading-screen'), resDiv = document.getElementById('resultados-conteudo');
-            
-            // UI Reset
-            btnExec.classList.add('hidden'); btnCanc.classList.remove('hidden'); resDiv.classList.add('hidden'); load.classList.replace('hidden', 'flex');
-            document.getElementById('barra-progresso').style.width = '5%';
-            document.getElementById('texto-porcentagem').innerText = '5%';
-            document.getElementById('texto-status-robo').innerText = 'Conectando ao servidor...';
-
-            // GERA O ID ÚNICO
-            currentTaskId = 'task_' + Math.random().toString(36).substr(2, 9);
-
-            const payload = { 
-                task_id: currentTaskId,
-                alvo: document.getElementById('alvo').value, 
-                usuario: document.getElementById('usuario').value, 
-                senha: document.getElementById('senha').value, 
-                tempo_espera: parseInt(document.getElementById('tempo_espera').value)||4, 
-                modo_oculto: document.getElementById('modo_oculto').checked, 
-                seguir_alvo: document.getElementById('seguir_alvo').checked, 
-                coletar_feed: document.getElementById('coletar_feed').checked, 
-                limite_posts: parseInt(document.getElementById('limite_posts').value)||3, 
-                qtd_comentarios: parseInt(document.getElementById('qtd_comentarios').value)||0, 
-                coletar_stories: document.getElementById('coletar_stories').checked 
+            // Navegacao Segura
+            const mapTabs = {
+                'btn-tab-monitor': { view: 'view-monitor', isGrid: true },
+                'btn-tab-agendar': { view: 'view-agendar', isGrid: false },
+                'btn-tab-lista': { view: 'view-lista', isGrid: false },
+                'btn-tab-comparativo': { view: 'view-comparativo', isGrid: false },
+                'btn-tab-config': { view: 'view-config', isGrid: false }
             };
 
-            // O ESPIÃO DA BARRA DE PROGRESSO
-            pollingInterval = setInterval(async () => {
+            function hideAllViews() {
+                Object.values(mapTabs).forEach(tabObj => {
+                    const el = document.getElementById(tabObj.view);
+                    if (el) {
+                        el.classList.add('hidden');
+                        if (tabObj.isGrid) el.classList.remove('grid');
+                    }
+                });
+                Object.keys(mapTabs).forEach(btnId => {
+                    const btn = document.getElementById(btnId);
+                    if (btn) {
+                        btn.className = "pb-3 text-sm font-bold text-zinc-400 hover:text-zinc-800 border-b-2 border-transparent hover:border-zinc-300 flex items-center gap-2 transition-all whitespace-nowrap";
+                    }
+                });
+            }
+
+            function activateTab(btnId) {
+                hideAllViews();
+                const tabObj = mapTabs[btnId];
+                if (!tabObj) return;
+
+                const viewEl = document.getElementById(tabObj.view);
+                const btnEl = document.getElementById(btnId);
+
+                if (viewEl) {
+                    viewEl.classList.remove('hidden');
+                    if (tabObj.isGrid) viewEl.classList.add('grid');
+                }
+                if (btnEl) {
+                    btnEl.className = "pb-3 text-sm font-bold text-pink-600 border-b-2 border-pink-600 flex items-center gap-2 transition-all whitespace-nowrap";
+                }
+            }
+
+            document.getElementById('btn-tab-monitor')?.addEventListener('click', () => activateTab('btn-tab-monitor'));
+            document.getElementById('btn-tab-agendar')?.addEventListener('click', () => activateTab('btn-tab-agendar'));
+            document.getElementById('btn-tab-lista')?.addEventListener('click', () => { activateTab('btn-tab-lista'); carregarAgendamentos(); });
+            document.getElementById('btn-tab-comparativo')?.addEventListener('click', () => { activateTab('btn-tab-comparativo'); iniciarDashboard(); });
+            document.getElementById('btn-tab-config')?.addEventListener('click', () => activateTab('btn-tab-config'));
+
+            // Storage das Configuracoes
+            const cfgUser = localStorage.getItem('cfg_usuario') || '';
+            const cfgPass = localStorage.getItem('cfg_senha') || '';
+            const cfgDelay = localStorage.getItem('cfg_delay') || '4';
+            const cfgHeadless = localStorage.getItem('cfg_headless') === 'true';
+
+            document.getElementById('config_usuario').value = cfgUser;
+            document.getElementById('config_senha').value = cfgPass;
+            document.getElementById('config_delay').value = cfgDelay;
+            document.getElementById('config_headless').checked = cfgHeadless;
+
+            document.getElementById('formConfig').addEventListener('submit', (e) => {
+                e.preventDefault();
+                localStorage.setItem('cfg_usuario', document.getElementById('config_usuario').value);
+                localStorage.setItem('cfg_senha', document.getElementById('config_senha').value);
+                localStorage.setItem('cfg_delay', document.getElementById('config_delay').value);
+                localStorage.setItem('cfg_headless', document.getElementById('config_headless').checked);
+
+                const msg = document.getElementById('config-salvo-msg');
+                msg.style.opacity = '1';
+                setTimeout(() => msg.style.opacity = '0', 3000);
+            });
+
+
+            function converterDataString(dataStr) {
+                if (!dataStr || dataStr === "Data N/A") return new Date(0);
+                try { let p = dataStr.split(' '); let d = p[0].split('/'); return new Date(d[2], d[1] - 1, d[0]); } catch (e) { return new Date(0); }
+            }
+
+            async function iniciarDashboard() {
+                const loading = document.getElementById('loading-graficos'); const painel = document.getElementById('painel-graficos');
+                loading.classList.remove('hidden'); loading.classList.add('flex'); painel.classList.add('hidden');
                 try {
-                    let res = await fetch('/api/status_tarefa/' + currentTaskId);
-                    let data = await res.json();
-                    document.getElementById('barra-progresso').style.width = data.progresso + '%';
-                    document.getElementById('texto-porcentagem').innerText = data.progresso + '%';
-                    document.getElementById('texto-status-robo').innerText = data.mensagem;
-                } catch(e) {}
-            }, 1000);
+                    const res = await fetch('/api/historico_graficos'); dadosHistoricosDB = await res.json();
+                    let perfisUnicos = new Set([...dadosHistoricosDB.seguidores.map(s => s.perfil), ...dadosHistoricosDB.posts.map(p => p.perfil)]);
+                    const seletor = document.getElementById('seletor-perfil'); seletor.innerHTML = '';
+                    if (perfisUnicos.size === 0) { seletor.innerHTML = '<option value="">Nenhum dado no banco</option>'; loading.classList.replace('flex', 'hidden'); return; }
+                    perfisUnicos.forEach(p => { let opt = document.createElement('option'); opt.value = p; opt.text = '@' + p; seletor.appendChild(opt); });
 
-            try {
-                // ENVIA PARA O BACKEND
-                const req = await fetch('/executar_bot', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) });
-                const data = await req.json();
-                
-                clearInterval(pollingInterval); // Para de espiar
-                
-                load.classList.replace('flex', 'hidden'); resDiv.classList.remove('hidden'); resDiv.innerHTML = '';
-                document.getElementById('data-atualizacao').innerText = 'Atualizado: ' + getTimestamp();
+                    const recarregar = () => atualizarGraficosTela(document.getElementById('seletor-perfil').value);
 
-                data.resultados.forEach(res => {
-                    let feedHtml = '';
-                    res.feed_posts?.forEach(p => {
-                        const eng = res.seguidores_matematica ? ((p.curtidas_matematica / res.seguidores_matematica) * 100).toFixed(2) : "0.00";
-                        const cor = eng > 3 ? 'green' : (eng > 1 ? 'amber' : 'red');
-                        feedHtml += `
-                            <div class="bg-white border border-zinc-200 rounded-lg flex flex-col sm:flex-row overflow-hidden shadow-sm">
-                                <div class="w-full sm:w-48 h-40 bg-zinc-50 shrink-0 relative">${p.print_post ? `<img src="${p.print_post}" class="w-full h-full object-cover">` : ''}</div>
-                                <div class="p-4 flex-1 min-w-0">
-                                    <div class="flex justify-between text-[10px] font-bold text-zinc-400 mb-2"><span>📅 ${p.data}</span><a href="${p.url_post}" target="_blank" class="text-blue-500">LINK 🔗</a></div>
-                                    <div class="grid grid-cols-2 gap-3">
-                                        <div class="bg-zinc-50 p-3 rounded text-center"><p class="text-[8px] uppercase text-zinc-400 font-bold">Curtidas</p><p class="text-sm font-black truncate">${p.curtidas}</p></div>
-                                        <div class="bg-${cor}-50 p-3 rounded text-center"><p class="text-[8px] uppercase text-${cor}-600 font-bold">Engajamento</p><p class="text-sm font-black text-${cor}-700 truncate">${eng}%</p></div>
+                    atualizarGraficosTela(seletor.value);
+                    seletor.addEventListener('change', recarregar);
+                    document.getElementById('seletor-mes').addEventListener('change', recarregar);
+                    document.getElementById('seletor-dia').addEventListener('change', recarregar);
+
+                    loading.classList.replace('flex', 'hidden'); painel.classList.remove('hidden'); painel.classList.add('flex');
+                } catch (erro) { loading.innerHTML = `<i data-lucide="alert-triangle" class="w-8 h-8 mb-3 text-red-500"></i><p class="font-medium text-sm text-red-600">Erro ao buscar histórico do banco.</p>`; lucide.createIcons(); }
+            }
+
+            function atualizarGraficosTela(perfilSelecionado) {
+                const mesFilter = document.getElementById('seletor-mes').value;
+                const diaFilter = document.getElementById('seletor-dia').value;
+
+                const passaFiltro = (dataStr) => {
+                    const valDate = converterDataString(dataStr);
+                    if (valDate.getTime() === 0) return false;
+                    if (mesFilter && (valDate.getMonth() + 1).toString() !== mesFilter) return false;
+                    if (diaFilter && valDate.getDay().toString() !== diaFilter) return false;
+                    return true;
+                };
+
+                let histSeg = dadosHistoricosDB.seguidores.filter(s => s.perfil === perfilSelecionado && passaFiltro(s.data));
+                let histPosts = dadosHistoricosDB.posts.filter(p => p.perfil === perfilSelecionado && passaFiltro(p.data));
+
+                let agora = new Date(); let data7 = new Date(); data7.setDate(agora.getDate() - 7); let data30 = new Date(); data30.setDate(agora.getDate() - 30);
+                let posts7 = histPosts.filter(p => converterDataString(p.data) >= data7); let posts30 = histPosts.filter(p => converterDataString(p.data) >= data30);
+                const calcMedia = (arr) => arr.length === 0 ? 0 : Math.round(arr.reduce((acc, p) => acc + p.curtidas, 0) / arr.length);
+                document.getElementById('card-total-posts').innerText = histPosts.length; document.getElementById('card-media-geral').innerText = calcMedia(histPosts).toLocaleString('pt-BR');
+                document.getElementById('card-media-7').innerText = calcMedia(posts7).toLocaleString('pt-BR'); document.getElementById('card-media-30').innerText = calcMedia(posts30).toLocaleString('pt-BR');
+                if (chartSeguidores) chartSeguidores.destroy(); if (chartPosts) chartPosts.destroy();
+                let ctxSeg = document.getElementById('graficoSeguidores').getContext('2d');
+                chartSeguidores = new Chart(ctxSeg, { type: 'line', data: { labels: histSeg.map(s => s.data.split(' ')[0]), datasets: [{ label: 'Seguidores', data: histSeg.map(s => s.valor), borderColor: '#2563eb', backgroundColor: 'rgba(37, 99, 235, 0.1)', borderWidth: 3, tension: 0.3, fill: true, pointRadius: 4, pointHoverRadius: 6 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { beginAtZero: false, suggestedMin: histSeg.length > 0 ? undefined : 0, suggestedMax: histSeg.length > 0 ? undefined : 100 } } } });
+                let ctxPosts = document.getElementById('graficoPosts').getContext('2d');
+                chartPosts = new Chart(ctxPosts, { type: 'bar', data: { labels: histPosts.map(p => p.data.split(' ')[0]), datasets: [{ label: 'Curtidas no Post', data: histPosts.map(p => p.curtidas), backgroundColor: '#db2777', borderWidth: 0, borderRadius: 4, maxBarThickness: 50 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { beginAtZero: true, suggestedMin: 0, suggestedMax: histPosts.length > 0 ? undefined : 100 } } } });
+            }
+
+            // Agendamento
+            async function carregarAgendamentos() {
+                const grid = document.getElementById('grid-agendamentos'); grid.innerHTML = '<div class="col-span-full flex flex-col items-center justify-center py-12 text-zinc-400"><i data-lucide="loader-2" class="w-8 h-8 animate-spin mb-3"></i>Carregando...</div>'; lucide.createIcons();
+                try {
+                    const res = await fetch('/api/agendamentos'); const data = await res.json();
+                    if (data.agendamentos.length === 0) { grid.innerHTML = '<div class="col-span-full text-center py-16 text-zinc-400 border-2 border-dashed border-zinc-200 rounded-xl bg-white"><p>Nenhum post agendado.</p></div>'; return; }
+                    grid.innerHTML = '';
+                    data.agendamentos.forEach(item => {
+                        let stClass = item.status === 'PUBLICADO' ? 'bg-green-100 text-green-700' : (item.status === 'ERRO' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700');
+                        grid.innerHTML += `<div class="bg-white border border-zinc-200 rounded-xl p-4 flex gap-4"><div class="w-20 h-20 bg-zinc-100 rounded overflow-hidden shrink-0"><img src="/uploads/${item.arquivo}" class="w-full h-full object-cover"></div><div class="flex-1"><div class="flex justify-between"><span class="text-[9px] font-bold px-2 py-0.5 rounded ${stClass}">${item.status}</span><button onclick="deletarAgendamento(${item.id})" class="text-red-500 hover:text-red-700"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div><p class="text-xs text-zinc-500 mt-2 font-bold">${item.data_agendada.replace('T', ' às ')}</p></div></div>`;
+                    }); lucide.createIcons();
+                } catch (e) { }
+            }
+            async function deletarAgendamento(id) { if (confirm('Cancelar?')) { await fetch('/api/agendamentos/' + id, { method: 'DELETE' }); carregarAgendamentos(); } }
+
+            document.getElementById('foto_upload')?.addEventListener('change', function (e) { if (e.target.files[0]) { const reader = new FileReader(); reader.onload = function (evt) { document.getElementById('preview_img').src = evt.target.result; document.getElementById('preview_img').classList.remove('hidden'); }; reader.readAsDataURL(e.target.files[0]); } });
+
+            document.getElementById('legenda_post')?.addEventListener('input', function (e) {
+                const previewText = document.getElementById('preview-legenda-texto');
+                if (e.target.value.trim() === '') {
+                    previewText.innerText = 'Sua legenda aparecerá aqui...';
+                    previewText.classList.add('text-zinc-500');
+                } else {
+                    previewText.innerText = e.target.value;
+                    previewText.classList.remove('text-zinc-500');
+                }
+            });
+
+            document.getElementById('config_usuario')?.addEventListener('input', function (e) {
+                let nome = e.target.value.trim() !== '' ? e.target.value : 'seu_perfil';
+                document.getElementById('preview-username').innerText = nome;
+                document.getElementById('preview-username-caption').innerText = nome;
+            });
+
+            document.getElementById('formAgendamento')?.addEventListener('submit', async function (event) {
+                event.preventDefault(); const btn = document.getElementById('btn-salvar-post'); btn.disabled = true; btn.innerHTML = 'Salvando...';
+                const formData = new FormData(); formData.append("foto", document.getElementById('foto_upload').files[0]); formData.append("legenda", document.getElementById('legenda_post').value); formData.append("data_agendada", document.getElementById('data_agendada').value);
+                await fetch('/api/agendar', { method: 'POST', body: formData });
+                document.getElementById('formAgendamento').reset(); document.getElementById('preview_img').classList.add('hidden');
+                btn.innerHTML = 'Confirmar Agendamento'; btn.disabled = false; alert("Agendado!");
+            });
+
+            // Controle de Extracao
+            function getTimestamp() { return new Date().toLocaleTimeString('pt-BR') + ' - ' + new Date().toLocaleDateString('pt-BR'); }
+
+            document.getElementById('btn-cancelar').addEventListener('click', async () => {
+                document.getElementById('btn-cancelar').innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> INTERROMPENDO...`;
+                lucide.createIcons();
+                if (currentTaskId) {
+                    // Cancela no backend
+                    await fetch('/cancelar_bot/' + currentTaskId, { method: 'POST' });
+                }
+            });
+
+            document.getElementById('bot-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                console.log("Iniciando extacao do bot...");
+
+                const btnExec = document.getElementById('btn-executar'), btnCanc = document.getElementById('btn-cancelar');
+                const load = document.getElementById('loading-screen'), resDiv = document.getElementById('resultados-conteudo');
+
+                // Reset UI
+                btnExec.classList.add('hidden'); btnCanc.classList.remove('hidden'); resDiv.classList.add('hidden'); load.classList.replace('hidden', 'flex');
+                document.getElementById('barra-progresso').style.width = '5%';
+                document.getElementById('texto-porcentagem').innerText = '5%';
+                document.getElementById('texto-status-robo').innerText = 'Conectando ao servidor...';
+
+                // Geracao de ID
+                currentTaskId = 'task_' + Math.random().toString(36).substr(2, 9);
+
+                const payload = {
+                    task_id: currentTaskId,
+                    alvo: document.getElementById('alvo').value,
+                    usuario: localStorage.getItem('cfg_usuario') || '',
+                    senha: localStorage.getItem('cfg_senha') || '',
+                    tempo_espera: parseInt(localStorage.getItem('cfg_delay')) || 4,
+                    modo_oculto: localStorage.getItem('cfg_headless') === 'true',
+                    seguir_alvo: document.getElementById('seguir_alvo').checked,
+                    coletar_feed: document.getElementById('coletar_feed').checked,
+                    limite_posts: parseInt(document.getElementById('limite_posts').value) || 3,
+                    qtd_comentarios: parseInt(document.getElementById('qtd_comentarios').value) || 0,
+                    coletar_stories: document.getElementById('coletar_stories').checked
+                };
+
+                if (!payload.usuario || !payload.senha) {
+                    alert("Por favor, configure suas credenciais na aba 'Configurações' antes de iniciar.");
+                    btnCanc.classList.add('hidden'); btnExec.classList.remove('hidden'); resDiv.classList.add('hidden'); load.classList.replace('flex', 'hidden');
+                    return;
+                }
+
+                // Polling de Progresso
+                pollingInterval = setInterval(async () => {
+                    try {
+                        let res = await fetch('/api/status_tarefa/' + currentTaskId);
+                        let data = await res.json();
+                        document.getElementById('barra-progresso').style.width = data.progresso + '%';
+                        document.getElementById('texto-porcentagem').innerText = data.progresso + '%';
+                        document.getElementById('texto-status-robo').innerText = data.mensagem;
+                    } catch (e) { }
+                }, 1000);
+
+                try {
+                    // Requisicao de motor
+                    const req = await fetch('/executar_bot', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                    const data = await req.json();
+
+                    clearInterval(pollingInterval);
+
+                    load.classList.replace('flex', 'hidden'); resDiv.classList.remove('hidden'); resDiv.innerHTML = '';
+                    document.getElementById('data-atualizacao').innerText = 'Atualizado: ' + getTimestamp();
+
+                    data.resultados.forEach(res => {
+                        let feedHtml = '';
+                        res.feed_posts?.forEach(p => {
+                            const eng = res.seguidores_matematica ? ((p.curtidas_matematica / res.seguidores_matematica) * 100).toFixed(2) : "0.00";
+                            const cor = eng > 3 ? 'green' : (eng > 1 ? 'amber' : 'red');
+                            feedHtml += `
+                            <div class="bg-white border border-zinc-200 rounded-xl p-4 flex flex-col sm:flex-row gap-5 shadow-sm hover:shadow-md transition-shadow">
+                                <div class="w-full sm:w-32 h-64 sm:h-32 bg-zinc-100 rounded-lg overflow-hidden shrink-0 border border-zinc-200">
+                                    ${p.print_post ? `<img src="${p.print_post}" class="w-full h-full object-cover">` : '<div class="w-full h-full flex flex-col items-center justify-center text-zinc-300"><i data-lucide="image" class="w-6 h-6 mb-1"></i><span class="text-[10px] font-medium uppercase tracking-widest">Sem Foto</span></div>'}
+                                </div>
+                                <div class="flex-1 flex flex-col min-w-0 justify-between py-1 w-full">
+                                    <div class="flex justify-between items-start mb-4">
+                                        <div class="flex items-center gap-2 text-xs font-semibold text-zinc-500">
+                                            <i data-lucide="calendar" class="w-3.5 h-3.5"></i>
+                                            <span>${p.data}</span>
+                                        </div>
+                                        <a href="${p.url_post}" target="_blank" class="text-[10px] font-bold bg-zinc-100 hover:bg-zinc-200 text-blue-600 hover:text-blue-700 px-3 py-1.5 rounded-full transition-colors flex items-center gap-1">
+                                            Ver Post <i data-lucide="external-link" class="w-3 h-3"></i>
+                                        </a>
+                                    </div>
+                                    
+                                    <div class="flex items-center gap-6 mt-auto bg-zinc-50 px-4 py-3 rounded-lg border border-zinc-100">
+                                        <div class="flex flex-col">
+                                            <span class="text-[10px] uppercase font-bold text-zinc-400 mb-0.5 tracking-wider">Curtidas</span>
+                                            <div class="flex items-center gap-2">
+                                                <i data-lucide="heart" class="w-4 h-4 text-pink-500"></i>
+                                                <span class="text-xl font-black text-zinc-800">${p.curtidas}</span>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="w-px h-10 bg-zinc-200"></div>
+                                        
+                                        <div class="flex flex-col">
+                                            <span class="text-[10px] uppercase font-bold text-${cor}-500 mb-0.5 tracking-wider">Engajamento</span>
+                                            <div class="flex items-center gap-2">
+                                                <i data-lucide="activity" class="w-4 h-4 text-${cor}-500"></i>
+                                                <span class="text-xl font-black text-${cor}-700">${eng}%</span>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>`;
+                        });
+                        resDiv.innerHTML += `<div class="bg-white border border-zinc-200 rounded-xl p-6 shadow-sm"><h3 class="text-xl font-black mb-4">@${res.alvo}</h3><div class="space-y-4">${feedHtml}</div></div>`;
                     });
-                    resDiv.innerHTML += `<div class="bg-white border border-zinc-200 rounded-xl p-6 shadow-sm"><h3 class="text-xl font-black mb-4">@${res.alvo}</h3><div class="space-y-4">${feedHtml}</div></div>`;
-                });
-                lucide.createIcons();
-            } finally { 
-                clearInterval(pollingInterval);
-                btnCanc.classList.add('hidden'); btnExec.classList.remove('hidden'); 
-                document.getElementById('btn-cancelar').innerHTML = `<i data-lucide="square" class="w-4 h-4"></i> ABORTAR`;
-            }
-        };
+                    lucide.createIcons();
+                } finally {
+                    clearInterval(pollingInterval);
+                    btnCanc.classList.add('hidden'); btnExec.classList.remove('hidden');
+                    document.getElementById('btn-cancelar').innerHTML = `<i data-lucide="square" class="w-4 h-4"></i> ABORTAR`;
+                }
+            });
+
+        }); // END DOMContentLoaded
     </script>
 </body>
+
 </html>
