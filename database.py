@@ -3,16 +3,13 @@ import os
 from datetime import datetime
 from contextlib import contextmanager
 
-# --- CONFIGURAÇÃO DO BANCO DE DADOS ---
+# Config DB
 DIRETORIO_BASE = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(DIRETORIO_BASE, "banco_dados.db")
 
 @contextmanager
 def conectar():
-    """
-    Gerenciador de contexto para o banco de dados.
-    Garante a abertura e fechamento seguro da conexao e ativa a checagem de chaves estrangeiras.
-    """
+    """Context manager para o DB."""
     conexao = sqlite3.connect(DB_PATH)
     conexao.execute("PRAGMA foreign_keys = ON;")
     try:
@@ -21,7 +18,7 @@ def conectar():
         conexao.close()
 
 def criar_tabelas():
-    """Inicializa o esquema relacional do banco de dados (se não existir)."""
+    """Inicializa o esquema relacional."""
     with conectar() as conexao:
         cursor = conexao.cursor()
 
@@ -92,7 +89,7 @@ def criar_tabelas():
 
         conexao.commit()
 
-# --- FUNÇÕES DE INSERÇÃO ---
+# Insercao
 
 def _inserir_comentarios(cursor, post_id, comentarios):
     if not comentarios: return
@@ -128,10 +125,10 @@ def salvar_lote(resultados_em_lote):
                 _inserir_stories(cursor, perfil_id, perfil.get("stories"))
             conexao.commit()
         except Exception as e:
-            print(f"ERRO CRITICO DE BANCO DE DADOS: {e}")
+            print(f"[DB] Erro: {e}")
             conexao.rollback()
 
-# --- FUNÇÕES DE AGENDAMENTO ---
+# Agendamento
 
 def agendar_novo_post(caminho_foto, legenda, data_agendada):
     with conectar() as conexao:
@@ -164,7 +161,7 @@ def atualizar_status_post(post_id, novo_status):
         cursor.execute("UPDATE postagens_agendadas SET status = ? WHERE id = ?", (novo_status, post_id))
         conexao.commit()
 
-# --- FUNÇÕES ANALÍTICAS ---
+# Analises
 
 def buscar_ultimo_lote_com_engajamento():
     with conectar() as conexao:
@@ -195,17 +192,11 @@ def buscar_historico_graficos():
         posts = [{"perfil": r[0], "data": r[1], "curtidas": r[2]} for r in cursor.fetchall()]
         return {"seguidores": seguidores, "posts": posts}
 
-# =========================================================================
-# 🚀 NOVA FUNÇÃO: O CÉREBRO DO MELHOR HORÁRIO (SAAS STYLE)
-# =========================================================================
+# Melhor Horario
 def obter_ranking_horarios(perfil_alvo):
-    """
-    Analisa todos os posts de um perfil e retorna a média de curtidas
-    agrupada por dia da semana.
-    """
+    """Retorna media de curtidas agrupadas por dia da semana."""
     with conectar() as conexao:
         cursor = conexao.cursor()
-        # Seleciona data e curtidas de todos os posts deste perfil
         cursor.execute("""
             SELECT pf.data_publicacao, pf.curtidas_valor 
             FROM posts_feed pf
@@ -216,14 +207,12 @@ def obter_ranking_horarios(perfil_alvo):
         posts = cursor.fetchall()
         if not posts: return []
 
-        # Dicionário para acumular [soma_curtidas, quantidade_posts]
-        # 0=Segunda, 1=Terça... 6=Domingo
+        # Acumuladores de curtidas [soma, qtd]
         stats = {i: [0, 0] for i in range(7)}
         dias_nomes = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"]
 
         for data_str, curtidas in posts:
             try:
-                # Converte string "17/02/2026 22:25" para objeto datetime
                 dt = datetime.strptime(data_str, "%d/%m/%Y %H:%M")
                 dia_semana = dt.weekday() 
                 stats[dia_semana][0] += curtidas

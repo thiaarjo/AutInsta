@@ -7,13 +7,13 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
-# Importa as configurações e utilidades (agora com o megafone 'atualizar_status')
+# Dependencias locais
 from config import ConfigBot, PASTA_PRINTS, gerenciador_tarefas
 from utils import sleep_seguro, analisar_curtidas, atualizar_status
 
-# --- FUNÇÃO PARA MATAR PROCESSOS ZUMBIS (Proteção de RAM) ---
+# Process termination
 def aniquilar_processo_chrome(pid):
-    """Mata o processo do ChromeDriver e todos os processos filhos (Chrome.exe) à força."""
+    """Forca o encerramento do processo e filhos."""
     try:
         processo_pai = psutil.Process(pid)
         for processo_filho in processo_pai.children(recursive=True):
@@ -54,7 +54,7 @@ def verificar_perfil_privado(driver):
     except:
         return False
 
-# --- FOLLOW ACTION (Com task_id) ---
+# Acoes de Follow
 def realizar_acao_seguir(driver, task_id):
     """
     Attempts to locate and click the 'Follow' button.
@@ -84,9 +84,9 @@ def realizar_acao_seguir(driver, task_id):
         if "CANCELADO_PELO_USUARIO" in str(e): raise e 
         return f"Error following: {str(e)}"
 
-# --- EXTRAÇÃO FORÇA-BRUTA DE SEGUIDORES ---
+# Extracao de seguidores
 def extrair_seguidores_robusto(driver):
-    """Garante que os seguidores sejam pegos, seja a conta pública ou privada"""
+    """Tenta diversos metodos para ler followers."""
     try:
         elem = driver.find_element(By.XPATH, "//a[contains(@href, '/followers/')]//span[@title]")
         _, txt = analisar_curtidas(elem.get_attribute("title"))
@@ -112,12 +112,10 @@ def extrair_seguidores_robusto(driver):
 
     return "N/A"
 
-# =========================================================================
-# --- BOT LOGIC (EXECUTA 1 PERFIL POR VEZ) ---
-# =========================================================================
+# Loop principal do Robo
 def rodar_robo(config: ConfigBot):
     
-    # 🛡️ REGISTRA A TAREFA NO GERENCIADOR
+    # Registra Tarefa
     task_id = config.task_id
     gerenciador_tarefas[task_id] = {"cancelar": False, "pid": None, "progresso": 0, "mensagem": "Iniciando..."}
     
@@ -152,10 +150,10 @@ def rodar_robo(config: ConfigBot):
         atualizar_status(task_id, 10, "Iniciando Navegador Invisível...")
         driver = webdriver.Chrome(options=chrome_options)
         
-        # 🛡️ GUARDA O PID (Process ID) PARA LIMPAR A RAM DEPOIS
+        # Armazena PID para limpeza
         gerenciador_tarefas[task_id]["pid"] = driver.service.process.pid
         
-        # --- 1. LOGIN ---
+        # 1. Login
         atualizar_status(task_id, 15, "Acessando Instagram.com e fazendo Login...")
         driver.get("https://www.instagram.com/")
         sleep_seguro(DELAY, task_id) 
@@ -178,12 +176,12 @@ def rodar_robo(config: ConfigBot):
             sleep_seguro(DELAY, task_id)
         except: pass
 
-        # --- 2. ACCESS PROFILE ---
+        # 2. Access Profile
         atualizar_status(task_id, 35, f"Buscando Perfil: @{config.alvo}...")
         driver.get(PERFIL_ALVO)
         sleep_seguro(DELAY + 1, task_id)
 
-        # --- PEGA OS SEGUIDORES IMEDIATAMENTE APÓS ABRIR O PERFIL ---
+        # Leitura inicial de seguidores
         resultado["seguidores"] = extrair_seguidores_robusto(driver)
         try:
              valor_int_seguidores, _ = analisar_curtidas(resultado["seguidores"])
@@ -191,13 +189,13 @@ def rodar_robo(config: ConfigBot):
         except:
              resultado["seguidores_matematica"] = 0
              
-        # --- 2.1 FOLLOW LOGIC ---
+        # Follow
         if config.seguir_alvo:
             atualizar_status(task_id, 40, "Processando Follow no Alvo...")
             status_follow = realizar_acao_seguir(driver, task_id)
             resultado["status_seguir"] = status_follow
 
-        # --- 2.2 PRIVACY CHECK ---
+        # Verifica Privacidade
         if verificar_perfil_privado(driver):
             atualizar_status(task_id, 100, "Perfil Privado detectado. Operação concluída parcial.")
             resultado["privado"] = True
@@ -205,7 +203,7 @@ def rodar_robo(config: ConfigBot):
             resultado["status"] = "Profile Private and Blocked"
             return resultado 
         
-        # --- 4. FEED ANALYSIS ---
+        # Analise de feed
         if config.coletar_feed:
             atualizar_status(task_id, 45, "Mapeando Grade de Posts do Feed...")
             sleep_seguro(3, task_id)
@@ -228,13 +226,11 @@ def rodar_robo(config: ConfigBot):
                 sleep_seguro(0.5, task_id)
                 if posts_coletados >= config.limite_posts: break
                 
-                # Progresso dinâmico baseado na quantidade de posts (De 45% até 80%)
+                # Atualiza progresso
                 prog = int(45 + ((posts_coletados / config.limite_posts) * 35))
                 atualizar_status(task_id, prog, f"Extraindo dados do Post {posts_coletados+1} de {config.limite_posts}...")
                 
-                # ==========================================================
-                # 🛡️ BLINDAGEM MESTRA: ISOLA O POST PARA EVITAR EFEITO DOMINÓ
-                # ==========================================================
+                # Processa Post Fechado
                 try:
                     candidatos = driver.find_elements(By.XPATH, xpath_posts)
                     if i >= len(candidatos): break
@@ -253,7 +249,7 @@ def rodar_robo(config: ConfigBot):
                     driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", post_atual)
                     sleep_seguro(1, task_id)
                     
-                    # TIRA A FOTO DA MINIATURA ANTES DE CLICAR
+                    # Foto da miniatura
                     timestamp = int(datetime.now().timestamp())
                     nome_print = f"{config.alvo}_post_{posts_coletados+1}_{timestamp}.png"
                     caminho_print = os.path.join(PASTA_PRINTS, nome_print)
@@ -366,7 +362,7 @@ def rodar_robo(config: ConfigBot):
                     except: pass
                     continue 
 
-        # --- 5. STORIES (CONDITIONAL) ---
+        # Analise de Stories
         if config.coletar_stories:
             atualizar_status(task_id, 85, "Acessando Stories Ativos...")
             driver.get(STORY_ALVO)
@@ -415,9 +411,7 @@ def rodar_robo(config: ConfigBot):
             resultado["status"] = f"Error: {str(e)}"
             atualizar_status(task_id, 0, "Erro Crítico na Extração.")
             
-    # =========================================================================
-    # 🛡️ LIMPEZA GARANTIDA (RAM CLEAR)
-    # =========================================================================
+    # Limpeza Final
     finally:
         pid_alvo = None
         try:

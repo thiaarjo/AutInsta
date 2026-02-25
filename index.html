@@ -80,6 +80,9 @@
             <button id="btn-tab-comparativo"
                 class="pb-3 text-sm font-bold text-zinc-400 hover:text-zinc-800 border-b-2 border-transparent hover:border-zinc-300 flex items-center gap-2 transition-all whitespace-nowrap"><i
                     data-lucide="line-chart" class="w-4 h-4"></i> Relatórios & Gráficos</button>
+            <button id="btn-tab-config"
+                class="pb-3 text-sm font-bold text-zinc-400 hover:text-zinc-800 border-b-2 border-transparent hover:border-zinc-300 flex items-center gap-2 transition-all whitespace-nowrap"><i
+                    data-lucide="settings" class="w-4 h-4"></i> Configurações Globais</button>
         </div>
     </header>
 
@@ -91,86 +94,105 @@
                     <h2 class="text-sm font-bold text-zinc-900 uppercase tracking-wider">Parâmetros</h2>
                 </div>
 
-                <form id="bot-form" class="space-y-5">
-                    <div class="space-y-4">
-                        <div>
-                            <label
-                                class="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1">Perfis
-                                Alvo (Separar por vírgula)</label>
+                <form id="bot-form" class="space-y-6">
+                    <div>
+                        <label
+                            class="flex items-center gap-2 text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-2"><i
+                                data-lucide="crosshair" class="w-3.5 h-3.5"></i> Perfis
+                            Alvo (Separar por vírgula)</label>
+                        <div class="relative">
                             <input type="text" id="alvo" required
-                                class="w-full bg-zinc-50 border border-zinc-200 text-sm rounded-md px-3 py-2.5 focus:ring-1 focus:ring-pink-500 focus:border-pink-500 outline-none transition-all placeholder:text-zinc-300"
+                                class="w-full bg-zinc-50 border border-zinc-200 text-sm font-medium rounded-lg pl-10 pr-4 py-3 focus:ring-1 focus:ring-pink-500 focus:border-pink-500 focus:bg-white outline-none transition-all placeholder:text-zinc-400 shadow-sm"
                                 placeholder="@neymarjr, @anitta">
-                        </div>
-                        <div class="grid grid-cols-2 gap-3">
-                            <div>
-                                <label
-                                    class="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1">Usuário
-                                    Logado</label>
-                                <input type="text" id="usuario" required
-                                    class="w-full bg-zinc-50 border border-zinc-200 text-sm rounded-md px-3 py-2 focus:ring-1 focus:ring-pink-500 outline-none transition-all">
-                            </div>
-                            <div>
-                                <label
-                                    class="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1">Senha</label>
-                                <input type="password" id="senha" required
-                                    class="w-full bg-zinc-50 border border-zinc-200 text-sm rounded-md px-3 py-2 focus:ring-1 focus:ring-pink-500 outline-none transition-all">
-                            </div>
+                            <i data-lucide="users" class="w-4 h-4 text-zinc-400 absolute left-3.5 top-3.5"></i>
                         </div>
                     </div>
 
                     <div class="border-t border-zinc-100 pt-5">
-                        <label class="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-3">Módulos
+                        <label
+                            class="flex items-center gap-2 text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-3"><i
+                                data-lucide="blocks" class="w-3.5 h-3.5"></i> Módulos
                             de Ação</label>
-                        <div class="space-y-2">
+                        <div class="space-y-3">
                             <label
-                                class="flex items-center gap-3 p-2 hover:bg-zinc-50 rounded-md cursor-pointer transition border border-transparent hover:border-zinc-200"><input
-                                    type="checkbox" id="modo_oculto"
-                                    class="w-4 h-4 text-pink-500 bg-zinc-100 border-zinc-300 rounded focus:ring-pink-500"><span
-                                    class="text-xs font-medium text-zinc-700">Modo Invisível (Headless)</span></label>
+                                class="flex items-center justify-between p-3 bg-zinc-50 hover:bg-zinc-100 border border-zinc-200 rounded-lg cursor-pointer transition-colors shadow-sm">
+                                <div class="flex items-center gap-3">
+                                    <div
+                                        class="w-7 h-7 rounded bg-white flex items-center justify-center border border-zinc-200 shadow-sm">
+                                        <i data-lucide="user-plus" class="w-3.5 h-3.5 text-zinc-600"></i>
+                                    </div>
+                                    <span class="text-xs font-bold text-zinc-700">Auto-Seguir Alvos</span>
+                                </div>
+                                <div class="relative flex items-center">
+                                    <input type="checkbox" id="seguir_alvo" class="peer sr-only">
+                                    <div
+                                        class="w-9 h-5 bg-zinc-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-pink-500 shadow-inner">
+                                    </div>
+                                </div>
+                            </label>
+
                             <label
-                                class="flex items-center gap-3 p-2 hover:bg-zinc-50 rounded-md cursor-pointer transition border border-transparent hover:border-zinc-200"><input
-                                    type="checkbox" id="seguir_alvo"
-                                    class="w-4 h-4 text-pink-500 bg-zinc-100 border-zinc-300 rounded focus:ring-pink-500"><span
-                                    class="text-xs font-medium text-zinc-700">Auto-Seguir Alvos</span></label>
+                                class="flex items-center justify-between p-3 bg-zinc-50 hover:bg-zinc-100 border border-zinc-200 rounded-lg cursor-pointer transition-colors shadow-sm">
+                                <div class="flex items-center gap-3">
+                                    <div
+                                        class="w-7 h-7 rounded bg-white flex items-center justify-center border border-zinc-200 shadow-sm">
+                                        <i data-lucide="play-square" class="w-3.5 h-3.5 text-zinc-600"></i>
+                                    </div>
+                                    <span class="text-xs font-bold text-zinc-700">Extrair Stories</span>
+                                </div>
+                                <div class="relative flex items-center">
+                                    <input type="checkbox" id="coletar_stories" checked class="peer sr-only">
+                                    <div
+                                        class="w-9 h-5 bg-zinc-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-pink-500 shadow-inner">
+                                    </div>
+                                </div>
+                            </label>
+
                             <label
-                                class="flex items-center gap-3 p-2 hover:bg-zinc-50 rounded-md cursor-pointer transition border border-transparent hover:border-zinc-200"><input
-                                    type="checkbox" id="coletar_stories" checked
-                                    class="w-4 h-4 text-pink-500 bg-zinc-100 border-zinc-300 rounded focus:ring-pink-500"><span
-                                    class="text-xs font-medium text-zinc-700">Extrair Stories</span></label>
-                            <label
-                                class="flex items-center gap-3 p-2 hover:bg-zinc-50 rounded-md cursor-pointer transition border border-transparent hover:border-zinc-200"><input
-                                    type="checkbox" id="coletar_feed" checked
-                                    class="w-4 h-4 text-pink-500 bg-zinc-100 border-zinc-300 rounded focus:ring-pink-500"><span
-                                    class="text-xs font-medium text-zinc-700">Extrair Feed</span></label>
+                                class="flex items-center justify-between p-3 bg-zinc-50 hover:bg-zinc-100 border border-zinc-200 rounded-lg cursor-pointer transition-colors shadow-sm">
+                                <div class="flex items-center gap-3">
+                                    <div
+                                        class="w-7 h-7 rounded bg-white flex items-center justify-center border border-zinc-200 shadow-sm">
+                                        <i data-lucide="layout-grid" class="w-3.5 h-3.5 text-zinc-600"></i>
+                                    </div>
+                                    <span class="text-xs font-bold text-zinc-700">Extrair Face Feed</span>
+                                </div>
+                                <div class="relative flex items-center">
+                                    <input type="checkbox" id="coletar_feed" checked class="peer sr-only">
+                                    <div
+                                        class="w-9 h-5 bg-zinc-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-pink-500 shadow-inner">
+                                    </div>
+                                </div>
+                            </label>
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-2 gap-3 border-t border-zinc-100 pt-5">
-                        <div><label
-                                class="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1">Posts/Perfil</label><input
-                                type="number" id="limite_posts" value="3" min="1" max="10"
-                                class="w-full bg-zinc-50 border border-zinc-200 text-sm font-semibold text-center rounded-md px-3 py-2 outline-none focus:border-zinc-400">
+                    <div class="grid grid-cols-2 gap-4 border-t border-zinc-100 pt-5">
+                        <div>
+                            <label
+                                class="flex items-center gap-1.5 text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-2"><i
+                                    data-lucide="layers" class="w-3 h-3"></i> Máximo
+                                Posts</label>
+                            <input type="number" id="limite_posts" value="3" min="1" max="10"
+                                class="w-full bg-zinc-50 border border-zinc-200 text-sm font-black text-pink-600 text-center rounded-lg px-3 py-2.5 outline-none focus:bg-white focus:border-pink-500 transition-colors shadow-sm">
                         </div>
-                        <div><label
-                                class="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1">Comentários</label><input
-                                type="number" id="qtd_comentarios" value="2" min="0" max="10"
-                                class="w-full bg-zinc-50 border border-zinc-200 text-sm font-semibold text-center rounded-md px-3 py-2 outline-none focus:border-zinc-400">
-                        </div>
-                        <div class="col-span-2"><label
-                                class="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1 flex items-center justify-between">Delay
-                                Base <span class="text-zinc-400 font-normal normal-case">Segundos</span></label><input
-                                type="number" id="tempo_espera" value="4" min="1"
-                                class="w-full bg-zinc-50 border border-zinc-200 text-sm font-semibold text-center rounded-md px-3 py-2 outline-none focus:border-zinc-400">
+                        <div>
+                            <label
+                                class="flex items-center gap-1.5 text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-2"><i
+                                    data-lucide="message-square" class="w-3 h-3"></i>
+                                Comentários</label>
+                            <input type="number" id="qtd_comentarios" value="2" min="0" max="10"
+                                class="w-full bg-zinc-50 border border-zinc-200 text-sm font-black text-pink-600 text-center rounded-lg px-3 py-2.5 outline-none focus:bg-white focus:border-pink-500 transition-colors shadow-sm">
                         </div>
                     </div>
 
                     <div class="pt-4">
                         <button type="submit" id="btn-executar"
-                            class="w-full bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-bold uppercase tracking-widest py-3.5 rounded-md transition-all flex justify-center items-center gap-2"><i
-                                data-lucide="play" class="w-4 h-4"></i> Iniciar Extração</button>
+                            class="w-full bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-bold uppercase tracking-widest py-3.5 rounded-lg transition-all flex justify-center items-center gap-2 shadow-md hover:shadow-lg">
+                            <i data-lucide="play" class="w-4 h-4 fill-current"></i> Iniciar Extração</button>
                         <button type="button" id="btn-cancelar"
-                            class="hidden w-full bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 text-xs font-bold uppercase tracking-widest py-3.5 rounded-md transition-all flex justify-center items-center gap-2"><i
-                                data-lucide="square" class="w-4 h-4"></i> Abortar</button>
+                            class="hidden w-full bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 text-xs font-bold uppercase tracking-widest py-3.5 rounded-lg transition-all flex justify-center items-center gap-2 shadow-sm">
+                            <i data-lucide="square" class="w-4 h-4 fill-current"></i> Abortar</button>
                     </div>
                 </form>
             </div>
@@ -417,229 +439,385 @@
         </div>
     </main>
 
+    <main id="view-config" class="hidden max-w-[800px] mx-auto py-12 px-6">
+        <div class="bg-white rounded-xl shadow-sm border border-zinc-200 overflow-hidden">
+            <div class="p-6 border-b border-zinc-100 bg-zinc-50 flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-zinc-200 flex items-center justify-center"><i
+                        data-lucide="settings" class="w-5 h-5 text-zinc-600"></i></div>
+                <div>
+                    <h2 class="text-lg font-bold text-zinc-900 tracking-tight">Configurações Globais</h2>
+                    <p class="text-xs text-zinc-500 mt-1">Configure as credenciais e parâmetros de conexão do sistema.
+                    </p>
+                </div>
+            </div>
+
+            <form id="formConfig" class="p-8 space-y-8 bg-zinc-50/50">
+                <!-- Credenciais -->
+                <div class="bg-white p-6 rounded-lg border border-zinc-200 shadow-sm">
+                    <h3
+                        class="text-sm font-bold text-zinc-800 border-b border-zinc-100 pb-3 mb-5 flex items-center gap-2">
+                        <i data-lucide="key-round" class="w-4 h-4 text-zinc-400"></i> Credenciais de Acesso Instagram
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-xs font-bold text-zinc-600 uppercase tracking-wider mb-2">Usuário
+                                Alvo</label>
+                            <input type="text" id="config_usuario" required
+                                class="w-full bg-zinc-50 border border-zinc-200 text-sm rounded-md px-4 py-3 outline-none focus:border-pink-500 transition-colors shadow-sm"
+                                placeholder="Seu @usuario">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-zinc-600 uppercase tracking-wider mb-2">Senha do
+                                Agente</label>
+                            <input type="password" id="config_senha" required
+                                class="w-full bg-zinc-50 border border-zinc-200 text-sm rounded-md px-4 py-3 outline-none focus:border-pink-500 transition-colors shadow-sm"
+                                placeholder="••••••••">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Parametros -->
+                <div class="bg-white p-6 rounded-lg border border-zinc-200 shadow-sm">
+                    <h3
+                        class="text-sm font-bold text-zinc-800 border-b border-zinc-100 pb-3 mb-5 flex items-center gap-2">
+                        <i data-lucide="cpu" class="w-4 h-4 text-zinc-400"></i> Parâmetros do Robô
+                    </h3>
+                    <div class="space-y-6">
+                        <div>
+                            <label class="block text-xs font-bold text-zinc-600 uppercase tracking-wider mb-2">Delay
+                                Base (Segundos)</label>
+                            <input type="number" id="config_delay" value="4" min="1" required
+                                class="w-full md:w-1/3 bg-zinc-50 border border-zinc-200 text-sm font-semibold rounded-md px-4 py-3 outline-none focus:border-zinc-400 shadow-sm">
+                            <p class="text-[10px] text-zinc-500 mt-2 font-medium">Aumente para evitar bloqueios do
+                                Instagram. O robô sempre adiciona uma variação aleatória extra.</p>
+                        </div>
+
+                        <label
+                            class="flex items-start gap-4 p-4 bg-zinc-50 rounded-lg cursor-pointer border border-zinc-200 select-none hover:bg-zinc-100 transition-colors">
+                            <input type="checkbox" id="config_headless"
+                                class="mt-1 w-5 h-5 text-pink-500 bg-white border-zinc-300 rounded focus:ring-pink-500">
+                            <div>
+                                <span class="text-sm font-bold text-zinc-800 block">Modo Invisível (Headless)</span>
+                                <span class="text-xs text-zinc-500 mt-1 block">O robô rodará silenciosamente no servidor
+                                    sem abrir a janela gráfica do Chrome. Recomendado para maior estabilidade.</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="pt-4 flex items-center justify-end">
+                    <span id="config-salvo-msg"
+                        class="text-green-600 text-sm font-bold mr-4 opacity-0 transition-opacity">Configurações
+                        salvas!</span>
+                    <button type="submit"
+                        class="bg-zinc-900 hover:bg-zinc-800 text-white text-sm font-bold uppercase tracking-widest px-8 py-3.5 rounded-md transition-all shadow-md flex items-center gap-2">
+                        <i data-lucide="save" class="w-4 h-4"></i> Salvar Alterações
+                    </button>
+                </div>
+            </form>
+        </div>
+    </main>
+
     <script>
-        lucide.createIcons();
-
-        // NAVEGAÇÃO DE ABAS
-        const btnTabMonitor = document.getElementById('btn-tab-monitor');
-        const btnTabAgendar = document.getElementById('btn-tab-agendar');
-        const btnTabLista = document.getElementById('btn-tab-lista');
-        const btnTabComparativo = document.getElementById('btn-tab-comparativo');
-
-        const viewMonitor = document.getElementById('view-monitor');
-        const viewAgendar = document.getElementById('view-agendar');
-        const viewLista = document.getElementById('view-lista');
-        const viewComparativo = document.getElementById('view-comparativo');
-
-        function resetarAbas() {
-            viewMonitor.classList.add('hidden'); viewMonitor.classList.remove('grid');
-            viewAgendar.classList.add('hidden');
-            viewLista.classList.add('hidden');
-            viewComparativo.classList.add('hidden');
-
-            const classeInativa = "pb-3 text-sm font-bold text-zinc-400 hover:text-zinc-800 border-b-2 border-transparent hover:border-zinc-300 flex items-center gap-2 transition-all whitespace-nowrap";
-            btnTabMonitor.className = classeInativa;
-            btnTabAgendar.className = classeInativa;
-            btnTabLista.className = classeInativa;
-            btnTabComparativo.className = classeInativa;
-        }
-
-        btnTabMonitor.addEventListener('click', () => { resetarAbas(); viewMonitor.classList.remove('hidden'); viewMonitor.classList.add('grid'); btnTabMonitor.className = "pb-3 text-sm font-bold text-pink-600 border-b-2 border-pink-600 flex items-center gap-2 transition-all whitespace-nowrap"; });
-        btnTabAgendar.addEventListener('click', () => { resetarAbas(); viewAgendar.classList.remove('hidden'); btnTabAgendar.className = "pb-3 text-sm font-bold text-pink-600 border-b-2 border-pink-600 flex items-center gap-2 transition-all whitespace-nowrap"; });
-        btnTabLista.addEventListener('click', () => { resetarAbas(); viewLista.classList.remove('hidden'); btnTabLista.className = "pb-3 text-sm font-bold text-pink-600 border-b-2 border-pink-600 flex items-center gap-2 transition-all whitespace-nowrap"; carregarAgendamentos(); });
-        btnTabComparativo.addEventListener('click', () => { resetarAbas(); viewComparativo.classList.remove('hidden'); btnTabComparativo.className = "pb-3 text-sm font-bold text-pink-600 border-b-2 border-pink-600 flex items-center gap-2 transition-all whitespace-nowrap"; iniciarDashboard(); });
-
-        // DASHBOARD LOGIC
+        // Store globais
+        let currentTaskId = null;
+        let pollingInterval = null;
         let dadosHistoricosDB = { seguidores: [], posts: [] };
         let chartSeguidores = null; let chartPosts = null;
 
-        function converterDataString(dataStr) {
-            if (!dataStr || dataStr === "Data N/A") return new Date(0);
-            try { let p = dataStr.split(' '); let d = p[0].split('/'); return new Date(d[2], d[1] - 1, d[0]); } catch (e) { return new Date(0); }
-        }
-
-        async function iniciarDashboard() {
-            const loading = document.getElementById('loading-graficos'); const painel = document.getElementById('painel-graficos');
-            loading.classList.remove('hidden'); loading.classList.add('flex'); painel.classList.add('hidden');
-            try {
-                const res = await fetch('/api/historico_graficos'); dadosHistoricosDB = await res.json();
-                let perfisUnicos = new Set([...dadosHistoricosDB.seguidores.map(s => s.perfil), ...dadosHistoricosDB.posts.map(p => p.perfil)]);
-                const seletor = document.getElementById('seletor-perfil'); seletor.innerHTML = '';
-                if (perfisUnicos.size === 0) { seletor.innerHTML = '<option value="">Nenhum dado no banco</option>'; loading.classList.replace('flex', 'hidden'); return; }
-                perfisUnicos.forEach(p => { let opt = document.createElement('option'); opt.value = p; opt.text = '@' + p; seletor.appendChild(opt); });
-
-                const recarregar = () => atualizarGraficosTela(document.getElementById('seletor-perfil').value);
-
-                atualizarGraficosTela(seletor.value);
-                seletor.addEventListener('change', recarregar);
-                document.getElementById('seletor-mes').addEventListener('change', recarregar);
-                document.getElementById('seletor-dia').addEventListener('change', recarregar);
-
-                loading.classList.replace('flex', 'hidden'); painel.classList.remove('hidden'); painel.classList.add('flex');
-            } catch (erro) { loading.innerHTML = `<i data-lucide="alert-triangle" class="w-8 h-8 mb-3 text-red-500"></i><p class="font-medium text-sm text-red-600">Erro ao buscar histórico do banco.</p>`; lucide.createIcons(); }
-        }
-
-        function atualizarGraficosTela(perfilSelecionado) {
-            const mesFilter = document.getElementById('seletor-mes').value;
-            const diaFilter = document.getElementById('seletor-dia').value;
-
-            const passaFiltro = (dataStr) => {
-                const valDate = converterDataString(dataStr);
-                if (valDate.getTime() === 0) return false;
-                if (mesFilter && (valDate.getMonth() + 1).toString() !== mesFilter) return false;
-                if (diaFilter && valDate.getDay().toString() !== diaFilter) return false;
-                return true;
-            };
-
-            let histSeg = dadosHistoricosDB.seguidores.filter(s => s.perfil === perfilSelecionado && passaFiltro(s.data));
-            let histPosts = dadosHistoricosDB.posts.filter(p => p.perfil === perfilSelecionado && passaFiltro(p.data));
-
-            let agora = new Date(); let data7 = new Date(); data7.setDate(agora.getDate() - 7); let data30 = new Date(); data30.setDate(agora.getDate() - 30);
-            let posts7 = histPosts.filter(p => converterDataString(p.data) >= data7); let posts30 = histPosts.filter(p => converterDataString(p.data) >= data30);
-            const calcMedia = (arr) => arr.length === 0 ? 0 : Math.round(arr.reduce((acc, p) => acc + p.curtidas, 0) / arr.length);
-            document.getElementById('card-total-posts').innerText = histPosts.length; document.getElementById('card-media-geral').innerText = calcMedia(histPosts).toLocaleString('pt-BR');
-            document.getElementById('card-media-7').innerText = calcMedia(posts7).toLocaleString('pt-BR'); document.getElementById('card-media-30').innerText = calcMedia(posts30).toLocaleString('pt-BR');
-            if (chartSeguidores) chartSeguidores.destroy(); if (chartPosts) chartPosts.destroy();
-            let ctxSeg = document.getElementById('graficoSeguidores').getContext('2d');
-            chartSeguidores = new Chart(ctxSeg, { type: 'line', data: { labels: histSeg.map(s => s.data.split(' ')[0]), datasets: [{ label: 'Seguidores', data: histSeg.map(s => s.valor), borderColor: '#2563eb', backgroundColor: 'rgba(37, 99, 235, 0.1)', borderWidth: 3, tension: 0.3, fill: true, pointRadius: 4, pointHoverRadius: 6 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { beginAtZero: false, suggestedMin: histSeg.length > 0 ? undefined : 0, suggestedMax: histSeg.length > 0 ? undefined : 100 } } } });
-            let ctxPosts = document.getElementById('graficoPosts').getContext('2d');
-            chartPosts = new Chart(ctxPosts, { type: 'bar', data: { labels: histPosts.map(p => p.data.split(' ')[0]), datasets: [{ label: 'Curtidas no Post', data: histPosts.map(p => p.curtidas), backgroundColor: '#db2777', borderWidth: 0, borderRadius: 4, maxBarThickness: 50 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { beginAtZero: true, suggestedMin: 0, suggestedMax: histPosts.length > 0 ? undefined : 100 } } } });
-        }
-
-        // AGENDAMENTO LOGIC
-        async function carregarAgendamentos() {
-            const grid = document.getElementById('grid-agendamentos'); grid.innerHTML = '<div class="col-span-full flex flex-col items-center justify-center py-12 text-zinc-400"><i data-lucide="loader-2" class="w-8 h-8 animate-spin mb-3"></i>Carregando...</div>'; lucide.createIcons();
-            try {
-                const res = await fetch('/api/agendamentos'); const data = await res.json();
-                if (data.agendamentos.length === 0) { grid.innerHTML = '<div class="col-span-full text-center py-16 text-zinc-400 border-2 border-dashed border-zinc-200 rounded-xl bg-white"><p>Nenhum post agendado.</p></div>'; return; }
-                grid.innerHTML = '';
-                data.agendamentos.forEach(item => {
-                    let stClass = item.status === 'PUBLICADO' ? 'bg-green-100 text-green-700' : (item.status === 'ERRO' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700');
-                    grid.innerHTML += `<div class="bg-white border border-zinc-200 rounded-xl p-4 flex gap-4"><div class="w-20 h-20 bg-zinc-100 rounded overflow-hidden shrink-0"><img src="/uploads/${item.arquivo}" class="w-full h-full object-cover"></div><div class="flex-1"><div class="flex justify-between"><span class="text-[9px] font-bold px-2 py-0.5 rounded ${stClass}">${item.status}</span><button onclick="deletarAgendamento(${item.id})" class="text-red-500 hover:text-red-700"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div><p class="text-xs text-zinc-500 mt-2 font-bold">${item.data_agendada.replace('T', ' às ')}</p></div></div>`;
-                }); lucide.createIcons();
-            } catch (e) { }
-        }
-        async function deletarAgendamento(id) { if (confirm('Cancelar?')) { await fetch('/api/agendamentos/' + id, { method: 'DELETE' }); carregarAgendamentos(); } }
-
-        document.getElementById('foto_upload').addEventListener('change', function (e) { if (e.target.files[0]) { const reader = new FileReader(); reader.onload = function (evt) { document.getElementById('preview_img').src = evt.target.result; document.getElementById('preview_img').classList.remove('hidden'); }; reader.readAsDataURL(e.target.files[0]); } });
-
-        document.getElementById('legenda_post').addEventListener('input', function (e) {
-            const previewText = document.getElementById('preview-legenda-texto');
-            if (e.target.value.trim() === '') {
-                previewText.innerText = 'Sua legenda aparecerá aqui...';
-                previewText.classList.add('text-zinc-500');
-            } else {
-                previewText.innerText = e.target.value;
-                previewText.classList.remove('text-zinc-500');
-            }
-        });
-
-        document.getElementById('usuario').addEventListener('input', function (e) {
-            let nome = e.target.value.trim() !== '' ? e.target.value : 'seu_perfil';
-            document.getElementById('preview-username').innerText = nome;
-            document.getElementById('preview-username-caption').innerText = nome;
-        });
-
-        document.getElementById('formAgendamento').addEventListener('submit', async function (event) {
-            event.preventDefault(); const btn = document.getElementById('btn-salvar-post'); btn.disabled = true; btn.innerHTML = 'Salvando...';
-            const formData = new FormData(); formData.append("foto", document.getElementById('foto_upload').files[0]); formData.append("legenda", document.getElementById('legenda_post').value); formData.append("data_agendada", document.getElementById('data_agendada').value);
-            await fetch('/api/agendar', { method: 'POST', body: formData });
-            document.getElementById('formAgendamento').reset(); document.getElementById('preview_img').classList.add('hidden');
-            btn.innerHTML = 'Confirmar Agendamento'; btn.disabled = false; alert("Agendado!");
-        });
-
-        // ==========================================
-        // 🚀 O NOVO CÉREBRO DA EXTRAÇÃO (COM PROGRESSO REAL E ID ÚNICO)
-        // ==========================================
-        function getTimestamp() { return new Date().toLocaleTimeString('pt-BR') + ' - ' + new Date().toLocaleDateString('pt-BR'); }
-
-        let currentTaskId = null; // Guarda o ID da tarefa atual para poder cancelar
-        let pollingInterval = null; // Guarda o loop do espião
-
-        document.getElementById('btn-cancelar').onclick = async () => {
-            document.getElementById('btn-cancelar').innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> INTERROMPENDO...`;
+        document.addEventListener('DOMContentLoaded', () => {
             lucide.createIcons();
-            if (currentTaskId) {
-                // AGORA SIM, ELE MANDA CANCELAR A TAREFA CERTA!
-                await fetch('/cancelar_bot/' + currentTaskId, { method: 'POST' });
-            }
-        };
 
-        document.getElementById('bot-form').onsubmit = async (e) => {
-            e.preventDefault();
-            const btnExec = document.getElementById('btn-executar'), btnCanc = document.getElementById('btn-cancelar');
-            const load = document.getElementById('loading-screen'), resDiv = document.getElementById('resultados-conteudo');
-
-            // UI Reset
-            btnExec.classList.add('hidden'); btnCanc.classList.remove('hidden'); resDiv.classList.add('hidden'); load.classList.replace('hidden', 'flex');
-            document.getElementById('barra-progresso').style.width = '5%';
-            document.getElementById('texto-porcentagem').innerText = '5%';
-            document.getElementById('texto-status-robo').innerText = 'Conectando ao servidor...';
-
-            // GERA O ID ÚNICO
-            currentTaskId = 'task_' + Math.random().toString(36).substr(2, 9);
-
-            const payload = {
-                task_id: currentTaskId,
-                alvo: document.getElementById('alvo').value,
-                usuario: document.getElementById('usuario').value,
-                senha: document.getElementById('senha').value,
-                tempo_espera: parseInt(document.getElementById('tempo_espera').value) || 4,
-                modo_oculto: document.getElementById('modo_oculto').checked,
-                seguir_alvo: document.getElementById('seguir_alvo').checked,
-                coletar_feed: document.getElementById('coletar_feed').checked,
-                limite_posts: parseInt(document.getElementById('limite_posts').value) || 3,
-                qtd_comentarios: parseInt(document.getElementById('qtd_comentarios').value) || 0,
-                coletar_stories: document.getElementById('coletar_stories').checked
+            // Navegacao Segura
+            const mapTabs = {
+                'btn-tab-monitor': { view: 'view-monitor', isGrid: true },
+                'btn-tab-agendar': { view: 'view-agendar', isGrid: false },
+                'btn-tab-lista': { view: 'view-lista', isGrid: false },
+                'btn-tab-comparativo': { view: 'view-comparativo', isGrid: false },
+                'btn-tab-config': { view: 'view-config', isGrid: false }
             };
 
-            // O ESPIÃO DA BARRA DE PROGRESSO
-            pollingInterval = setInterval(async () => {
+            function hideAllViews() {
+                Object.values(mapTabs).forEach(tabObj => {
+                    const el = document.getElementById(tabObj.view);
+                    if (el) {
+                        el.classList.add('hidden');
+                        if (tabObj.isGrid) el.classList.remove('grid');
+                    }
+                });
+                Object.keys(mapTabs).forEach(btnId => {
+                    const btn = document.getElementById(btnId);
+                    if (btn) {
+                        btn.className = "pb-3 text-sm font-bold text-zinc-400 hover:text-zinc-800 border-b-2 border-transparent hover:border-zinc-300 flex items-center gap-2 transition-all whitespace-nowrap";
+                    }
+                });
+            }
+
+            function activateTab(btnId) {
+                hideAllViews();
+                const tabObj = mapTabs[btnId];
+                if (!tabObj) return;
+
+                const viewEl = document.getElementById(tabObj.view);
+                const btnEl = document.getElementById(btnId);
+
+                if (viewEl) {
+                    viewEl.classList.remove('hidden');
+                    if (tabObj.isGrid) viewEl.classList.add('grid');
+                }
+                if (btnEl) {
+                    btnEl.className = "pb-3 text-sm font-bold text-pink-600 border-b-2 border-pink-600 flex items-center gap-2 transition-all whitespace-nowrap";
+                }
+            }
+
+            document.getElementById('btn-tab-monitor')?.addEventListener('click', () => activateTab('btn-tab-monitor'));
+            document.getElementById('btn-tab-agendar')?.addEventListener('click', () => activateTab('btn-tab-agendar'));
+            document.getElementById('btn-tab-lista')?.addEventListener('click', () => { activateTab('btn-tab-lista'); carregarAgendamentos(); });
+            document.getElementById('btn-tab-comparativo')?.addEventListener('click', () => { activateTab('btn-tab-comparativo'); iniciarDashboard(); });
+            document.getElementById('btn-tab-config')?.addEventListener('click', () => activateTab('btn-tab-config'));
+
+            // Storage das Configuracoes
+            const cfgUser = localStorage.getItem('cfg_usuario') || '';
+            const cfgPass = localStorage.getItem('cfg_senha') || '';
+            const cfgDelay = localStorage.getItem('cfg_delay') || '4';
+            const cfgHeadless = localStorage.getItem('cfg_headless') === 'true';
+
+            document.getElementById('config_usuario').value = cfgUser;
+            document.getElementById('config_senha').value = cfgPass;
+            document.getElementById('config_delay').value = cfgDelay;
+            document.getElementById('config_headless').checked = cfgHeadless;
+
+            document.getElementById('formConfig').addEventListener('submit', (e) => {
+                e.preventDefault();
+                localStorage.setItem('cfg_usuario', document.getElementById('config_usuario').value);
+                localStorage.setItem('cfg_senha', document.getElementById('config_senha').value);
+                localStorage.setItem('cfg_delay', document.getElementById('config_delay').value);
+                localStorage.setItem('cfg_headless', document.getElementById('config_headless').checked);
+
+                const msg = document.getElementById('config-salvo-msg');
+                msg.style.opacity = '1';
+                setTimeout(() => msg.style.opacity = '0', 3000);
+            });
+
+
+            function converterDataString(dataStr) {
+                if (!dataStr || dataStr === "Data N/A") return new Date(0);
+                try { let p = dataStr.split(' '); let d = p[0].split('/'); return new Date(d[2], d[1] - 1, d[0]); } catch (e) { return new Date(0); }
+            }
+
+            async function iniciarDashboard() {
+                const loading = document.getElementById('loading-graficos'); const painel = document.getElementById('painel-graficos');
+                loading.classList.remove('hidden'); loading.classList.add('flex'); painel.classList.add('hidden');
                 try {
-                    let res = await fetch('/api/status_tarefa/' + currentTaskId);
-                    let data = await res.json();
-                    document.getElementById('barra-progresso').style.width = data.progresso + '%';
-                    document.getElementById('texto-porcentagem').innerText = data.progresso + '%';
-                    document.getElementById('texto-status-robo').innerText = data.mensagem;
+                    const res = await fetch('/api/historico_graficos'); dadosHistoricosDB = await res.json();
+                    let perfisUnicos = new Set([...dadosHistoricosDB.seguidores.map(s => s.perfil), ...dadosHistoricosDB.posts.map(p => p.perfil)]);
+                    const seletor = document.getElementById('seletor-perfil'); seletor.innerHTML = '';
+                    if (perfisUnicos.size === 0) { seletor.innerHTML = '<option value="">Nenhum dado no banco</option>'; loading.classList.replace('flex', 'hidden'); return; }
+                    perfisUnicos.forEach(p => { let opt = document.createElement('option'); opt.value = p; opt.text = '@' + p; seletor.appendChild(opt); });
+
+                    const recarregar = () => atualizarGraficosTela(document.getElementById('seletor-perfil').value);
+
+                    atualizarGraficosTela(seletor.value);
+                    seletor.addEventListener('change', recarregar);
+                    document.getElementById('seletor-mes').addEventListener('change', recarregar);
+                    document.getElementById('seletor-dia').addEventListener('change', recarregar);
+
+                    loading.classList.replace('flex', 'hidden'); painel.classList.remove('hidden'); painel.classList.add('flex');
+                } catch (erro) { loading.innerHTML = `<i data-lucide="alert-triangle" class="w-8 h-8 mb-3 text-red-500"></i><p class="font-medium text-sm text-red-600">Erro ao buscar histórico do banco.</p>`; lucide.createIcons(); }
+            }
+
+            function atualizarGraficosTela(perfilSelecionado) {
+                const mesFilter = document.getElementById('seletor-mes').value;
+                const diaFilter = document.getElementById('seletor-dia').value;
+
+                const passaFiltro = (dataStr) => {
+                    const valDate = converterDataString(dataStr);
+                    if (valDate.getTime() === 0) return false;
+                    if (mesFilter && (valDate.getMonth() + 1).toString() !== mesFilter) return false;
+                    if (diaFilter && valDate.getDay().toString() !== diaFilter) return false;
+                    return true;
+                };
+
+                let histSeg = dadosHistoricosDB.seguidores.filter(s => s.perfil === perfilSelecionado && passaFiltro(s.data));
+                let histPosts = dadosHistoricosDB.posts.filter(p => p.perfil === perfilSelecionado && passaFiltro(p.data));
+
+                let agora = new Date(); let data7 = new Date(); data7.setDate(agora.getDate() - 7); let data30 = new Date(); data30.setDate(agora.getDate() - 30);
+                let posts7 = histPosts.filter(p => converterDataString(p.data) >= data7); let posts30 = histPosts.filter(p => converterDataString(p.data) >= data30);
+                const calcMedia = (arr) => arr.length === 0 ? 0 : Math.round(arr.reduce((acc, p) => acc + p.curtidas, 0) / arr.length);
+                document.getElementById('card-total-posts').innerText = histPosts.length; document.getElementById('card-media-geral').innerText = calcMedia(histPosts).toLocaleString('pt-BR');
+                document.getElementById('card-media-7').innerText = calcMedia(posts7).toLocaleString('pt-BR'); document.getElementById('card-media-30').innerText = calcMedia(posts30).toLocaleString('pt-BR');
+                if (chartSeguidores) chartSeguidores.destroy(); if (chartPosts) chartPosts.destroy();
+                let ctxSeg = document.getElementById('graficoSeguidores').getContext('2d');
+                chartSeguidores = new Chart(ctxSeg, { type: 'line', data: { labels: histSeg.map(s => s.data.split(' ')[0]), datasets: [{ label: 'Seguidores', data: histSeg.map(s => s.valor), borderColor: '#2563eb', backgroundColor: 'rgba(37, 99, 235, 0.1)', borderWidth: 3, tension: 0.3, fill: true, pointRadius: 4, pointHoverRadius: 6 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { beginAtZero: false, suggestedMin: histSeg.length > 0 ? undefined : 0, suggestedMax: histSeg.length > 0 ? undefined : 100 } } } });
+                let ctxPosts = document.getElementById('graficoPosts').getContext('2d');
+                chartPosts = new Chart(ctxPosts, { type: 'bar', data: { labels: histPosts.map(p => p.data.split(' ')[0]), datasets: [{ label: 'Curtidas no Post', data: histPosts.map(p => p.curtidas), backgroundColor: '#db2777', borderWidth: 0, borderRadius: 4, maxBarThickness: 50 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { beginAtZero: true, suggestedMin: 0, suggestedMax: histPosts.length > 0 ? undefined : 100 } } } });
+            }
+
+            // Agendamento
+            async function carregarAgendamentos() {
+                const grid = document.getElementById('grid-agendamentos'); grid.innerHTML = '<div class="col-span-full flex flex-col items-center justify-center py-12 text-zinc-400"><i data-lucide="loader-2" class="w-8 h-8 animate-spin mb-3"></i>Carregando...</div>'; lucide.createIcons();
+                try {
+                    const res = await fetch('/api/agendamentos'); const data = await res.json();
+                    if (data.agendamentos.length === 0) { grid.innerHTML = '<div class="col-span-full text-center py-16 text-zinc-400 border-2 border-dashed border-zinc-200 rounded-xl bg-white"><p>Nenhum post agendado.</p></div>'; return; }
+                    grid.innerHTML = '';
+                    data.agendamentos.forEach(item => {
+                        let stClass = item.status === 'PUBLICADO' ? 'bg-green-100 text-green-700' : (item.status === 'ERRO' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700');
+                        grid.innerHTML += `<div class="bg-white border border-zinc-200 rounded-xl p-4 flex gap-4"><div class="w-20 h-20 bg-zinc-100 rounded overflow-hidden shrink-0"><img src="/uploads/${item.arquivo}" class="w-full h-full object-cover"></div><div class="flex-1"><div class="flex justify-between"><span class="text-[9px] font-bold px-2 py-0.5 rounded ${stClass}">${item.status}</span><button onclick="deletarAgendamento(${item.id})" class="text-red-500 hover:text-red-700"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div><p class="text-xs text-zinc-500 mt-2 font-bold">${item.data_agendada.replace('T', ' às ')}</p></div></div>`;
+                    }); lucide.createIcons();
                 } catch (e) { }
-            }, 1000);
+            }
+            async function deletarAgendamento(id) { if (confirm('Cancelar?')) { await fetch('/api/agendamentos/' + id, { method: 'DELETE' }); carregarAgendamentos(); } }
 
-            try {
-                // ENVIA PARA O BACKEND
-                const req = await fetch('/executar_bot', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-                const data = await req.json();
+            document.getElementById('foto_upload')?.addEventListener('change', function (e) { if (e.target.files[0]) { const reader = new FileReader(); reader.onload = function (evt) { document.getElementById('preview_img').src = evt.target.result; document.getElementById('preview_img').classList.remove('hidden'); }; reader.readAsDataURL(e.target.files[0]); } });
 
-                clearInterval(pollingInterval); // Para de espiar
+            document.getElementById('legenda_post')?.addEventListener('input', function (e) {
+                const previewText = document.getElementById('preview-legenda-texto');
+                if (e.target.value.trim() === '') {
+                    previewText.innerText = 'Sua legenda aparecerá aqui...';
+                    previewText.classList.add('text-zinc-500');
+                } else {
+                    previewText.innerText = e.target.value;
+                    previewText.classList.remove('text-zinc-500');
+                }
+            });
 
-                load.classList.replace('flex', 'hidden'); resDiv.classList.remove('hidden'); resDiv.innerHTML = '';
-                document.getElementById('data-atualizacao').innerText = 'Atualizado: ' + getTimestamp();
+            document.getElementById('config_usuario')?.addEventListener('input', function (e) {
+                let nome = e.target.value.trim() !== '' ? e.target.value : 'seu_perfil';
+                document.getElementById('preview-username').innerText = nome;
+                document.getElementById('preview-username-caption').innerText = nome;
+            });
 
-                data.resultados.forEach(res => {
-                    let feedHtml = '';
-                    res.feed_posts?.forEach(p => {
-                        const eng = res.seguidores_matematica ? ((p.curtidas_matematica / res.seguidores_matematica) * 100).toFixed(2) : "0.00";
-                        const cor = eng > 3 ? 'green' : (eng > 1 ? 'amber' : 'red');
-                        feedHtml += `
-                            <div class="bg-white border border-zinc-200 rounded-lg flex flex-col sm:flex-row overflow-hidden shadow-sm">
-                                <div class="w-full sm:w-48 h-40 bg-zinc-50 shrink-0 relative">${p.print_post ? `<img src="${p.print_post}" class="w-full h-full object-cover">` : ''}</div>
-                                <div class="p-4 flex-1 min-w-0">
-                                    <div class="flex justify-between text-[10px] font-bold text-zinc-400 mb-2"><span>📅 ${p.data}</span><a href="${p.url_post}" target="_blank" class="text-blue-500">LINK 🔗</a></div>
-                                    <div class="grid grid-cols-2 gap-3">
-                                        <div class="bg-zinc-50 p-3 rounded text-center"><p class="text-[8px] uppercase text-zinc-400 font-bold">Curtidas</p><p class="text-sm font-black truncate">${p.curtidas}</p></div>
-                                        <div class="bg-${cor}-50 p-3 rounded text-center"><p class="text-[8px] uppercase text-${cor}-600 font-bold">Engajamento</p><p class="text-sm font-black text-${cor}-700 truncate">${eng}%</p></div>
+            document.getElementById('formAgendamento')?.addEventListener('submit', async function (event) {
+                event.preventDefault(); const btn = document.getElementById('btn-salvar-post'); btn.disabled = true; btn.innerHTML = 'Salvando...';
+                const formData = new FormData(); formData.append("foto", document.getElementById('foto_upload').files[0]); formData.append("legenda", document.getElementById('legenda_post').value); formData.append("data_agendada", document.getElementById('data_agendada').value);
+                await fetch('/api/agendar', { method: 'POST', body: formData });
+                document.getElementById('formAgendamento').reset(); document.getElementById('preview_img').classList.add('hidden');
+                btn.innerHTML = 'Confirmar Agendamento'; btn.disabled = false; alert("Agendado!");
+            });
+
+            // Controle de Extracao
+            function getTimestamp() { return new Date().toLocaleTimeString('pt-BR') + ' - ' + new Date().toLocaleDateString('pt-BR'); }
+
+            document.getElementById('btn-cancelar').addEventListener('click', async () => {
+                document.getElementById('btn-cancelar').innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> INTERROMPENDO...`;
+                lucide.createIcons();
+                if (currentTaskId) {
+                    // Cancela no backend
+                    await fetch('/cancelar_bot/' + currentTaskId, { method: 'POST' });
+                }
+            });
+
+            document.getElementById('bot-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                console.log("Iniciando extacao do bot...");
+
+                const btnExec = document.getElementById('btn-executar'), btnCanc = document.getElementById('btn-cancelar');
+                const load = document.getElementById('loading-screen'), resDiv = document.getElementById('resultados-conteudo');
+
+                // Reset UI
+                btnExec.classList.add('hidden'); btnCanc.classList.remove('hidden'); resDiv.classList.add('hidden'); load.classList.replace('hidden', 'flex');
+                document.getElementById('barra-progresso').style.width = '5%';
+                document.getElementById('texto-porcentagem').innerText = '5%';
+                document.getElementById('texto-status-robo').innerText = 'Conectando ao servidor...';
+
+                // Geracao de ID
+                currentTaskId = 'task_' + Math.random().toString(36).substr(2, 9);
+
+                const payload = {
+                    task_id: currentTaskId,
+                    alvo: document.getElementById('alvo').value,
+                    usuario: localStorage.getItem('cfg_usuario') || '',
+                    senha: localStorage.getItem('cfg_senha') || '',
+                    tempo_espera: parseInt(localStorage.getItem('cfg_delay')) || 4,
+                    modo_oculto: localStorage.getItem('cfg_headless') === 'true',
+                    seguir_alvo: document.getElementById('seguir_alvo').checked,
+                    coletar_feed: document.getElementById('coletar_feed').checked,
+                    limite_posts: parseInt(document.getElementById('limite_posts').value) || 3,
+                    qtd_comentarios: parseInt(document.getElementById('qtd_comentarios').value) || 0,
+                    coletar_stories: document.getElementById('coletar_stories').checked
+                };
+
+                if (!payload.usuario || !payload.senha) {
+                    alert("Por favor, configure suas credenciais na aba 'Configurações' antes de iniciar.");
+                    btnCanc.classList.add('hidden'); btnExec.classList.remove('hidden'); resDiv.classList.add('hidden'); load.classList.replace('flex', 'hidden');
+                    return;
+                }
+
+                // Polling de Progresso
+                pollingInterval = setInterval(async () => {
+                    try {
+                        let res = await fetch('/api/status_tarefa/' + currentTaskId);
+                        let data = await res.json();
+                        document.getElementById('barra-progresso').style.width = data.progresso + '%';
+                        document.getElementById('texto-porcentagem').innerText = data.progresso + '%';
+                        document.getElementById('texto-status-robo').innerText = data.mensagem;
+                    } catch (e) { }
+                }, 1000);
+
+                try {
+                    // Requisicao de motor
+                    const req = await fetch('/executar_bot', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                    const data = await req.json();
+
+                    clearInterval(pollingInterval);
+
+                    load.classList.replace('flex', 'hidden'); resDiv.classList.remove('hidden'); resDiv.innerHTML = '';
+                    document.getElementById('data-atualizacao').innerText = 'Atualizado: ' + getTimestamp();
+
+                    data.resultados.forEach(res => {
+                        let feedHtml = '';
+                        res.feed_posts?.forEach(p => {
+                            const eng = res.seguidores_matematica ? ((p.curtidas_matematica / res.seguidores_matematica) * 100).toFixed(2) : "0.00";
+                            const cor = eng > 3 ? 'green' : (eng > 1 ? 'amber' : 'red');
+                            feedHtml += `
+                            <div class="bg-white border border-zinc-200 rounded-xl p-4 flex flex-col sm:flex-row gap-5 shadow-sm hover:shadow-md transition-shadow">
+                                <div class="w-full sm:w-32 h-64 sm:h-32 bg-zinc-100 rounded-lg overflow-hidden shrink-0 border border-zinc-200">
+                                    ${p.print_post ? `<img src="${p.print_post}" class="w-full h-full object-cover">` : '<div class="w-full h-full flex flex-col items-center justify-center text-zinc-300"><i data-lucide="image" class="w-6 h-6 mb-1"></i><span class="text-[10px] font-medium uppercase tracking-widest">Sem Foto</span></div>'}
+                                </div>
+                                <div class="flex-1 flex flex-col min-w-0 justify-between py-1 w-full">
+                                    <div class="flex justify-between items-start mb-4">
+                                        <div class="flex items-center gap-2 text-xs font-semibold text-zinc-500">
+                                            <i data-lucide="calendar" class="w-3.5 h-3.5"></i>
+                                            <span>${p.data}</span>
+                                        </div>
+                                        <a href="${p.url_post}" target="_blank" class="text-[10px] font-bold bg-zinc-100 hover:bg-zinc-200 text-blue-600 hover:text-blue-700 px-3 py-1.5 rounded-full transition-colors flex items-center gap-1">
+                                            Ver Post <i data-lucide="external-link" class="w-3 h-3"></i>
+                                        </a>
+                                    </div>
+                                    
+                                    <div class="flex items-center gap-6 mt-auto bg-zinc-50 px-4 py-3 rounded-lg border border-zinc-100">
+                                        <div class="flex flex-col">
+                                            <span class="text-[10px] uppercase font-bold text-zinc-400 mb-0.5 tracking-wider">Curtidas</span>
+                                            <div class="flex items-center gap-2">
+                                                <i data-lucide="heart" class="w-4 h-4 text-pink-500"></i>
+                                                <span class="text-xl font-black text-zinc-800">${p.curtidas}</span>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="w-px h-10 bg-zinc-200"></div>
+                                        
+                                        <div class="flex flex-col">
+                                            <span class="text-[10px] uppercase font-bold text-${cor}-500 mb-0.5 tracking-wider">Engajamento</span>
+                                            <div class="flex items-center gap-2">
+                                                <i data-lucide="activity" class="w-4 h-4 text-${cor}-500"></i>
+                                                <span class="text-xl font-black text-${cor}-700">${eng}%</span>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>`;
+                        });
+                        resDiv.innerHTML += `<div class="bg-white border border-zinc-200 rounded-xl p-6 shadow-sm"><h3 class="text-xl font-black mb-4">@${res.alvo}</h3><div class="space-y-4">${feedHtml}</div></div>`;
                     });
-                    resDiv.innerHTML += `<div class="bg-white border border-zinc-200 rounded-xl p-6 shadow-sm"><h3 class="text-xl font-black mb-4">@${res.alvo}</h3><div class="space-y-4">${feedHtml}</div></div>`;
-                });
-                lucide.createIcons();
-            } finally {
-                clearInterval(pollingInterval);
-                btnCanc.classList.add('hidden'); btnExec.classList.remove('hidden');
-                document.getElementById('btn-cancelar').innerHTML = `<i data-lucide="square" class="w-4 h-4"></i> ABORTAR`;
-            }
-        };
+                    lucide.createIcons();
+                } finally {
+                    clearInterval(pollingInterval);
+                    btnCanc.classList.add('hidden'); btnExec.classList.remove('hidden');
+                    document.getElementById('btn-cancelar').innerHTML = `<i data-lucide="square" class="w-4 h-4"></i> ABORTAR`;
+                }
+            });
+
+        }); // END DOMContentLoaded
     </script>
 </body>
 
