@@ -127,6 +127,7 @@ def rodar_robo(config: ConfigBot):
     STORY_ALVO = f"https://www.instagram.com/stories/{config.alvo}/"
 
     chrome_options = Options()
+    chrome_options.page_load_strategy = 'eager' # Nao espera iframes e media terminar de carregar
     chrome_options.add_argument("--lang=pt-BR") 
     chrome_options.add_argument("--window-size=1920,1080")
     chrome_options.add_argument("--disable-notifications")
@@ -206,18 +207,21 @@ def rodar_robo(config: ConfigBot):
         # Analise de feed
         if config.coletar_feed:
             atualizar_status(task_id, 45, "Mapeando Grade de Posts do Feed...")
-            sleep_seguro(3, task_id)
             xpath_posts = "//a[contains(@href, '/p/') or contains(@href, '/reel/')]"
             
             candidatos = []
             tentativas_grade = 0
             while tentativas_grade < 3:
-                sleep_seguro(0.5, task_id)
+                try:
+                    # Espera dinamicamente os posts renderizarem na UI, sem sleep forçado de longa duração
+                    WebDriverWait(driver, 5).until(EC.presence_of_element_located((By.XPATH, xpath_posts)))
+                except: pass
+                
                 candidatos = driver.find_elements(By.XPATH, xpath_posts)
                 if len(candidatos) > 0:
                     break
                 else:
-                    sleep_seguro(2.5, task_id)
+                    sleep_seguro(1, task_id) # Reduzido de 2.5 pra 1s no retry
                     tentativas_grade += 1
             
             posts_coletados = 0
@@ -249,24 +253,49 @@ def rodar_robo(config: ConfigBot):
                     driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", post_atual)
                     sleep_seguro(1, task_id)
                     
-                    # Foto da miniatura
-                    timestamp = int(datetime.now().timestamp())
-                    nome_print = f"{config.alvo}_post_{posts_coletados+1}_{timestamp}.png"
-                    caminho_print = os.path.join(PASTA_PRINTS, nome_print)
+                    # Foto da miniatura - Verifica se já existe print para esse url_post
                     url_print = None
                     try:
-                        post_atual.screenshot(caminho_print)
-                        url_print = f"/fotos/{nome_print}" 
-                    except: pass
+                        from database import conectar
+                        with conectar() as conn:
+                            cur = conn.cursor()
+                            cur.execute("SELECT caminho_imagem FROM posts_feed WHERE url_post = ? AND caminho_imagem IS NOT NULL ORDER BY id DESC LIMIT 1", (url_do_post,))
+                            registro_existente = cur.fetchone()
+                        
+                        if registro_existente and registro_existente[0]:
+                            # Verifica se o arquivo ainda existe no disco
+                            caminho_existente = registro_existente[0].replace("/fotos/", "")
+                            caminho_completo = os.path.join(PASTA_PRINTS, caminho_existente)
+                            if os.path.exists(caminho_completo):
+                                url_print = registro_existente[0]
+                                nome_print = caminho_existente
+                                caminho_print = caminho_completo
+                            
+                        if url_print is None:
+                            # Não existe print anterior, tira uma nova
+                            timestamp = int(datetime.now().timestamp())
+                            nome_print = f"{config.alvo}_post_{posts_coletados+1}_{timestamp}.png"
+                            caminho_print = os.path.join(PASTA_PRINTS, nome_print)
+                            post_atual.screenshot(caminho_print)
+                            url_print = f"/fotos/{nome_print}"
+                    except Exception:
+                        # Fallback: tira screenshot normalmente
+                        timestamp = int(datetime.now().timestamp())
+                        nome_print = f"{config.alvo}_post_{posts_coletados+1}_{timestamp}.png"
+                        caminho_print = os.path.join(PASTA_PRINTS, nome_print)
+                        try:
+                            post_atual.screenshot(caminho_print)
+                            url_print = f"/fotos/{nome_print}"
+                        except: pass
                     
                     driver.execute_script("arguments[0].click();", post_atual)
                     
                     try:
                         xpath_espera = "//article[@role='presentation']//time | //article[@role='presentation']//video | //article[@role='presentation']//div[contains(@class, '_aagv')]"
                         WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, xpath_espera)))
-                        sleep_seguro(1.5, task_id) 
+                        sleep_seguro(0.5, task_id) # Reduzido de 1.5s pra 0.5s agora que o WAIT garantidamente carrega o modal
                     except Exception:
-                        sleep_seguro(DELAY, task_id)
+                        sleep_seguro(2, task_id) # Foi trocado o DELAY genérico (q poderia ser muito alto) por 2s fixos de escape
                     
                     texto_extraido = ""
                     try:
@@ -294,7 +323,18 @@ def rodar_robo(config: ConfigBot):
                     if config.qtd_comentarios > 0:
                         atualizar_status(task_id, prog + 2, f"Raspando amostra de comentários do Post {posts_coletados+1}...")
                         try:
-                            blocos_comentarios = driver.find_elements(By.XPATH, "//ul/li | //ul/div")
+                            sleep_seguro(1.5, task_id)
+                            
+                            # Estratégia 1: Comentários dentro do article/modal do post
+                            blocos_comentarios = driver.find_elements(By.XPATH, "//article[@role='presentation']//ul//li")
+                            print(f"[DEBUG] Comentários: {len(blocos_comentarios)} blocos <li> encontrados no modal", flush=True)
+                            
+                            # Se não achou dentro do article, tenta mais genérico
+                            if len(blocos_comentarios) == 0:
+                                blocos_comentarios = driver.find_elements(By.XPATH, "//ul/li")
+                                print(f"[DEBUG] Fallback: {len(blocos_comentarios)} blocos <li> genéricos", flush=True)
+                            
+                            # Pula o primeiro item (geralmente é a legenda do dono do post)
                             itens_para_raspar = blocos_comentarios[1:] if len(blocos_comentarios) > 1 else blocos_comentarios
                             
                             for bloco in itens_para_raspar:
@@ -305,36 +345,37 @@ def rodar_robo(config: ConfigBot):
                                 nome_autor = ""
                                 texto_coment = ""
                                 
+                                # Tenta extrair usuario e texto do bloco
                                 try:
-                                    elem_usuario = bloco.find_element(By.XPATH, ".//h2//a | .//h3//a")
-                                    nome_autor = elem_usuario.text.strip()
-                                    elem_texto = bloco.find_element(By.XPATH, ".//span[@dir='auto'][not(ancestor::h2) and not(ancestor::h3)]")
-                                    texto_coment = elem_texto.text.strip()
-                                except:
-                                    try:
-                                        links = bloco.find_elements(By.XPATH, ".//a")
-                                        for lnk in links:
-                                            if lnk.text.strip():
-                                                nome_autor = lnk.text.strip()
-                                                break
-                                                
-                                        spans = bloco.find_elements(By.XPATH, ".//span[@dir='auto']")
-                                        for sp in spans:
-                                            txt = sp.text.strip()
-                                            if txt and txt != nome_autor:
-                                                texto_coment = txt
-                                                break
-                                    except: pass
+                                    # Busca o link do usuario (h2/a, h3/a, ou a direto com href de perfil)
+                                    possiveis_autores = bloco.find_elements(By.XPATH, ".//h2//a | .//h3//a | .//a[contains(@href, '/') and not(contains(@href, '/explore/'))]")
+                                    for autor_el in possiveis_autores:
+                                        txt_autor = autor_el.text.strip()
+                                        if txt_autor and len(txt_autor) < 40:
+                                            nome_autor = txt_autor
+                                            break
+                                    
+                                    # Busca o texto do comentário
+                                    spans_texto = bloco.find_elements(By.XPATH, ".//span[@dir='auto']")
+                                    for sp in spans_texto:
+                                        txt = sp.text.strip()
+                                        if txt and txt != nome_autor and len(txt) > 1:
+                                            texto_coment = txt
+                                            break
+                                except: pass
                                 
                                 if nome_autor and texto_coment:
                                     assinatura = f"{nome_autor}|{texto_coment}"
                                     if assinatura not in comentarios_vistos:
                                         comentarios_vistos.add(assinatura)
                                         comentarios_list.append({
-                                        "usuario": nome_autor,
-                                        "texto": texto_coment
-                                    })
+                                            "usuario": nome_autor,
+                                            "texto": texto_coment
+                                        })
+                            
+                            print(f"[DEBUG] Total comentários extraídos: {len(comentarios_list)}", flush=True)
                         except Exception as e:
+                            print(f"[DEBUG] Erro na extração de comentários: {e}", flush=True)
                             if "CANCELADO_PELO_USUARIO" in str(e): raise e
 
                     resultado["feed_posts"].append({

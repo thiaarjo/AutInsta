@@ -313,16 +313,19 @@
     </main>
 
     <main id="view-comparativo" class="hidden max-w-[1200px] mx-auto py-12 px-6">
-        <div class="flex flex-col md:flex-row items-center justify-between mb-8 border-b border-zinc-200 pb-4 gap-4">
-            <div>
-                <h2 class="text-xl font-bold text-zinc-900 flex items-center gap-2"><i data-lucide="line-chart"
-                        class="w-5 h-5 text-pink-600"></i> Dashboard de Crescimento</h2>
-                <p class="text-xs text-zinc-500 mt-1">Análise temporal de engajamento baseada no histórico do banco de
-                    dados.</p>
+        <div class="mb-8 border-b border-zinc-200 pb-4">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h2 class="text-xl font-bold text-zinc-900 flex items-center gap-2"><i data-lucide="line-chart"
+                            class="w-5 h-5 text-pink-600"></i> Dashboard de Crescimento</h2>
+                    <p class="text-xs text-zinc-500 mt-1">Análise temporal de engajamento baseada no histórico do banco
+                        de
+                        dados.</p>
+                </div>
             </div>
-            <div class="flex flex-wrap items-center gap-3">
+            <div class="flex items-center gap-2 overflow-x-auto pb-1">
                 <select id="seletor-mes"
-                    class="bg-white border border-zinc-300 text-sm font-bold text-zinc-700 rounded-md px-3 py-2 outline-none focus:border-pink-500 shadow-sm cursor-pointer">
+                    class="bg-white border border-zinc-300 text-xs font-bold text-zinc-700 rounded-md px-2.5 py-1.5 outline-none focus:border-pink-500 shadow-sm cursor-pointer shrink-0">
                     <option value="">Todos os Meses</option>
                     <option value="1">Janeiro</option>
                     <option value="2">Fevereiro</option>
@@ -338,7 +341,7 @@
                     <option value="12">Dezembro</option>
                 </select>
                 <select id="seletor-dia"
-                    class="bg-white border border-zinc-300 text-sm font-bold text-zinc-700 rounded-md px-3 py-2 outline-none focus:border-pink-500 shadow-sm cursor-pointer">
+                    class="bg-white border border-zinc-300 text-xs font-bold text-zinc-700 rounded-md px-2.5 py-1.5 outline-none focus:border-pink-500 shadow-sm cursor-pointer shrink-0">
                     <option value="">Todos os Dias</option>
                     <option value="0">Domingo</option>
                     <option value="1">Segunda-feira</option>
@@ -349,12 +352,13 @@
                     <option value="6">Sábado</option>
                 </select>
                 <select id="seletor-perfil"
-                    class="bg-white border border-zinc-300 text-sm font-bold text-zinc-700 rounded-md px-4 py-2 outline-none focus:border-pink-500 shadow-sm cursor-pointer">
+                    class="bg-white border border-zinc-300 text-xs font-bold text-zinc-700 rounded-md px-2.5 py-1.5 outline-none focus:border-pink-500 shadow-sm cursor-pointer shrink-0">
                     <option value="">Carregando perfis...</option>
                 </select>
+
                 <a href="/api/exportar_csv" download
-                    class="text-sm font-bold bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded-md flex items-center gap-2 transition shadow-sm"><i
-                        data-lucide="file-spreadsheet" class="w-4 h-4"></i> Excel</a>
+                    class="text-xs font-bold bg-green-600 hover:bg-green-700 text-white px-4 py-1.5 rounded-md flex items-center gap-1.5 transition shadow-sm shrink-0 ml-auto"><i
+                        data-lucide="file-spreadsheet" class="w-3.5 h-3.5"></i> Excel</a>
             </div>
         </div>
 
@@ -366,8 +370,8 @@
         <div id="painel-graficos" class="hidden flex-col gap-6">
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div class="bg-white border border-zinc-200 rounded-xl p-5 shadow-sm">
-                    <p class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1"><i data-lucide="hash"
-                            class="w-3 h-3 inline"></i> Total de Posts Lidos</p>
+                    <p id="card-texto-qtd" class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1"><i
+                            data-lucide="hash" class="w-3 h-3 inline"></i> Total de Posts Lidos</p>
                     <p id="card-total-posts" class="text-2xl font-black text-zinc-900">0</p>
                 </div>
                 <div class="bg-white border border-zinc-200 rounded-xl p-5 shadow-sm">
@@ -387,20 +391,62 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 gap-6">
-                <div class="bg-white border border-zinc-200 rounded-xl p-5 shadow-sm col-span-full">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-white border border-zinc-200 rounded-xl p-5 shadow-sm">
                     <h3 class="text-sm font-bold text-zinc-800 mb-4 flex items-center gap-2"><i data-lucide="users"
                             class="w-4 h-4 text-zinc-400"></i> Crescimento de Seguidores</h3>
                     <div class="w-full" style="height: 300px;">
                         <canvas id="graficoSeguidores"></canvas>
                     </div>
                 </div>
-                <div class="bg-white border border-zinc-200 rounded-xl p-5 shadow-sm col-span-full">
+                <div class="bg-white border border-zinc-200 rounded-xl p-5 shadow-sm">
                     <h3 class="text-sm font-bold text-zinc-800 mb-4 flex items-center gap-2"><i data-lucide="heart"
                             class="w-4 h-4 text-zinc-400"></i> Desempenho de Curtidas por Post</h3>
-                    <div class="w-full" style="height: 250px;">
+                    <div class="w-full" style="height: 300px;">
                         <canvas id="graficoPosts"></canvas>
                     </div>
+                </div>
+            </div>
+
+            <!-- GALERIA DE POSTS EXTRAÍDOS -->
+            <div class="bg-white border border-zinc-200 rounded-xl p-5 shadow-sm mt-6">
+                <h3 class="text-sm font-bold text-zinc-800 mb-4 flex items-center gap-2">
+                    <i data-lucide="grid-3x3" class="w-4 h-4 text-zinc-400"></i> Posts Extraídos
+                    <span id="galeria-contador"
+                        class="text-[10px] font-bold text-pink-600 bg-pink-50 px-2 py-0.5 rounded-full ml-auto">0
+                        posts</span>
+                </h3>
+                <div id="galeria-posts" class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <p class="col-span-full text-center text-zinc-400 text-sm py-6">Selecione um perfil para ver os
+                        posts.</p>
+                </div>
+            </div>
+
+            <!-- NOVA SESSÃO: HISTÓRICO DETALHADO -->
+            <div class="bg-white border border-zinc-200 rounded-xl p-5 shadow-sm col-span-full mt-2">
+                <div class="flex items-center justify-between mb-4 pb-3 border-b border-zinc-100">
+                    <h3 class="text-sm font-bold text-zinc-800 flex items-center gap-2">
+                        <i data-lucide="clock" class="w-4 h-4 text-pink-600"></i>
+                        Histórico de Extrações (Últimos Registros)
+                    </h3>
+                    <span class="text-[10px] font-bold text-zinc-400 tracking-widest uppercase">Ord. Descendente</span>
+                </div>
+                <div class="overflow-x-auto w-full">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr
+                                class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest bg-zinc-50 border-y border-zinc-100">
+                                <th class="py-3 px-4 font-bold rounded-l-md">Data e Hora da Leitura</th>
+                                <th class="py-3 px-4 font-bold text-right rounded-r-md">Qtd. Seguidores (Snapshot)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabela-historico-detalhado" class="text-sm divide-y divide-zinc-100 text-zinc-700">
+                            <!-- JS PREENCHE AQUI -->
+                            <tr>
+                                <td colspan="2" class="py-8 text-center text-zinc-400 text-sm">Aguardando dados...</td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>

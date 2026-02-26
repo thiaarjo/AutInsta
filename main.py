@@ -140,15 +140,7 @@ async def executar_bot(request: ConfigBot):
     
     # Registra tarefa
     task_id = request.task_id
-    gerenciador_tarefas[task_id] = {"cancelar": False, "progresso": 2, "mensagem": "Limpando prints de extrações anteriores...", "pid": None}
-    
-    # Auto-Cleanup: Remove prints antigos para nao lotar o disco
-    try:
-        arquivos_antigos = glob.glob(os.path.join(PASTA_PRINTS, "*.png"))
-        for arq in arquivos_antigos:
-            os.remove(arq)
-    except Exception as e:
-        print(f"[!] Erro ao limpar prints antigos: {e}", flush=True)
+    gerenciador_tarefas[task_id] = {"cancelar": False, "progresso": 2, "mensagem": "Preparando extração...", "pid": None}
 
     gerenciador_tarefas[task_id]["progresso"] = 5
     gerenciador_tarefas[task_id]["mensagem"] = "Preparando motor de extração..."
@@ -205,6 +197,15 @@ async def historico_graficos():
         dados = database.buscar_historico_graficos()
         return dados
     except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/historico_detalhado/{perfil}")
+async def historico_detalhado_perfil(perfil: str):
+    try:
+        dados = database.buscar_historico_detalhado(perfil)
+        return {"historico": dados}
+    except Exception as e:
+        print(f"[!] Erro ao buscar histórico detalhado: {e}", flush=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/ranking_horarios/{perfil}")
