@@ -34,8 +34,8 @@ btnTabAgendar.addEventListener('click', () => { resetarAbas(); viewAgendar.class
 btnTabLista.addEventListener('click', () => { resetarAbas(); viewLista.classList.remove('hidden'); btnTabLista.className = "pb-3 text-sm font-bold text-pink-600 border-b-2 border-pink-600 flex items-center gap-2 transition-all whitespace-nowrap"; carregarAgendamentos(); });
 btnTabConfig.addEventListener('click', () => { resetarAbas(); viewConfig.classList.remove('hidden'); btnTabConfig.className = "pb-3 text-sm font-bold text-pink-600 border-b-2 border-pink-600 flex items-center gap-2 transition-all whitespace-nowrap ml-auto"; carregarConfigUI(); });
 
-// Inicializa a primeira tela como Dashboard
-iniciarDashboard();
+// Inicializa a primeira tela como Dashboard (Relatórios / Gráficos) e força a classe CSS correta
+btnTabComparativo.click();
 
 // DASHBOARD LOGIC
 let dadosHistoricosDB = { seguidores: [], posts: [] };
@@ -131,9 +131,16 @@ document.getElementById('bot-form').onsubmit = async (e) => {
     // GERA O ID ÚNICO
     currentTaskId = 'task_' + Math.random().toString(36).substr(2, 9);
 
-    const configLocal = JSON.parse(localStorage.getItem('ig_config')) || {};
+    // CARREGA CONFIGURACOES DIRETAMENTE DO BANCO ANTES DE EXECUTAR
+    let configDB = {};
+    try {
+        const confRes = await fetch('/api/configuracoes');
+        configDB = await confRes.json();
+    } catch (e) {
+        console.error("Falha ao carregar configuracoes globais", e);
+    }
 
-    if (!configLocal.usuario || !configLocal.senha) {
+    if (!configDB.usuario || !configDB.senha) {
         alert("⚠️ Você precisa configurar seu Usuário e Senha na aba de Configurações antes de extrair os dados!");
         btnCanc.classList.add('hidden'); btnExec.classList.remove('hidden'); resDiv.classList.add('hidden'); load.classList.replace('flex', 'hidden');
         return;
@@ -142,10 +149,10 @@ document.getElementById('bot-form').onsubmit = async (e) => {
     const payload = {
         task_id: currentTaskId,
         alvo: document.getElementById('alvo').value,
-        usuario: configLocal.usuario,
-        senha: configLocal.senha,
-        tempo_espera: parseInt(document.getElementById('tempo_espera').value) || 4,
-        modo_oculto: document.getElementById('modo_oculto').checked,
+        usuario: configDB.usuario,
+        senha: configDB.senha,
+        tempo_espera: configDB.delay_base || 4,
+        modo_oculto: configDB.modo_invisivel !== undefined ? configDB.modo_invisivel : true,
         seguir_alvo: document.getElementById('seguir_alvo').checked,
         coletar_feed: document.getElementById('coletar_feed').checked,
         limite_posts: parseInt(document.getElementById('limite_posts').value) || 3,
@@ -179,19 +186,73 @@ document.getElementById('bot-form').onsubmit = async (e) => {
             res.feed_posts?.forEach(p => {
                 const eng = res.seguidores_matematica ? ((p.curtidas_matematica / res.seguidores_matematica) * 100).toFixed(2) : "0.00";
                 const cor = eng > 3 ? 'green' : (eng > 1 ? 'amber' : 'red');
+                const isFixado = p.fixado ? `<span class="bg-blue-500 text-white text-[8px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider shadow-sm absolute top-2 right-2 flex items-center gap-1"><i data-lucide="pin" class="w-2.5 h-2.5"></i> Fixado</span>` : '';
+
+                let iconTipo = 'image';
+                let bgTipo = 'bg-zinc-800 text-white';
+                if (p.tipo === 'Reel') { iconTipo = 'film'; bgTipo = 'bg-pink-600 text-white'; }
+                else if (p.tipo === 'Vídeo') { iconTipo = 'video'; bgTipo = 'bg-blue-600 text-white'; }
+                else if (p.tipo === 'Carrossel') { iconTipo = 'layers'; bgTipo = 'bg-orange-500 text-white'; }
+
+                const tipoBadge = p.tipo ? `<span class="${bgTipo} text-[8px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider shadow-sm absolute bottom-2 left-2 flex items-center gap-1"><i data-lucide="${iconTipo}" class="w-2.5 h-2.5"></i> ${p.tipo}</span>` : '';
+
                 feedHtml += `
-                    <div class="bg-white border border-zinc-200 rounded-lg flex flex-col sm:flex-row overflow-hidden shadow-sm">
-                        <div class="w-full sm:w-48 h-40 bg-zinc-50 shrink-0 relative">${p.print_post ? `<img src="${p.print_post}" class="w-full h-full object-cover">` : ''}</div>
-                        <div class="p-4 flex-1 min-w-0">
-                            <div class="flex justify-between text-[10px] font-bold text-zinc-400 mb-2"><span>📅 ${p.data}</span><a href="${p.url_post}" target="_blank" class="text-blue-500">LINK 🔗</a></div>
-                            <div class="grid grid-cols-2 gap-3">
-                                <div class="bg-zinc-50 p-3 rounded text-center"><p class="text-[8px] uppercase text-zinc-400 font-bold">Curtidas</p><p class="text-sm font-black truncate">${p.curtidas}</p></div>
-                                <div class="bg-${cor}-50 p-3 rounded text-center"><p class="text-[8px] uppercase text-${cor}-600 font-bold">Engajamento</p><p class="text-sm font-black text-${cor}-700 truncate">${eng}%</p></div>
+                    <div class="bg-white border border-zinc-200 rounded-lg flex flex-col sm:flex-row overflow-hidden shadow-sm hover:border-pink-300 transition-colors">
+                        <div class="w-full sm:w-48 h-40 bg-zinc-100 shrink-0 relative flex items-center justify-center">
+                            ${p.print_post ? `<img src="${p.print_post}" class="w-full h-full object-cover">` : '<i data-lucide="image" class="w-8 h-8 text-zinc-300"></i>'}
+                            ${isFixado}
+                            ${tipoBadge}
+                        </div>
+                        <div class="p-4 flex-1 min-w-0 flex flex-col justify-between">
+                            <div class="flex justify-between items-start text-[10px] font-bold text-zinc-400 mb-2">
+                                <span class="flex items-center gap-1"><i data-lucide="calendar" class="w-3 h-3"></i> ${p.data}</span>
+                                <a href="${p.url_post}" target="_blank" class="text-pink-600 hover:text-pink-700 hover:underline flex items-center gap-1"><i data-lucide="external-link" class="w-3 h-3"></i> ABRIR</a>
+                            </div>
+                            <div class="grid grid-cols-2 gap-3 mt-auto">
+                                <div class="bg-zinc-50 border border-zinc-100 p-2.5 rounded text-center"><p class="text-[8px] uppercase text-zinc-400 font-bold mb-0.5">Curtidas</p><p class="text-sm font-black text-zinc-800 truncate">${p.curtidas}</p></div>
+                                <div class="bg-${cor}-50 border border-${cor}-100 p-2.5 rounded text-center"><p class="text-[8px] uppercase text-${cor}-600 font-bold mb-0.5">Engajamento</p><p class="text-sm font-black text-${cor}-700 truncate">${eng}%</p></div>
                             </div>
                         </div>
                     </div>`;
             });
-            resDiv.innerHTML += `<div class="bg-white border border-zinc-200 rounded-xl p-6 shadow-sm"><h3 class="text-xl font-black mb-4">@${res.alvo}</h3><div class="space-y-4">${feedHtml}</div></div>`;
+
+            // STORIES LOGIC
+            let storiesHtml = '';
+            if (res.stories && res.stories.length > 0) {
+                const videos = res.stories.filter(s => s.tipo === 'Video').length;
+                const fotos = res.stories.filter(s => s.tipo !== 'Video').length;
+
+                storiesHtml = `
+                <div class="bg-zinc-50 border border-zinc-200 rounded-lg p-4 mb-5 shadow-sm">
+                    <h4 class="text-xs font-bold text-zinc-700 uppercase tracking-wider mb-3 flex items-center gap-2">
+                        <i data-lucide="play-square" class="w-4 h-4 text-pink-500"></i> Resumo de Stories 
+                        <span class="bg-pink-100 text-pink-700 text-[10px] px-2 py-0.5 rounded-full ml-auto">${res.stories.length} Ativos</span>
+                    </h4>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="bg-white p-3 rounded border border-zinc-100 flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center"><i data-lucide="video" class="w-4 h-4 text-blue-500"></i></div>
+                            <div><p class="text-sm font-black text-zinc-800">${videos}</p><p class="text-[10px] text-zinc-400 font-bold uppercase">Vídeos</p></div>
+                        </div>
+                        <div class="bg-white p-3 rounded border border-zinc-100 flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-full bg-orange-50 flex items-center justify-center"><i data-lucide="image" class="w-4 h-4 text-orange-500"></i></div>
+                            <div><p class="text-sm font-black text-zinc-800">${fotos}</p><p class="text-[10px] text-zinc-400 font-bold uppercase">Fotos</p></div>
+                        </div>
+                    </div>
+                </div>`;
+            } else if (payload.coletar_stories) {
+                storiesHtml = `
+                <div class="bg-zinc-50 border border-zinc-200 rounded-lg p-4 mb-5 shadow-sm flex items-center gap-3 text-zinc-500">
+                    <i data-lucide="info" class="w-4 h-4"></i>
+                    <p class="text-xs font-medium">Nenhum story disponivel ou ativo no momento da extração.</p>
+                </div>`;
+            }
+
+            resDiv.innerHTML += `
+                <div class="bg-white border border-zinc-200 rounded-xl p-6 shadow-sm">
+                    <h3 class="text-xl font-black mb-4">@${res.alvo}</h3>
+                    ${storiesHtml}
+                    ${feedHtml ? `<div class="space-y-4">${feedHtml}</div>` : ''}
+                </div>`;
         });
         lucide.createIcons();
     } finally {
@@ -206,16 +267,78 @@ document.getElementById('bot-form').onsubmit = async (e) => {
 // ==========================================
 
 function carregarConfigUI() {
-    const data = JSON.parse(localStorage.getItem('ig_config')) || {};
-    if (data.usuario) document.getElementById('config-usuario').value = data.usuario;
-    if (data.senha) document.getElementById('config-senha').value = data.senha;
+    fetch('/api/configuracoes')
+        .then(res => res.json())
+        .then(data => {
+            const elUsr = document.getElementById('config_usuario') || document.getElementById('config-usuario');
+            const elSen = document.getElementById('config_senha') || document.getElementById('config-senha');
+            const elDel = document.getElementById('config_delay') || document.getElementById('tempo_espera'); // Fallback map
+            const elHid = document.getElementById('config_headless') || document.getElementById('modo_oculto');
+
+            if (elUsr) elUsr.value = data.usuario || "";
+            if (elSen) elSen.value = data.senha || "";
+            if (elDel && data.delay_base) elDel.value = data.delay_base;
+            if (elHid && data.modo_invisivel !== undefined) elHid.checked = data.modo_invisivel;
+        })
+        .catch(err => console.error("Erro ao carregar configuracoes:", err));
 }
 
-document.getElementById('btn-salvar-config').onclick = () => {
-    const user = document.getElementById('config-usuario').value;
-    const pwd = document.getElementById('config-senha').value;
-    if (!user || !pwd) { alert("Preencha o usuário e senha."); return; }
+const formConfig = document.getElementById('formConfig');
+if (formConfig) {
+    formConfig.addEventListener('submit', async (e) => {
+        // ESSENCIAL: Impede o form de dar reload na página (o que causa o sumiço do flex e desalinha o layout)
+        e.preventDefault();
 
-    localStorage.setItem('ig_config', JSON.stringify({ usuario: user, senha: pwd }));
-    alert("Configurações salvas localmente no navegador! ⚙️");
-};
+        const btnSalvar = formConfig.querySelector('button[type="submit"]');
+        const btnTextoOriginal = btnSalvar ? btnSalvar.innerHTML : "Salvar Alterações";
+
+        const elUsr = document.getElementById('config_usuario') || document.getElementById('config-usuario');
+        const elSen = document.getElementById('config_senha') || document.getElementById('config-senha');
+        const elDel = document.getElementById('config_delay') || document.getElementById('tempo_espera');
+        const elHid = document.getElementById('config_headless') || document.getElementById('modo_oculto');
+
+        const user = elUsr ? elUsr.value : '';
+        const pwd = elSen ? elSen.value : '';
+        const delay = elDel ? parseInt(elDel.value) : 4;
+        const invisivel = elHid ? elHid.checked : true;
+
+        if (!user || !pwd) { alert("Preencha o usuário e senha."); return; }
+
+        if (btnSalvar) {
+            btnSalvar.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Salvando...`;
+            lucide.createIcons();
+            btnSalvar.disabled = true;
+        }
+
+        try {
+            const formData = new FormData();
+            formData.append("usuario", user);
+            formData.append("senha", pwd);
+            formData.append("delay_base", delay);
+            formData.append("modo_invisivel", invisivel);
+
+            const response = await fetch('/api/configuracoes', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (response.ok) {
+                const msg = document.getElementById('config-salvo-msg');
+                if (msg) {
+                    msg.style.opacity = '1';
+                    setTimeout(() => msg.style.opacity = '0', 3000);
+                }
+            } else {
+                alert("Erro ao salvar configurações.");
+            }
+        } catch (e) {
+            console.error(e);
+            alert("Falha de rede ao salvar configurações.");
+        } finally {
+            if (btnSalvar) {
+                btnSalvar.innerHTML = btnTextoOriginal;
+                btnSalvar.disabled = false;
+            }
+        }
+    });
+}

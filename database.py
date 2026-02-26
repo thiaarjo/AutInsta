@@ -80,6 +80,14 @@ def criar_tabelas():
                 data_agendada TEXT,
                 status TEXT DEFAULT 'PENDENTE'
             );
+
+            CREATE TABLE IF NOT EXISTS configuracoes_globais (
+                id INTEGER PRIMARY KEY DEFAULT 1 CHECK (id = 1),
+                usuario TEXT,
+                senha TEXT,
+                delay_base INTEGER DEFAULT 4,
+                modo_invisivel BOOLEAN DEFAULT 1
+            );
         """)
         
         try:
@@ -226,5 +234,30 @@ def obter_ranking_horarios(perfil_alvo):
             ranking.append({"dia": dias_nomes[i], "media_curtidas": media})
         
         return ranking
+
+# Configurações Globais
+
+def salvar_configuracoes(usuario, senha, delay_base, modo_invisivel):
+    with conectar() as conexao:
+        cursor = conexao.cursor()
+        cursor.execute("""
+            INSERT OR REPLACE INTO configuracoes_globais (id, usuario, senha, delay_base, modo_invisivel)
+            VALUES (1, ?, ?, ?, ?)
+        """, (usuario, senha, delay_base, int(modo_invisivel)))
+        conexao.commit()
+
+def obter_configuracoes():
+    with conectar() as conexao:
+        cursor = conexao.cursor()
+        cursor.execute("SELECT usuario, senha, delay_base, modo_invisivel FROM configuracoes_globais WHERE id = 1")
+        linha = cursor.fetchone()
+        if linha:
+            return {
+                "usuario": linha[0] or "",
+                "senha": linha[1] or "",
+                "delay_base": linha[2],
+                "modo_invisivel": bool(linha[3])
+            }
+        return {"usuario": "", "senha": "", "delay_base": 4, "modo_invisivel": True}
 
 criar_tabelas()
