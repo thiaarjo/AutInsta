@@ -80,6 +80,14 @@ def criar_tabelas():
                 data_agendada TEXT,
                 status TEXT DEFAULT 'PENDENTE'
             );
+
+            CREATE TABLE IF NOT EXISTS configuracoes_globais (
+                id INTEGER PRIMARY KEY DEFAULT 1 CHECK (id = 1),
+                usuario TEXT,
+                senha TEXT,
+                delay_base INTEGER DEFAULT 4,
+                modo_invisivel BOOLEAN DEFAULT 1
+            );
         """)
         
         try:
@@ -188,9 +196,55 @@ def buscar_historico_graficos():
         cursor = conexao.cursor()
         cursor.execute("SELECT pe.alvo, el.data_execucao, pe.seguidores_valor FROM perfis_extraidos pe JOIN execucoes_lote el ON pe.lote_id = el.id WHERE pe.seguidores_valor > 0 ORDER BY el.data_execucao ASC")
         seguidores = [{"perfil": r[0], "data": r[1], "valor": r[2]} for r in cursor.fetchall()]
-        cursor.execute("SELECT pe.alvo, pf.data_publicacao, pf.curtidas_valor FROM posts_feed pf JOIN perfis_extraidos pe ON pf.perfil_id = pe.id WHERE pf.curtidas_valor > 0 ORDER BY pf.data_publicacao ASC")
+
+        # Visão Geral (agrupada por dia) - para o modo "Todos os Posts"
+        cursor.execute("""
+            SELECT pe.alvo, substr(pf.data_publicacao, 1, 10) as dia, MAX(pf.curtidas_valor) 
+            FROM posts_feed pf 
+            JOIN perfis_extraidos pe ON pf.perfil_id = pe.id 
+            WHERE pf.curtidas_valor > 0 
+            GROUP BY pe.alvo, dia 
+            ORDER BY dia ASC
+        """)
         posts = [{"perfil": r[0], "data": r[1], "curtidas": r[2]} for r in cursor.fetchall()]
-        return {"seguidores": seguidores, "posts": posts}
+
+        # Visão por Post (dados brutos com url_post e hora exata) - para o modo "Post Específico"
+        cursor.execute("""
+            SELECT pe.alvo, pf.url_post, pf.data_publicacao, pf.curtidas_valor, el.data_execucao, pf.caminho_imagem
+            FROM posts_feed pf 
+            JOIN perfis_extraidos pe ON pf.perfil_id = pe.id 
+            JOIN execucoes_lote el ON pe.lote_id = el.id
+            WHERE pf.url_post IS NOT NULL
+            ORDER BY el.data_execucao ASC
+        """)
+        posts_brutos = [{"perfil": r[0], "url_post": r[1], "data_pub": r[2], "curtidas": r[3], "data_extracao": r[4], "print": r[5]} for r in cursor.fetchall()]
+
+        return {"seguidores": seguidores, "posts": posts, "posts_brutos": posts_brutos}
+
+def buscar_historico_detalhado(perfil_alvo):
+    """Busca todas as execuções de um perfil específico para visualização detalhada hora a hora."""
+    with conectar() as conexao:
+        cursor = conexao.cursor()
+        
+        # Últimos 20 registros do histórico do perfil (seguidores e data/hora exata)
+        cursor.execute("""
+            SELECT el.data_execucao, pe.seguidores, pe.seguidores_valor 
+            FROM perfis_extraidos pe 
+            JOIN execucoes_lote el ON pe.lote_id = el.id 
+            WHERE pe.alvo = ? 
+            ORDER BY el.data_execucao DESC LIMIT 20
+        """, (perfil_alvo,))
+        
+        registros = cursor.fetchall()
+        historico = []
+        for reg in registros:
+            historico.append({
+                "data_hora": reg[0],
+                "seguidores_texto": reg[1],
+                "seguidores_valor": reg[2]
+            })
+            
+        return historico
 
 # Melhor Horario
 def obter_ranking_horarios(perfil_alvo):
@@ -226,5 +280,30 @@ def obter_ranking_horarios(perfil_alvo):
             ranking.append({"dia": dias_nomes[i], "media_curtidas": media})
         
         return ranking
+
+# Configurações Globais
+
+def salvar_configuracoes(usuario, senha, delay_base, modo_invisivel):
+    with conectar() as conexao:
+        cursor = conexao.cursor()
+        cursor.execute("""
+            INSERT OR REPLACE INTO configuracoes_globais (id, usuario, senha, delay_base, modo_invisivel)
+            VALUES (1, ?, ?, ?, ?)
+        """, (usuario, senha, delay_base, int(modo_invisivel)))
+        conexao.commit()
+
+def obter_configuracoes():
+    with conectar() as conexao:
+        cursor = conexao.cursor()
+        cursor.execute("SELECT usuario, senha, delay_base, modo_invisivel FROM configuracoes_globais WHERE id = 1")
+        linha = cursor.fetchone()
+        if linha:
+            return {
+                "usuario": linha[0] or "",
+                "senha": linha[1] or "",
+                "delay_base": linha[2],
+                "modo_invisivel": bool(linha[3])
+            }
+        return {"usuario": "", "senha": "", "delay_base": 4, "modo_invisivel": True}
 
 criar_tabelas()

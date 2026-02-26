@@ -4,6 +4,7 @@ import webbrowser
 import asyncio
 import csv
 import io
+import glob
 from time import sleep
 from datetime import datetime
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
@@ -37,6 +38,7 @@ app.add_middleware(
 
 app.mount("/fotos", StaticFiles(directory=PASTA_PRINTS), name="fotos")
 app.mount("/uploads", StaticFiles(directory=PASTA_UPLOADS), name="uploads")
+app.mount("/frontend", StaticFiles(directory="frontend"), name="frontend")
 
 # Background Scheduler
 def verificar_fila_postagens():
@@ -138,7 +140,10 @@ async def executar_bot(request: ConfigBot):
     
     # Registra tarefa
     task_id = request.task_id
-    gerenciador_tarefas[task_id] = {"cancelar": False, "progresso": 5, "mensagem": "Preparando motor de extração...", "pid": None}
+    gerenciador_tarefas[task_id] = {"cancelar": False, "progresso": 2, "mensagem": "Preparando extração...", "pid": None}
+
+    gerenciador_tarefas[task_id]["progresso"] = 5
+    gerenciador_tarefas[task_id]["mensagem"] = "Preparando motor de extração..."
     
     alvos_brutos = request.alvo.replace(";", ",").split(",")
     alvos_lista = [a.strip() for a in alvos_brutos if a.strip()][:3]
@@ -194,6 +199,15 @@ async def historico_graficos():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.get("/api/historico_detalhado/{perfil}")
+async def historico_detalhado_perfil(perfil: str):
+    try:
+        dados = database.buscar_historico_detalhado(perfil)
+        return {"historico": dados}
+    except Exception as e:
+        print(f"[!] Erro ao buscar histórico detalhado: {e}", flush=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.get("/api/ranking_horarios/{perfil}")
 async def ranking_horarios(perfil: str):
     try:
@@ -201,6 +215,28 @@ async def ranking_horarios(perfil: str):
         return {"ranking": dados}
     except Exception as e:
         print(f"[!] Erro ao buscar ranking de horários: {e}", flush=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Rotas de Configuracao
+@app.get("/api/configuracoes")
+async def obter_configuracoes():
+    try:
+        return database.obter_configuracoes()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/configuracoes")
+async def salvar_configuracoes(
+    usuario: str = Form(""),
+    senha: str = Form(""),
+    delay_base: int = Form(4),
+    modo_invisivel: bool = Form(True)
+):
+    try:
+        database.salvar_configuracoes(usuario, senha, delay_base, modo_invisivel)
+        return {"status": "Configurações salvas no banco de dados com sucesso!"}
+    except Exception as e:
+        print(f"[!] Erro ao salvar configurações: {e}", flush=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/exportar_csv")
