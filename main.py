@@ -7,6 +7,7 @@ import io
 import glob
 from time import sleep
 from datetime import datetime
+from pydantic import BaseModel
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -99,6 +100,15 @@ async def receber_agendamento(
 ):
     try:
         print(f"\n[*] Recebendo nova solicitação de agendamento...", flush=True)
+        
+        # Validação de data no passado
+        try:
+            dt = datetime.strptime(data_agendada, "%Y-%m-%dT%H:%M")
+            if dt < datetime.now():
+                raise HTTPException(status_code=400, detail="Não é possível agendar para uma data no passado.")
+        except ValueError:
+            pass
+        
         caminho_arquivo = os.path.join(PASTA_UPLOADS, foto.filename)
         with open(caminho_arquivo, "wb") as buffer:
             shutil.copyfileobj(foto.file, buffer)
@@ -106,6 +116,8 @@ async def receber_agendamento(
         print(f"[+] Imagem salva com sucesso em: {caminho_arquivo}", flush=True)
         database.agendar_novo_post(caminho_arquivo, legenda, data_agendada)
         return {"status": "Publicação agendada com sucesso!"}
+    except HTTPException:
+        raise
     except Exception as e:
         print(f"[!] Erro ao processar agendamento: {e}", flush=True)
         raise HTTPException(status_code=500, detail=str(e))
@@ -123,6 +135,72 @@ async def excluir_agendamento(post_id: int):
     try:
         database.excluir_agendamento(post_id)
         return {"status": "Agendamento cancelado com sucesso."}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Rota de Drag and Drop (Atualizar data)
+class AtualizarDataRequest(BaseModel):
+    nova_data: str
+
+@app.patch("/api/agendamentos/{post_id}/data")
+async def atualizar_data_post(post_id: int, body: AtualizarDataRequest):
+    try:
+        database.atualizar_data_agendamento(post_id, body.nova_data)
+        return {"status": "Data atualizada com sucesso!"}
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Rotas de Lembretes
+class LembreteRequest(BaseModel):
+    data: str
+    texto: str
+    cor: str = 'yellow'
+
+class LembreteUpdateRequest(BaseModel):
+    texto: str
+    cor: str = None
+
+@app.get("/api/lembretes")
+async def listar_lembretes():
+    try:
+        return {"lembretes": database.buscar_lembretes()}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/lembretes")
+async def criar_lembrete(body: LembreteRequest):
+    try:
+        novo_id = database.criar_lembrete(body.data, body.texto, body.cor)
+        return {"status": "Lembrete criado!", "id": novo_id}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.put("/api/lembretes/{lembrete_id}")
+async def editar_lembrete(lembrete_id: int, body: LembreteUpdateRequest):
+    try:
+        database.atualizar_lembrete(lembrete_id, body.texto, body.cor)
+        return {"status": "Lembrete atualizado!"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.delete("/api/lembretes/{lembrete_id}")
+async def deletar_lembrete(lembrete_id: int):
+    try:
+        database.excluir_lembrete(lembrete_id)
+        return {"status": "Lembrete removido!"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+class MoverLembreteRequest(BaseModel):
+    nova_data: str
+
+@app.patch("/api/lembretes/{lembrete_id}/mover")
+async def mover_lembrete(lembrete_id: int, body: MoverLembreteRequest):
+    try:
+        database.mover_lembrete(lembrete_id, body.nova_data)
+        return {"status": "Lembrete movido!"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

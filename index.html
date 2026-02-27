@@ -38,12 +38,9 @@
             <button id="btn-tab-monitor"
                 class="pb-3 text-sm font-bold text-pink-600 border-b-2 border-pink-600 flex items-center gap-2 transition-all whitespace-nowrap"><i
                     data-lucide="search" class="w-4 h-4"></i> Extração de Dados</button>
-            <button id="btn-tab-agendar"
-                class="pb-3 text-sm font-bold text-zinc-400 hover:text-zinc-800 border-b-2 border-transparent hover:border-zinc-300 flex items-center gap-2 transition-all whitespace-nowrap"><i
-                    data-lucide="calendar-plus" class="w-4 h-4"></i> Agendar Publicação</button>
             <button id="btn-tab-lista"
                 class="pb-3 text-sm font-bold text-zinc-400 hover:text-zinc-800 border-b-2 border-transparent hover:border-zinc-300 flex items-center gap-2 transition-all whitespace-nowrap"><i
-                    data-lucide="list-todo" class="w-4 h-4"></i> Fila de Posts</button>
+                    data-lucide="calendar" class="w-4 h-4"></i> Calendário de Posts</button>
             <button id="btn-tab-comparativo"
                 class="pb-3 text-sm font-bold text-zinc-400 hover:text-zinc-800 border-b-2 border-transparent hover:border-zinc-300 flex items-center gap-2 transition-all whitespace-nowrap"><i
                     data-lucide="line-chart" class="w-4 h-4"></i> Relatórios & Gráficos</button>
@@ -209,107 +206,233 @@
         </section>
     </main>
 
-    <main id="view-agendar" class="hidden max-w-[1000px] mx-auto py-12 px-6">
-        <div class="bg-white rounded-xl shadow-sm border border-zinc-200 overflow-hidden">
-            <div class="p-6 border-b border-zinc-100 bg-zinc-50 flex items-center gap-3">
+    <!-- MODAL HUB DO DIA -->
+    <div id="modal-agendar" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+        <!-- Overlay escuro -->
+        <div class="absolute inset-0 bg-zinc-900/40 backdrop-blur-sm transition-opacity"
+            onclick="fecharModalAgendamento()"></div>
+
+        <!-- Conteúdo do Modal -->
+        <div
+            class="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto relative z-10 animate-in fade-in zoom-in-95 duration-200">
+            <button type="button" onclick="fecharModalAgendamento()"
+                class="absolute top-5 right-5 w-8 h-8 flex items-center justify-center rounded-full bg-zinc-100 text-zinc-500 hover:bg-red-50 hover:text-red-500 transition-colors z-20">
+                <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+
+            <!-- HEADER DO DIA -->
+            <div class="p-6 border-b border-zinc-100 flex items-center gap-3">
                 <div class="w-10 h-10 rounded-full bg-pink-100 text-pink-600 flex items-center justify-center"><i
-                        data-lucide="send" class="w-5 h-5"></i></div>
+                        data-lucide="calendar" class="w-5 h-5"></i></div>
                 <div>
-                    <h2 class="text-lg font-bold text-zinc-900 tracking-tight">Agendar Nova Publicação</h2>
+                    <h2 class="text-lg font-bold text-zinc-900 tracking-tight" id="modal-titulo-dia">Hub do Dia</h2>
+                    <p class="text-xs text-zinc-400 font-medium" id="modal-subtitulo-dia">Gerencie lembretes e
+                        publicações</p>
                 </div>
             </div>
 
-            <form id="formAgendamento" class="p-8 grid grid-cols-1 md:grid-cols-2 gap-10 bg-zinc-50/50">
+            <div class="divide-y divide-zinc-100">
 
-                <!-- PREVIEW COLUMN -->
-                <div class="flex flex-col items-center justify-center">
-                    <p class="text-xs font-bold text-zinc-400 uppercase tracking-widest mb-4"><i data-lucide="eye"
-                            class="w-3.5 h-3.5 inline mr-1"></i> Prévia do Feed</p>
-                    <div
-                        class="w-full max-w-[320px] bg-white border border-zinc-200 rounded-xl overflow-hidden shadow-sm flex flex-col pointer-events-none">
-                        <!-- Post Header -->
-                        <div class="px-3 py-2.5 flex items-center gap-2 border-b border-zinc-100">
-                            <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-yellow-400 to-pink-600 p-[2px]">
+                <!-- SEÇÃO 1: LEMBRETES DO DIA -->
+                <div class="p-6">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="text-xs font-black text-zinc-500 uppercase tracking-widest flex items-center gap-2">
+                            <i data-lucide="sticky-note" class="w-3.5 h-3.5 text-amber-500"></i> Lembretes
+                        </h3>
+                    </div>
+
+                    <!-- Lista de lembretes existentes deste dia -->
+                    <div id="modal-lembretes-lista" class="space-y-1.5 mb-3">
+                        <!-- JS preenche aqui -->
+                    </div>
+
+                    <!-- Input para novo lembrete -->
+                    <div class="flex items-center gap-2">
+                        <input type="text" id="modal-lembrete-input" placeholder="Adicionar um lembrete..."
+                            maxlength="100"
+                            class="flex-1 bg-amber-50 border border-amber-200 text-xs font-bold rounded-lg px-3 py-2.5 outline-none text-amber-800 placeholder:text-amber-400 focus:border-amber-400 focus:ring-1 focus:ring-amber-300 transition-all">
+                        <button type="button" onclick="salvarLembreteDoModal()"
+                            class="bg-amber-100 hover:bg-amber-200 text-amber-700 text-xs font-bold px-3 py-2.5 rounded-lg transition-colors flex items-center gap-1.5 shrink-0">
+                            <i data-lucide="plus" class="w-3.5 h-3.5"></i> Adicionar
+                        </button>
+                    </div>
+                </div>
+
+                <!-- SEÇÃO 2: POSTS AGENDADOS NESTE DIA -->
+                <div class="p-6">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="text-xs font-black text-zinc-500 uppercase tracking-widest flex items-center gap-2">
+                            <i data-lucide="image" class="w-3.5 h-3.5 text-pink-500"></i> Publicações do Dia
+                            <span id="modal-posts-count"
+                                class="text-[10px] font-bold text-pink-600 bg-pink-50 px-2 py-0.5 rounded-full">0</span>
+                        </h3>
+                    </div>
+
+                    <!-- Lista de posts agendados deste dia -->
+                    <div id="modal-posts-lista" class="space-y-2 mb-4">
+                        <p class="text-xs text-zinc-400 text-center py-3">Nenhuma publicação agendada para este dia.</p>
+                    </div>
+                </div>
+
+                <!-- SEÇÃO 3: FORMULÁRIO DE NOVA PUBLICAÇÃO -->
+                <div class="p-6">
+                    <button type="button" id="btn-toggle-form-agendar" onclick="toggleFormAgendamento()"
+                        class="w-full bg-zinc-50 hover:bg-zinc-100 border border-zinc-200 text-zinc-700 text-xs font-bold uppercase tracking-widest py-3 rounded-lg transition-all flex justify-center items-center gap-2 mb-4">
+                        <i data-lucide="plus-circle" class="w-4 h-4 text-pink-500"></i> Agendar Nova Publicação
+                    </button>
+
+                    <div id="form-agendar-wrapper" class="hidden">
+                        <form id="formAgendamento" class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <!-- PREVIEW COLUMN -->
+                            <div class="flex flex-col items-center justify-center">
+                                <p class="text-xs font-bold text-zinc-400 uppercase tracking-widest mb-3"><i
+                                        data-lucide="eye" class="w-3.5 h-3.5 inline mr-1"></i> Prévia do Feed</p>
                                 <div
-                                    class="w-full h-full bg-white rounded-full border border-white overflow-hidden flex items-center justify-center">
-                                    <i data-lucide="user" class="w-4 h-4 text-zinc-400"></i>
+                                    class="w-full max-w-[280px] bg-white border border-zinc-200 rounded-xl overflow-hidden shadow-sm flex flex-col pointer-events-none">
+                                    <div class="px-3 py-2 flex items-center gap-2 border-b border-zinc-100">
+                                        <div
+                                            class="w-7 h-7 rounded-full bg-gradient-to-tr from-yellow-400 to-pink-600 p-[1.5px]">
+                                            <div
+                                                class="w-full h-full bg-white rounded-full border border-white overflow-hidden flex items-center justify-center">
+                                                <i data-lucide="user" class="w-3.5 h-3.5 text-zinc-400"></i>
+                                            </div>
+                                        </div>
+                                        <span class="text-[11px] font-bold text-zinc-800"
+                                            id="preview-username">seu_perfil</span>
+                                    </div>
+                                    <div class="relative bg-zinc-100 aspect-[4/5] flex flex-col items-center justify-center hover:bg-zinc-200 transition-colors cursor-pointer group pointer-events-auto"
+                                        id="dropzone_area">
+                                        <div
+                                            class="flex flex-col items-center text-center p-4 group-hover:scale-110 transition-transform">
+                                            <i data-lucide="image-plus"
+                                                class="w-7 h-7 text-zinc-400 mb-1.5 group-hover:text-pink-500 transition-colors"></i>
+                                            <span
+                                                class="text-xs font-bold text-zinc-600 group-hover:text-pink-600 transition-colors">Selecionar
+                                                Imagem</span>
+                                            <span class="text-[10px] text-zinc-400 mt-0.5 font-medium">Proporção ideal:
+                                                4:5</span>
+                                        </div>
+                                        <img id="preview_img"
+                                            class="hidden absolute inset-0 w-full h-full object-cover z-10" src="">
+                                        <input type="file" id="foto_upload" required accept="image/*,video/*"
+                                            class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20">
+                                    </div>
+                                    <div class="p-2.5">
+                                        <div class="flex items-center gap-2.5 mb-1.5">
+                                            <i data-lucide="heart" class="w-4 h-4 text-zinc-800"></i>
+                                            <i data-lucide="message-circle" class="w-4 h-4 text-zinc-800"></i>
+                                            <i data-lucide="send" class="w-4 h-4 text-zinc-800"></i>
+                                            <i data-lucide="bookmark" class="w-4 h-4 ml-auto text-zinc-800"></i>
+                                        </div>
+                                        <div class="text-[10px] text-zinc-800 leading-snug">
+                                            <span class="font-bold mr-1" id="preview-username-caption">seu_perfil</span>
+                                            <span id="preview-legenda-texto" class="text-zinc-500">Sua legenda aparecerá
+                                                aqui...</span>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                            <span class="text-xs font-bold text-zinc-800" id="preview-username">seu_perfil</span>
-                            <i data-lucide="more-horizontal" class="w-4 h-4 ml-auto text-zinc-400"></i>
-                        </div>
 
-                        <!-- Image Dropzone Area -->
-                        <div class="relative bg-zinc-100 aspect-[4/5] flex flex-col items-center justify-center hover:bg-zinc-200 transition-colors cursor-pointer group pointer-events-auto"
-                            id="dropzone_area">
-                            <div
-                                class="flex flex-col items-center text-center p-6 group-hover:scale-110 transition-transform">
-                                <i data-lucide="image-plus"
-                                    class="w-8 h-8 text-zinc-400 mb-2 group-hover:text-pink-500 transition-colors"></i>
-                                <span
-                                    class="text-sm font-bold text-zinc-600 group-hover:text-pink-600 transition-colors">Selecionar
-                                    Imagem</span>
-                                <span class="text-[10px] text-zinc-400 mt-1 font-medium">Proporção ideal: 4:5</span>
+                            <!-- FORM COLUMN -->
+                            <div class="space-y-5 flex flex-col justify-center">
+                                <div>
+                                    <label
+                                        class="block text-xs font-bold text-zinc-700 uppercase tracking-wider mb-2">1.
+                                        Legenda da
+                                        Publicação</label>
+                                    <textarea id="legenda_post" rows="4" required
+                                        class="w-full bg-white border border-zinc-200 text-sm rounded-md px-4 py-3 outline-none resize-none placeholder:text-zinc-300 focus:border-pink-500 focus:ring-1 focus:ring-pink-500 transition-all shadow-sm"
+                                        placeholder="Escreva algo cativante..."></textarea>
+                                </div>
+                                <div>
+                                    <label
+                                        class="block text-xs font-bold text-zinc-700 uppercase tracking-wider mb-2">2.
+                                        Horário de
+                                        Publicação</label>
+                                    <input type="datetime-local" id="data_agendada" required
+                                        class="w-full bg-white border border-zinc-200 text-sm font-semibold rounded-md px-4 py-3 outline-none focus:border-pink-500 focus:ring-1 focus:ring-pink-500 transition-all text-zinc-700 shadow-sm">
+                                </div>
+                                <div class="pt-1 mt-auto">
+                                    <div id="mensagem-agendamento"
+                                        class="hidden mb-3 p-3 rounded-md text-sm font-medium border text-center"></div>
+                                    <button type="submit" id="btn-salvar-post"
+                                        class="w-full bg-pink-600 hover:bg-pink-700 text-white text-sm font-bold uppercase tracking-widest py-3.5 rounded-md transition-all shadow-md flex justify-center items-center gap-2"><i
+                                            data-lucide="calendar-check" class="w-5 h-5"></i> Confirmar
+                                        Agendamento</button>
+                                </div>
                             </div>
-                            <img id="preview_img" class="hidden absolute inset-0 w-full h-full object-cover z-10"
-                                src="">
-                            <input type="file" id="foto_upload" required
-                                class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20">
-                        </div>
-
-                        <!-- Post Footer (Icons & Caption) -->
-                        <div class="p-3">
-                            <div class="flex items-center gap-3 mb-2">
-                                <i data-lucide="heart" class="w-5 h-5 text-zinc-800"></i>
-                                <i data-lucide="message-circle" class="w-5 h-5 text-zinc-800"></i>
-                                <i data-lucide="send" class="w-5 h-5 text-zinc-800"></i>
-                                <i data-lucide="bookmark" class="w-5 h-5 ml-auto text-zinc-800"></i>
-                            </div>
-                            <div class="text-[11px] text-zinc-800 leading-snug">
-                                <span class="font-bold mr-1" id="preview-username-caption">seu_perfil</span>
-                                <span id="preview-legenda-texto" class="text-zinc-500">Sua legenda aparecerá
-                                    aqui...</span>
-                            </div>
-                        </div>
+                        </form>
                     </div>
                 </div>
 
-                <!-- FORM COLUMN -->
-                <div class="space-y-6 flex flex-col justify-center">
-                    <div>
-                        <label class="block text-xs font-bold text-zinc-700 uppercase tracking-wider mb-2">1. Legenda da
-                            Publicação</label>
-                        <textarea id="legenda_post" rows="5" required
-                            class="w-full bg-white border border-zinc-200 text-sm rounded-md px-4 py-3 outline-none resize-none placeholder:text-zinc-300 focus:border-pink-500 focus:ring-1 focus:ring-pink-500 transition-all shadow-sm"
-                            placeholder="Escreva algo cativante..."></textarea>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-zinc-700 uppercase tracking-wider mb-2">2. Horário de
-                            Publicação</label>
-                        <input type="datetime-local" id="data_agendada" required
-                            class="w-full bg-white border border-zinc-200 text-sm font-semibold rounded-md px-4 py-3 outline-none focus:border-pink-500 focus:ring-1 focus:ring-pink-500 transition-all text-zinc-700 shadow-sm">
-                    </div>
-                    <div class="pt-2 mt-auto">
-                        <div id="mensagem-agendamento"
-                            class="hidden mb-4 p-3 rounded-md text-sm font-medium border text-center"></div>
-                        <button type="submit" id="btn-salvar-post"
-                            class="w-full bg-pink-600 hover:bg-pink-700 text-white text-sm font-bold uppercase tracking-widest py-4 rounded-md transition-all shadow-md flex justify-center items-center gap-2"><i
-                                data-lucide="calendar-check" class="w-5 h-5"></i> Confirmar Agendamento</button>
-                    </div>
-                </div>
-            </form>
+            </div>
         </div>
-    </main>
+    </div>
 
-    <main id="view-lista" class="hidden max-w-[1000px] mx-auto py-12 px-6">
-        <div class="flex items-center justify-between mb-6 border-b border-zinc-200 pb-4">
-            <h2 class="text-xl font-bold text-zinc-900 flex items-center gap-2"><i data-lucide="calendar-days"
-                    class="w-5 h-5 text-pink-600"></i> Publicações Programadas</h2>
-            <button onclick="carregarAgendamentos()"
-                class="text-xs font-bold bg-white border border-zinc-200 text-zinc-700 px-4 py-2 rounded-md hover:bg-zinc-50 flex items-center gap-2 transition shadow-sm"><i
-                    data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Atualizar</button>
+    <main id="view-lista" class="hidden max-w-[1200px] mx-auto py-12 px-6">
+        <div class="flex items-center justify-between mb-6 pb-4 border-b border-zinc-200">
+            <div>
+                <h2 class="text-xl font-bold text-zinc-900 flex items-center gap-2"><i data-lucide="calendar"
+                        class="w-5 h-5 text-pink-600"></i> Calendário de Conteúdo</h2>
+                <p class="text-xs text-zinc-500 mt-1">Visualize, edite e acompanhe suas postagens programadas.</p>
+            </div>
+
+            <div class="flex items-center gap-4">
+                <div class="flex items-center bg-white border border-zinc-200 rounded-lg shadow-sm">
+                    <button id="btn-mes-anterior" class="p-2 text-zinc-500 hover:text-pink-600 transition-colors"><i
+                            data-lucide="chevron-left" class="w-4 h-4"></i></button>
+                    <span id="label-mes-ano" class="px-4 text-sm font-bold text-zinc-800 w-36 text-center">Fevereiro
+                        2026</span>
+                    <button id="btn-mes-proximo" class="p-2 text-zinc-500 hover:text-pink-600 transition-colors"><i
+                            data-lucide="chevron-right" class="w-4 h-4"></i></button>
+                </div>
+
+                <button onclick="abrirModalAgendamento()"
+                    class="text-xs font-bold bg-pink-600 text-white px-4 py-2.5 rounded-lg hover:bg-pink-700 flex items-center gap-2 transition shadow-md"><i
+                        data-lucide="plus" class="w-3.5 h-3.5"></i> Novo Post</button>
+                <button onclick="carregarAgendamentos()"
+                    class="text-xs font-bold bg-white border border-zinc-200 text-zinc-700 px-4 py-2.5 rounded-lg hover:bg-zinc-50 flex items-center gap-2 transition shadow-sm"><i
+                        data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Sincronizar</button>
+            </div>
         </div>
-        <div id="grid-agendamentos" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
+
+        <div class="flex items-stretch gap-2">
+            <!-- Seta lateral esquerda -->
+            <div class="flex items-center">
+                <button onclick="mudarMesCalendario(-1)"
+                    class="w-9 h-9 flex items-center justify-center rounded-full bg-pink-100 hover:bg-pink-200 text-pink-600 hover:text-pink-700 shadow-sm hover:shadow transition-all group"
+                    title="Mês anterior">
+                    <i data-lucide="chevron-left" class="w-5 h-5 group-hover:scale-110 transition-transform"></i>
+                </button>
+            </div>
+
+            <!-- Calendário -->
+            <div class="flex-1 bg-white border border-zinc-200 rounded-xl shadow-sm overflow-hidden">
+                <!-- Cabeçalho dos Dias da Semana -->
+                <div class="grid grid-cols-7 border-b border-zinc-200 bg-zinc-50/50">
+                    <div class="py-3 text-center text-xs font-black text-zinc-400 uppercase tracking-widest">Dom</div>
+                    <div class="py-3 text-center text-xs font-black text-zinc-500 uppercase tracking-widest">Seg</div>
+                    <div class="py-3 text-center text-xs font-black text-zinc-500 uppercase tracking-widest">Ter</div>
+                    <div class="py-3 text-center text-xs font-black text-zinc-500 uppercase tracking-widest">Qua</div>
+                    <div class="py-3 text-center text-xs font-black text-zinc-500 uppercase tracking-widest">Qui</div>
+                    <div class="py-3 text-center text-xs font-black text-zinc-500 uppercase tracking-widest">Sex</div>
+                    <div class="py-3 text-center text-xs font-black text-zinc-400 uppercase tracking-widest">Sáb</div>
+                </div>
+                <!-- Grade do Calendário -->
+                <div id="grid-calendario" class="grid grid-cols-7 bg-zinc-100 gap-[1px]">
+                    <!-- Javascript preenche os dias aqui -->
+                </div>
+            </div>
+
+            <!-- Seta lateral direita -->
+            <div class="flex items-center">
+                <button onclick="mudarMesCalendario(1)"
+                    class="w-9 h-9 flex items-center justify-center rounded-full bg-pink-100 hover:bg-pink-200 text-pink-600 hover:text-pink-700 shadow-sm hover:shadow transition-all group"
+                    title="Próximo mês">
+                    <i data-lucide="chevron-right" class="w-5 h-5 group-hover:scale-110 transition-transform"></i>
+                </button>
+            </div>
+        </div>
     </main>
 
     <main id="view-comparativo" class="hidden max-w-[1200px] mx-auto py-12 px-6">

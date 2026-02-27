@@ -81,6 +81,13 @@ def criar_tabelas():
                 status TEXT DEFAULT 'PENDENTE'
             );
 
+            CREATE TABLE IF NOT EXISTS lembretes (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                data TEXT NOT NULL,
+                texto TEXT NOT NULL,
+                cor TEXT DEFAULT 'yellow'
+            );
+
             CREATE TABLE IF NOT EXISTS configuracoes_globais (
                 id INTEGER PRIMARY KEY DEFAULT 1 CHECK (id = 1),
                 usuario TEXT,
@@ -139,6 +146,16 @@ def salvar_lote(resultados_em_lote):
 # Agendamento
 
 def agendar_novo_post(caminho_foto, legenda, data_agendada):
+    # Validação: impede agendamentos no passado
+    try:
+        dt_agendada = datetime.strptime(data_agendada, "%Y-%m-%dT%H:%M")
+        if dt_agendada < datetime.now():
+            raise ValueError("Não é possível agendar para uma data no passado.")
+    except ValueError as ve:
+        if "passado" in str(ve):
+            raise ve
+        # Se o formato for diferente, deixa passar
+        pass
     with conectar() as conexao:
         cursor = conexao.cursor()
         cursor.execute("INSERT INTO postagens_agendadas (caminho_foto, legenda, data_agendada, status) VALUES (?, ?, ?, 'PENDENTE')", (caminho_foto, legenda, data_agendada))
@@ -154,6 +171,58 @@ def excluir_agendamento(post_id):
     with conectar() as conexao:
         cursor = conexao.cursor()
         cursor.execute("DELETE FROM postagens_agendadas WHERE id = ?", (post_id,))
+        conexao.commit()
+
+def atualizar_data_agendamento(post_id, nova_data):
+    """Atualiza apenas a data de um agendamento (usado no Drag and Drop)."""
+    try:
+        dt = datetime.strptime(nova_data, "%Y-%m-%dT%H:%M")
+        if dt < datetime.now():
+            raise ValueError("Não é possível mover para uma data no passado.")
+    except ValueError as ve:
+        if "passado" in str(ve):
+            raise ve
+        pass
+    with conectar() as conexao:
+        cursor = conexao.cursor()
+        cursor.execute("UPDATE postagens_agendadas SET data_agendada = ? WHERE id = ?", (nova_data, post_id))
+        conexao.commit()
+
+# Lembretes CRUD
+
+def criar_lembrete(data, texto, cor='yellow'):
+    with conectar() as conexao:
+        cursor = conexao.cursor()
+        cursor.execute("INSERT INTO lembretes (data, texto, cor) VALUES (?, ?, ?)", (data, texto, cor))
+        conexao.commit()
+        return cursor.lastrowid
+
+def buscar_lembretes():
+    with conectar() as conexao:
+        cursor = conexao.cursor()
+        cursor.execute("SELECT id, data, texto, cor FROM lembretes ORDER BY data ASC")
+        return [{"id": r[0], "data": r[1], "texto": r[2], "cor": r[3]} for r in cursor.fetchall()]
+
+def atualizar_lembrete(lembrete_id, texto, cor=None):
+    with conectar() as conexao:
+        cursor = conexao.cursor()
+        if cor:
+            cursor.execute("UPDATE lembretes SET texto = ?, cor = ? WHERE id = ?", (texto, cor, lembrete_id))
+        else:
+            cursor.execute("UPDATE lembretes SET texto = ? WHERE id = ?", (texto, lembrete_id))
+        conexao.commit()
+
+def excluir_lembrete(lembrete_id):
+    with conectar() as conexao:
+        cursor = conexao.cursor()
+        cursor.execute("DELETE FROM lembretes WHERE id = ?", (lembrete_id,))
+        conexao.commit()
+
+def mover_lembrete(lembrete_id, nova_data):
+    """Move um lembrete para uma nova data (usado no Drag and Drop)."""
+    with conectar() as conexao:
+        cursor = conexao.cursor()
+        cursor.execute("UPDATE lembretes SET data = ? WHERE id = ?", (nova_data, lembrete_id))
         conexao.commit()
 
 def buscar_posts_pendentes():
