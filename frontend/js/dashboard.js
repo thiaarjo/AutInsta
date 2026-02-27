@@ -1,0 +1,303 @@
+import { converterDataString, getTimestamp, NOMES_DIAS_SEMANA, NOMES_MESES_CURTO, NOMES_MESES } from './globals.js';
+
+async function iniciarDashboard() {
+    const loading = document.getElementById('loading-graficos');
+    const painel = document.getElementById('painel-graficos');
+    const seletor = document.getElementById('seletor-perfil');
+    const btnSync = document.getElementById('btn-sync-graficos');
+
+    const perfilSalvo = seletor.value || ''; // Salva qual perfil o usuário estava olhando
+    const htmlOrigBtn = btnSync ? btnSync.innerHTML : '';
+
+    if (btnSync) {
+        btnSync.innerHTML = `<i data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin"></i> Atualizando...`;
+        lucide.createIcons();
+    } else {
+        loading.classList.remove('hidden'); loading.classList.add('flex'); painel.classList.add('hidden');
+    }
+
+    try {
+        const res = await fetch('/api/historico_graficos'); window.dadosHistoricosDB = await res.json();
+        let perfisUnicos = new Set([...window.dadosHistoricosDB.seguidores.map(s => s.perfil), ...window.dadosHistoricosDB.posts.map(p => p.perfil)]);
+
+        seletor.innerHTML = '';
+        if (perfisUnicos.size === 0) {
+            seletor.innerHTML = '<option value="">Nenhum dado no banco</option>';
+            loading.classList.replace('flex', 'hidden');
+            if (btnSync) btnSync.innerHTML = htmlOrigBtn;
+            return;
+        }
+
+        perfisUnicos.forEach(p => { let opt = document.createElement('option'); opt.value = p; opt.text = '@' + p; seletor.appendChild(opt); });
+
+        // Restaura a visualização que ele estava
+        if (perfilSalvo && perfisUnicos.has(perfilSalvo)) {
+            seletor.value = perfilSalvo;
+        }
+
+        // Não limpamos postSelecionadoAtual ao dar Sync
+        atualizarGraficosTela(seletor.value);
+
+        // Se for a primeira vez que entra na tela o evento deve ser atrelado
+        if (!seletor.dataset.escutando) {
+            seletor.addEventListener('change', (e) => {
+                window.postSelecionadoAtual = "";
+                atualizarGraficosTela(e.target.value);
+            });
+            seletor.dataset.escutando = "true";
+        }
+
+        loading.classList.replace('flex', 'hidden'); painel.classList.remove('hidden'); painel.classList.add('flex');
+    } catch (erro) {
+        console.error(erro);
+        loading.innerHTML = `<i data-lucide="alert-triangle" class="w-8 h-8 mb-3 text-red-500"></i><p class="font-medium text-sm text-red-600">Erro ao buscar histórico do banco.</p>`; lucide.createIcons();
+    } finally {
+        if (btnSync) {
+            btnSync.innerHTML = htmlOrigBtn;
+            if (window.lucide) lucide.createIcons();
+        }
+    }
+}
+
+
+
+function popularGaleriaPosts(perfilSelecionado) {
+    const galeria = document.getElementById('galeria-posts');
+    const contador = document.getElementById('galeria-contador');
+    if (!galeria) return;
+
+    const perfilLimpo = perfilSelecionado.replace('@', '').toLowerCase();
+    const brutos = (window.dadosHistoricosDB.posts_brutos || []).filter(p => p.perfil.toLowerCase() === perfilLimpo);
+
+    console.log('[DEBUG GALERIA] Perfil Original:', perfilSelecionado, '| Perfil Limpo:', perfilLimpo);
+    console.log('[DEBUG GALERIA] Total Brutos:', window.dadosHistoricosDB.posts_brutos?.length, '| Filtrados:', brutos.length);
+
+    // Agrupa por url_post único, contando extrações e pegando dados mais recentes
+    const mapaUnico = {};
+    brutos.forEach(p => {
+        if (!p.url_post) return;
+        if (!mapaUnico[p.url_post]) {
+            mapaUnico[p.url_post] = {
+                ...p,
+                vezes_extraido: 1,
+                primeira_extracao: p.data_extracao,
+                ultima_extracao: p.data_extracao
+            };
+        } else {
+            mapaUnico[p.url_post].vezes_extraido++;
+            // Mantém os curtidas mais recentes
+            if (p.data_extracao > mapaUnico[p.url_post].ultima_extracao) {
+                mapaUnico[p.url_post].curtidas = p.curtidas;
+                mapaUnico[p.url_post].ultima_extracao = p.data_extracao;
+                if (p.print) mapaUnico[p.url_post].print = p.print;
+            }
+            if (p.data_extracao < mapaUnico[p.url_post].primeira_extracao) {
+                mapaUnico[p.url_post].primeira_extracao = p.data_extracao;
+            }
+        }
+    });
+
+    const postsUnicos = Object.values(mapaUnico);
+    if (contador) contador.textContent = postsUnicos.length + ' post' + (postsUnicos.length !== 1 ? 's' : '');
+
+    if (postsUnicos.length === 0) {
+        galeria.innerHTML = '<p class="col-span-full text-center text-zinc-400 text-sm py-6">Nenhum post extraído para este perfil.</p>';
+        return;
+    }
+
+    // Formata data "2026-02-26 15:30:00" -> "26/02 15:30"
+    function fmtData(d) {
+        if (!d) return 'N/A';
+        try {
+            const partes = d.split(' ');
+            const ymd = partes[0].split('-');
+            const hora = partes[1] ? partes[1].substring(0, 5) : '';
+            return `${ymd[2]}/${ymd[1]} ${hora}`;
+        } catch { return d; }
+    }
+
+    // Formata data de publicação "26/02/2026 22:50" -> "26/02/2026"
+    function fmtPub(d) {
+        if (!d) return 'N/A';
+        return d.split(' ')[0];
+    }
+
+    galeria.innerHTML = '';
+
+    postsUnicos.forEach(p => {
+        const imgSrc = p.print || null;
+        const isAtivo = window.postSelecionadoAtual === p.url_post;
+
+        const card = document.createElement('div');
+        card.className = `bg-white rounded-lg border-2 overflow-hidden cursor-pointer transition-all hover:shadow-md hover:border-pink-400 flex flex-col sm:flex-row ${isAtivo ? 'border-pink-500 ring-2 ring-pink-200' : 'border-zinc-200'}`;
+        card.onclick = () => {
+            if (window.postSelecionadoAtual === p.url_post) {
+                window.postSelecionadoAtual = ""; // Toggle OFF
+            } else {
+                window.postSelecionadoAtual = p.url_post; // Toggle ON
+            }
+            atualizarGraficosTela(perfilSelecionado);
+        };
+
+        card.innerHTML = `
+            <div class="w-full sm:w-28 h-28 bg-zinc-100 shrink-0 flex items-center justify-center overflow-hidden">
+                ${imgSrc ? `<img src="${imgSrc}" class="w-full h-full object-cover" onerror="this.style.display='none'">` : '<i data-lucide="image" class="w-6 h-6 text-zinc-300"></i>'}
+            </div>
+            <div class="p-3 flex-1 min-w-0 flex flex-col justify-center gap-1.5">
+                <div class="flex items-center gap-2 flex-wrap">
+                    <span class="text-[10px] font-bold text-zinc-500 flex items-center gap-1"><i data-lucide="calendar" class="w-3 h-3"></i> Publicado: ${fmtPub(p.data_pub)}</span>
+                    <span class="text-[10px] font-bold text-pink-600 bg-pink-50 px-1.5 py-0.5 rounded">${p.curtidas.toLocaleString('pt-BR')} curtidas</span>
+                </div>
+                <div class="flex items-center gap-2 flex-wrap">
+                    <span class="text-[10px] font-bold text-zinc-400 flex items-center gap-1"><i data-lucide="scan-search" class="w-3 h-3"></i> Ultima extração: ${fmtData(p.ultima_extracao)}</span>
+                    <span class="text-[10px] font-bold ${p.vezes_extraido > 1 ? 'text-violet-600 bg-violet-50' : 'text-zinc-500 bg-zinc-100'} px-1.5 py-0.5 rounded">${p.vezes_extraido}x extraído</span>
+                </div>
+                <a href="${p.url_post}" target="_blank" onclick="event.stopPropagation()" class="text-[10px] font-bold text-blue-500 hover:underline truncate block"><i data-lucide="external-link" class="w-3 h-3 inline"></i> Ver no Instagram</a>
+            </div>
+        `;
+        galeria.appendChild(card);
+    });
+    lucide.createIcons();
+}
+
+function atualizarGraficosTela(perfilSelecionado) {
+    const limpo = perfilSelecionado.replace('@', '').toLowerCase();
+    let histSeg = window.dadosHistoricosDB.seguidores.filter(s => s.perfil.toLowerCase() === limpo);
+    let histPosts = window.dadosHistoricosDB.posts.filter(p => p.perfil.toLowerCase() === limpo);
+
+    const postSelecionado = window.postSelecionadoAtual || '';
+
+    let cardsOrigemDados = histPosts;
+    let tituloGrafico = 'Desempenho de Curtidas por Post';
+    let labelsBarras = [];
+    let dadosBarras = [];
+
+    if (postSelecionado) {
+        // MODO: Post Específico
+        const brutosFiltrados = (window.dadosHistoricosDB.posts_brutos || []).filter(p => p.perfil.toLowerCase() === limpo && p.url_post === postSelecionado);
+        cardsOrigemDados = brutosFiltrados; // Os cards agora usam o histórico das leituras do post atual
+        tituloGrafico = 'Evolução de Curtidas (Post Específico)';
+
+        labelsBarras = brutosFiltrados.map(p => {
+            try {
+                const partes = p.data_extracao.split(' ');
+                const d = partes[0].split('-');
+                const hora = partes[1] ? partes[1].substring(0, 5) : '';
+                return `${d[2]}/${d[1]} ${hora}`;
+            } catch (e) { return p.data_extracao; }
+        });
+        dadosBarras = brutosFiltrados.map(p => p.curtidas);
+
+        document.getElementById('card-texto-qtd').innerHTML = '<i data-lucide="hash" class="w-3 h-3 inline"></i> Total de Leituras Deste Post';
+    } else {
+        // MODO: Visão Geral Profile
+        labelsBarras = histPosts.map(p => p.data.split(' ')[0]);
+        dadosBarras = histPosts.map(p => p.curtidas);
+        document.getElementById('card-texto-qtd').innerHTML = '<i data-lucide="hash" class="w-3 h-3 inline"></i> Total de Posts Lidos';
+    }
+
+    let agora = new Date(); let data7 = new Date(); data7.setDate(agora.getDate() - 7); let data30 = new Date(); data30.setDate(agora.getDate() - 30);
+    // Para filtro específico, converterDataString tenta ler "yyyy-mm-dd hh:mm:ss" ou "dd/mm/yyyy hh:mm", precisamos garantir:
+    let posts7 = cardsOrigemDados.filter(p => p.data ? converterDataString(p.data) >= data7 : new Date(p.data_extracao) >= data7);
+    let posts30 = cardsOrigemDados.filter(p => p.data ? converterDataString(p.data) >= data30 : new Date(p.data_extracao) >= data30);
+
+    const calcMedia = (arr) => arr.length === 0 ? 0 : Math.round(arr.reduce((acc, p) => acc + p.curtidas, 0) / arr.length);
+
+    document.getElementById('card-total-posts').innerText = cardsOrigemDados.length;
+    document.getElementById('card-media-geral').innerText = calcMedia(cardsOrigemDados).toLocaleString('pt-BR');
+    document.getElementById('card-media-7').innerText = calcMedia(posts7).toLocaleString('pt-BR');
+    document.getElementById('card-media-30').innerText = calcMedia(posts30).toLocaleString('pt-BR');
+
+    // Atualiza Gráfico de Seguidores (Sempre geral do perfil)
+    if (window.chartSeguidores) window.chartSeguidores.destroy();
+    let ctxSeg = document.getElementById('graficoSeguidores').getContext('2d');
+    window.chartSeguidores = new Chart(ctxSeg, { type: 'line', data: { labels: histSeg.map(s => s.data.split(' ')[0]), datasets: [{ label: 'Seguidores', data: histSeg.map(s => s.valor), borderColor: '#2563eb', backgroundColor: 'rgba(37, 99, 235, 0.1)', borderWidth: 3, tension: 0.3, fill: true, pointRadius: 4, pointHoverRadius: 6 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { beginAtZero: false } } } });
+
+    // Atualiza Gráfico de Posts
+    if (window.chartPosts) window.chartPosts.destroy();
+    let ctxPosts = document.getElementById('graficoPosts').getContext('2d');
+    window.chartPosts = new Chart(ctxPosts, {
+        type: 'bar',
+        data: {
+            labels: labelsBarras,
+            datasets: [{
+                label: tituloGrafico,
+                data: dadosBarras,
+                backgroundColor: postSelecionado ? '#7c3aed' : '#db2777',
+                borderWidth: 0,
+                borderRadius: 4,
+                barThickness: dadosBarras.length <= 3 ? 40 : undefined,
+                maxBarThickness: 50
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { grid: { display: false } },
+                y: { beginAtZero: true }
+            },
+            layout: { padding: { left: 20, right: 20 } }
+        }
+    });
+
+    // Galeria visual de Posts
+    popularGaleriaPosts(perfilSelecionado);
+
+    // Tabela Secundária (Chamada de API dedicada)
+    carregarTabelaHistorico(perfilSelecionado);
+}
+
+// NOVA FUNÇÃO: Busca o histórico cru no backend
+async function carregarTabelaHistorico(perfilSelecionado) {
+    const tbody = document.getElementById('tabela-historico-detalhado');
+    if (!tbody) return;
+
+    tbody.innerHTML = '<tr><td colspan="2" class="py-6 text-center text-zinc-500 text-sm"><i data-lucide="loader-2" class="w-5 h-5 animate-spin mx-auto mb-2 text-pink-500"></i> Buscando histórico detalhado...</td></tr>';
+    lucide.createIcons();
+
+    try {
+        const res = await fetch(`/api/historico_detalhado/${perfilSelecionado}`);
+        const data = await res.json();
+
+        if (!data.historico || data.historico.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="2" class="py-6 text-center text-zinc-500 text-sm font-medium">Nenhum histórico detalhado encontrado para este perfil.</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = '';
+        data.historico.forEach(reg => {
+            // reg.data_hora ex: "2024-02-26 14:00:00"
+            // Vamos formatar bonitinho
+            let dataFormatada = reg.data_hora;
+            try {
+                const p = reg.data_hora.split(' ');
+                const d = p[0].split('-');
+                dataFormatada = `${d[2]}/${d[1]}/${d[0]} às ${p[1]}`;
+            } catch (e) { }
+
+            const valorTxt = reg.seguidores_texto ? reg.seguidores_texto : (reg.seguidores_valor).toLocaleString('pt-BR');
+
+            // Cria linha
+            const tr = document.createElement('tr');
+            tr.className = 'hover:bg-zinc-50/80 transition-colors';
+            tr.innerHTML = `
+                <td class="py-3 px-4 text-sm font-semibold text-zinc-800 whitespace-nowrap"><i data-lucide="calendar-clock" class="w-3.5 h-3.5 text-zinc-400 inline mr-2 align-text-bottom"></i> ${dataFormatada}</td>
+                <td class="py-3 px-4 text-sm font-bold text-pink-600 text-right whitespace-nowrap bg-pink-50/20">${valorTxt} <span class="text-[10px] text-zinc-400 uppercase tracking-widest font-bold ml-1">Seg.</span></td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        lucide.createIcons();
+    } catch (e) {
+        console.error("Erro Tabela Histórico", e);
+        tbody.innerHTML = '<tr><td colspan="2" class="py-6 text-center text-red-500 text-sm font-bold">Erro ao carregar o detalhamento.</td></tr>';
+    }
+}
+
+// --- EXPORTANDO PARA O ESCOPO GLOBAL ---
+window.iniciarDashboard = iniciarDashboard;
+window.carregarTabelaHistorico = carregarTabelaHistorico;
+window.popularGaleriaPosts = popularGaleriaPosts;
+window.atualizarGraficosTela = atualizarGraficosTela;
