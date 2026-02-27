@@ -2,27 +2,23 @@ lucide.createIcons();
 
 // NAVEGAÇÃO DE ABAS
 const btnTabMonitor = document.getElementById('btn-tab-monitor');
-const btnTabAgendar = document.getElementById('btn-tab-agendar');
 const btnTabLista = document.getElementById('btn-tab-lista');
 const btnTabComparativo = document.getElementById('btn-tab-comparativo');
 const btnTabConfig = document.getElementById('btn-tab-config');
 
 const viewMonitor = document.getElementById('view-monitor');
-const viewAgendar = document.getElementById('view-agendar');
 const viewLista = document.getElementById('view-lista');
 const viewComparativo = document.getElementById('view-comparativo');
 const viewConfig = document.getElementById('view-config');
 
 function resetarAbas() {
     viewMonitor.classList.add('hidden'); viewMonitor.classList.remove('grid');
-    viewAgendar.classList.add('hidden');
     viewLista.classList.add('hidden');
     viewComparativo.classList.add('hidden');
     viewConfig.classList.add('hidden');
 
     const classeInativa = "pb-3 text-sm font-bold text-zinc-400 hover:text-zinc-800 border-b-2 border-transparent hover:border-zinc-300 flex items-center gap-2 transition-all whitespace-nowrap";
     btnTabMonitor.className = classeInativa;
-    btnTabAgendar.className = classeInativa;
     btnTabLista.className = classeInativa;
     btnTabComparativo.className = classeInativa;
     btnTabConfig.className = classeInativa + " ml-auto";
@@ -30,7 +26,6 @@ function resetarAbas() {
 
 btnTabComparativo.addEventListener('click', () => { resetarAbas(); viewComparativo.classList.remove('hidden'); btnTabComparativo.className = "pb-3 text-sm font-bold text-pink-600 border-b-2 border-pink-600 flex items-center gap-2 transition-all whitespace-nowrap"; iniciarDashboard(); });
 btnTabMonitor.addEventListener('click', () => { resetarAbas(); viewMonitor.classList.remove('hidden'); viewMonitor.classList.add('grid'); btnTabMonitor.className = "pb-3 text-sm font-bold text-pink-600 border-b-2 border-pink-600 flex items-center gap-2 transition-all whitespace-nowrap"; });
-btnTabAgendar.addEventListener('click', () => { resetarAbas(); viewAgendar.classList.remove('hidden'); btnTabAgendar.className = "pb-3 text-sm font-bold text-pink-600 border-b-2 border-pink-600 flex items-center gap-2 transition-all whitespace-nowrap"; });
 btnTabLista.addEventListener('click', () => { resetarAbas(); viewLista.classList.remove('hidden'); btnTabLista.className = "pb-3 text-sm font-bold text-pink-600 border-b-2 border-pink-600 flex items-center gap-2 transition-all whitespace-nowrap"; carregarAgendamentos(); });
 btnTabConfig.addEventListener('click', () => { resetarAbas(); viewConfig.classList.remove('hidden'); btnTabConfig.className = "pb-3 text-sm font-bold text-pink-600 border-b-2 border-pink-600 flex items-center gap-2 transition-all whitespace-nowrap ml-auto"; carregarConfigUI(); });
 
@@ -47,24 +42,62 @@ function converterDataString(dataStr) {
 }
 
 async function iniciarDashboard() {
-    const loading = document.getElementById('loading-graficos'); const painel = document.getElementById('painel-graficos');
-    loading.classList.remove('hidden'); loading.classList.add('flex'); painel.classList.add('hidden');
+    const loading = document.getElementById('loading-graficos');
+    const painel = document.getElementById('painel-graficos');
+    const seletor = document.getElementById('seletor-perfil');
+    const btnSync = document.getElementById('btn-sync-graficos');
+
+    const perfilSalvo = seletor.value || ''; // Salva qual perfil o usuário estava olhando
+    const htmlOrigBtn = btnSync ? btnSync.innerHTML : '';
+
+    if (btnSync) {
+        btnSync.innerHTML = `<i data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin"></i> Atualizando...`;
+        lucide.createIcons();
+    } else {
+        loading.classList.remove('hidden'); loading.classList.add('flex'); painel.classList.add('hidden');
+    }
+
     try {
         const res = await fetch('/api/historico_graficos'); dadosHistoricosDB = await res.json();
         let perfisUnicos = new Set([...dadosHistoricosDB.seguidores.map(s => s.perfil), ...dadosHistoricosDB.posts.map(p => p.perfil)]);
-        const seletor = document.getElementById('seletor-perfil'); seletor.innerHTML = '';
-        if (perfisUnicos.size === 0) { seletor.innerHTML = '<option value="">Nenhum dado no banco</option>'; loading.classList.replace('flex', 'hidden'); return; }
+
+        seletor.innerHTML = '';
+        if (perfisUnicos.size === 0) {
+            seletor.innerHTML = '<option value="">Nenhum dado no banco</option>';
+            loading.classList.replace('flex', 'hidden');
+            if (btnSync) btnSync.innerHTML = htmlOrigBtn;
+            return;
+        }
+
         perfisUnicos.forEach(p => { let opt = document.createElement('option'); opt.value = p; opt.text = '@' + p; seletor.appendChild(opt); });
 
-        window.postSelecionadoAtual = "";
+        // Restaura a visualização que ele estava
+        if (perfilSalvo && perfisUnicos.has(perfilSalvo)) {
+            seletor.value = perfilSalvo;
+        }
+
+        // Não limpamos postSelecionadoAtual ao dar Sync
         atualizarGraficosTela(seletor.value);
 
-        seletor.addEventListener('change', (e) => {
-            window.postSelecionadoAtual = "";
-            atualizarGraficosTela(e.target.value);
-        });
+        // Se for a primeira vez que entra na tela o evento deve ser atrelado
+        if (!seletor.dataset.escutando) {
+            seletor.addEventListener('change', (e) => {
+                window.postSelecionadoAtual = "";
+                atualizarGraficosTela(e.target.value);
+            });
+            seletor.dataset.escutando = "true";
+        }
+
         loading.classList.replace('flex', 'hidden'); painel.classList.remove('hidden'); painel.classList.add('flex');
-    } catch (erro) { loading.innerHTML = `<i data-lucide="alert-triangle" class="w-8 h-8 mb-3 text-red-500"></i><p class="font-medium text-sm text-red-600">Erro ao buscar histórico do banco.</p>`; lucide.createIcons(); }
+    } catch (erro) {
+        console.error(erro);
+        loading.innerHTML = `<i data-lucide="alert-triangle" class="w-8 h-8 mb-3 text-red-500"></i><p class="font-medium text-sm text-red-600">Erro ao buscar histórico do banco.</p>`; lucide.createIcons();
+    } finally {
+        if (btnSync) {
+            btnSync.innerHTML = htmlOrigBtn;
+            if (window.lucide) lucide.createIcons();
+        }
+    }
 }
 
 
@@ -306,27 +339,363 @@ async function carregarTabelaHistorico(perfilSelecionado) {
 
 // AGENDAMENTO LOGIC
 async function carregarAgendamentos() {
-    const grid = document.getElementById('grid-agendamentos'); grid.innerHTML = '<div class="col-span-full flex flex-col items-center justify-center py-12 text-zinc-400"><i data-lucide="loader-2" class="w-8 h-8 animate-spin mb-3"></i>Carregando...</div>'; lucide.createIcons();
     try {
-        const res = await fetch('/api/agendamentos'); const data = await res.json();
-        if (data.agendamentos.length === 0) { grid.innerHTML = '<div class="col-span-full text-center py-16 text-zinc-400 border-2 border-dashed border-zinc-200 rounded-xl bg-white"><p>Nenhum post agendado.</p></div>'; return; }
-        grid.innerHTML = '';
-        data.agendamentos.forEach(item => {
-            let stClass = item.status === 'PUBLICADO' ? 'bg-green-100 text-green-700' : (item.status === 'ERRO' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700');
-            grid.innerHTML += `<div class="bg-white border border-zinc-200 rounded-xl p-4 flex gap-4"><div class="w-20 h-20 bg-zinc-100 rounded overflow-hidden shrink-0"><img src="/uploads/${item.arquivo}" class="w-full h-full object-cover"></div><div class="flex-1"><div class="flex justify-between"><span class="text-[9px] font-bold px-2 py-0.5 rounded ${stClass}">${item.status}</span><button onclick="deletarAgendamento(${item.id})" class="text-red-500 hover:text-red-700"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div><p class="text-xs text-zinc-500 mt-2 font-bold">${item.data_agendada.replace('T', ' às ')}</p></div></div>`;
-        }); lucide.createIcons();
-    } catch (e) { }
-}
-async function deletarAgendamento(id) { if (confirm('Cancelar?')) { await fetch('/api/agendamentos/' + id, { method: 'DELETE' }); carregarAgendamentos(); } }
+        const res = await fetch('/api/agendamentos');
+        const data = await res.json();
 
+        // Limpa todos os slots diários correntes
+        document.querySelectorAll('[id^="cal-conteudo-"]').forEach(el => el.innerHTML = '');
+
+        if (!data.agendamentos || data.agendamentos.length === 0) {
+            // Ainda carrega lembretes mesmo sem agendamentos
+            await carregarLembretes();
+            return;
+        }
+
+        data.agendamentos.forEach(item => {
+            let partesDataStr = item.data_agendada.split('T');
+            let diaIdBase = partesDataStr[0];
+            let horaAbreviada = partesDataStr[1] ? partesDataStr[1].substring(0, 5) : '';
+
+            let celulaAlvo = document.getElementById(`cal-conteudo-${diaIdBase}`);
+            if (!celulaAlvo) return;
+
+            // Ícones e cores por status
+            let colorBorder = 'border-pink-200';
+            let colorBg = 'bg-pink-50/50';
+            let txtColor = 'text-pink-700';
+            let statusIcon = 'clock';
+            let statusLabel = 'Pendente';
+
+            if (item.status === 'PUBLICADO') {
+                colorBorder = 'border-green-300'; colorBg = 'bg-green-50'; txtColor = 'text-green-700';
+                statusIcon = 'check-circle'; statusLabel = 'Publicado';
+            } else if (item.status === 'ERRO') {
+                colorBorder = 'border-red-300'; colorBg = 'bg-red-50'; txtColor = 'text-red-700';
+                statusIcon = 'alert-circle'; statusLabel = 'Erro';
+            }
+
+            let legendaPreview = (item.legenda || '').substring(0, 60);
+
+            let cardHtml = `
+                <div class="${colorBg} border ${colorBorder} rounded px-2 py-1.5 flex items-center gap-2 group/card relative shadow-sm cursor-grab hover:shadow hover:-translate-y-0.5 transition-all"
+                     draggable="true"
+                     data-agendamento-id="${item.id}"
+                     data-tipo="post"
+                     data-legenda="${legendaPreview.replace(/"/g, '&quot;')}"
+                     data-imagem="/uploads/${item.arquivo}"
+                     data-hora="${horaAbreviada}"
+                     data-status="${statusLabel}"
+                     ondragstart="onDragStartCard(event)"
+                     onmouseenter="mostrarTooltip(event, this)"
+                     onmouseleave="esconderTooltip()"
+                     onclick="event.stopPropagation()">
+                    <div class="w-6 h-6 rounded shrink-0 overflow-hidden bg-white/50 border border-white/40">
+                        <img src="/uploads/${item.arquivo}" class="w-full h-full object-cover">
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-[10px] font-black ${txtColor} truncate flex items-center gap-1"><i data-lucide="${statusIcon}" class="w-2.5 h-2.5"></i> ${horaAbreviada} • ${statusLabel}</p>
+                    </div>
+                    <button onclick="deletarAgendamento(${item.id}); event.stopPropagation();" class="absolute top-1 right-1 opacity-0 group-hover/card:opacity-100 p-0.5 rounded text-red-500 hover:bg-red-100 transition-colors">
+                        <i data-lucide="x" class="w-3 h-3"></i>
+                    </button>
+                </div>
+            `;
+            celulaAlvo.innerHTML += cardHtml;
+        });
+
+        // Carrega lembretes depois dos posts
+        await carregarLembretes();
+
+        if (window.lucide) lucide.createIcons();
+    } catch (e) {
+        console.error("Erro ao popular posts no DB do calendário", e);
+    }
+}
+async function deletarAgendamento(id) { if (confirm('Remover post da programação?')) { await fetch('/api/agendamentos/' + id, { method: 'DELETE' }); carregarAgendamentos(); if (diaAtualDoModal) abrirModalAgendamento(diaAtualDoModal); } }
+
+// ==========================================
+// 📋 HUB DO DIA (MODAL CENTRAL)
+// ==========================================
+let diaAtualDoModal = null; // Data YYYY-MM-DD do dia aberto no modal
+
+const NOMES_DIAS_SEMANA = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
+const NOMES_MESES_CURTO = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+
+async function abrirModalAgendamento(dataPreDefinida = null) {
+    const modal = document.getElementById('modal-agendar');
+    if (modal) modal.classList.remove('hidden');
+
+    diaAtualDoModal = dataPreDefinida;
+
+    // Reset form visibility - form já aberto por padrão
+    const formWrapper = document.getElementById('form-agendar-wrapper');
+    if (formWrapper) formWrapper.classList.remove('hidden');
+    const btnToggle = document.getElementById('btn-toggle-form-agendar');
+    if (btnToggle) btnToggle.classList.add('hidden');
+
+    // Header do dia
+    if (dataPreDefinida) {
+        const parts = dataPreDefinida.split('-');
+        const dt = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+        const diaSemana = NOMES_DIAS_SEMANA[dt.getDay()];
+        const dia = dt.getDate();
+        const mes = NOMES_MESES_CURTO[dt.getMonth()];
+        const ano = dt.getFullYear();
+
+        document.getElementById('modal-titulo-dia').textContent = `${diaSemana}, ${dia} de ${mes} de ${ano}`;
+        document.getElementById('modal-subtitulo-dia').textContent = 'Gerencie lembretes e publicações deste dia';
+        document.getElementById('data_agendada').value = dataPreDefinida + "T12:00";
+    } else {
+        document.getElementById('modal-titulo-dia').textContent = 'Hub do Dia';
+        document.getElementById('modal-subtitulo-dia').textContent = 'Gerencie lembretes e publicações';
+    }
+
+    // Popula lembretes e posts do dia
+    await popularLembretesDoModal(dataPreDefinida);
+    await popularPostsDoModal(dataPreDefinida);
+
+    if (window.lucide) lucide.createIcons();
+}
+
+function fecharModalAgendamento() {
+    const modal = document.getElementById('modal-agendar');
+    if (modal) modal.classList.add('hidden');
+    diaAtualDoModal = null;
+    // Reset form
+    const form = document.getElementById('formAgendamento');
+    if (form) form.reset();
+    const previewImg = document.getElementById('preview_img');
+    if (previewImg) { previewImg.classList.add('hidden'); previewImg.src = ''; }
+}
+
+function toggleFormAgendamento() {
+    const wrapper = document.getElementById('form-agendar-wrapper');
+    const btn = document.getElementById('btn-toggle-form-agendar');
+    if (wrapper) {
+        wrapper.classList.toggle('hidden');
+        if (!wrapper.classList.contains('hidden')) {
+            btn.classList.add('hidden');
+        } else {
+            btn.classList.remove('hidden');
+        }
+    }
+}
+
+// --- LEMBRETES DO MODAL ---
+async function popularLembretesDoModal(dataStr) {
+    const container = document.getElementById('modal-lembretes-lista');
+    if (!container) return;
+    container.innerHTML = '';
+
+    if (!dataStr) return;
+
+    try {
+        const res = await fetch('/api/lembretes');
+        const data = await res.json();
+        if (!data.lembretes) return;
+
+        const dosDia = data.lembretes.filter(l => l.data === dataStr);
+
+        if (dosDia.length === 0) {
+            container.innerHTML = '<p class="text-xs text-zinc-400 text-center py-1">Nenhum lembrete para este dia.</p>';
+            return;
+        }
+
+        dosDia.forEach(lem => {
+            const div = document.createElement('div');
+            div.className = 'flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 group';
+            div.id = `modal-lem-${lem.id}`;
+            div.innerHTML = `
+                <i data-lucide="sticky-note" class="w-3.5 h-3.5 text-amber-500 shrink-0"></i>
+                <span class="text-xs font-bold text-amber-800 flex-1 truncate">${lem.texto}</span>
+                <button onclick="editarLembreteNoModal(${lem.id}, '${lem.texto.replace(/'/g, "\\'").replace(/"/g, '&quot;')}')" class="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-amber-200 text-amber-600 transition-all" title="Editar">
+                    <i data-lucide="pencil" class="w-3 h-3"></i>
+                </button>
+                <button onclick="deletarLembreteDoModal(${lem.id})" class="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-red-100 text-red-500 transition-all" title="Apagar">
+                    <i data-lucide="trash-2" class="w-3 h-3"></i>
+                </button>
+            `;
+            container.appendChild(div);
+        });
+    } catch (e) {
+        console.error('Erro ao carregar lembretes no modal:', e);
+    }
+}
+
+async function salvarLembreteDoModal() {
+    const input = document.getElementById('modal-lembrete-input');
+    if (!input || !input.value.trim() || !diaAtualDoModal) return;
+
+    try {
+        await fetch('/api/lembretes', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ data: diaAtualDoModal, texto: input.value.trim(), cor: 'yellow' })
+        });
+        input.value = '';
+        await popularLembretesDoModal(diaAtualDoModal);
+        carregarAgendamentos(); // Atualiza grid do calendário também
+        if (window.lucide) lucide.createIcons();
+    } catch (e) {
+        console.error('Erro ao salvar lembrete:', e);
+    }
+}
+
+function editarLembreteNoModal(id, textoAtual) {
+    const container = document.getElementById(`modal-lem-${id}`);
+    if (!container) return;
+
+    container.innerHTML = `
+        <input type="text" value="${textoAtual}" maxlength="100"
+               class="flex-1 bg-amber-50 border border-amber-400 text-xs font-bold rounded px-2 py-1.5 outline-none text-amber-800 min-w-0 focus:ring-1 focus:ring-amber-300"
+               id="modal-lem-edit-${id}"
+               onkeydown="if(event.key==='Enter') salvarEdicaoLembreteModal(${id})">
+        <button onclick="salvarEdicaoLembreteModal(${id})" class="p-1 rounded bg-amber-200 hover:bg-amber-300 text-amber-700 transition-colors">
+            <i data-lucide="check" class="w-3 h-3"></i>
+        </button>
+        <button onclick="popularLembretesDoModal('${diaAtualDoModal}').then(() => { if(window.lucide) lucide.createIcons(); })" class="p-1 rounded hover:bg-red-100 text-red-400 transition-colors">
+            <i data-lucide="x" class="w-3 h-3"></i>
+        </button>
+    `;
+    if (window.lucide) lucide.createIcons();
+    const inp = document.getElementById(`modal-lem-edit-${id}`);
+    if (inp) { inp.focus(); inp.setSelectionRange(inp.value.length, inp.value.length); }
+}
+
+async function salvarEdicaoLembreteModal(id) {
+    const inp = document.getElementById(`modal-lem-edit-${id}`);
+    if (!inp || !inp.value.trim()) return;
+
+    try {
+        await fetch(`/api/lembretes/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ texto: inp.value.trim() })
+        });
+        await popularLembretesDoModal(diaAtualDoModal);
+        carregarAgendamentos();
+        if (window.lucide) lucide.createIcons();
+    } catch (e) {
+        console.error('Erro ao editar lembrete:', e);
+    }
+}
+
+async function deletarLembreteDoModal(id) {
+    try {
+        await fetch(`/api/lembretes/${id}`, { method: 'DELETE' });
+        await popularLembretesDoModal(diaAtualDoModal);
+        carregarAgendamentos();
+        if (window.lucide) lucide.createIcons();
+    } catch (e) {
+        console.error('Erro ao deletar lembrete:', e);
+    }
+}
+
+// --- POSTS DO DIA NO MODAL ---
+async function popularPostsDoModal(dataStr) {
+    const container = document.getElementById('modal-posts-lista');
+    const countEl = document.getElementById('modal-posts-count');
+    if (!container) return;
+    container.innerHTML = '';
+
+    if (!dataStr) {
+        container.innerHTML = '<p class="text-xs text-zinc-400 text-center py-3">Selecione um dia para ver as publicações.</p>';
+        if (countEl) countEl.textContent = '0';
+        return;
+    }
+
+    try {
+        const res = await fetch('/api/agendamentos');
+        const data = await res.json();
+        if (!data.agendamentos) return;
+
+        // Filtra posts deste dia (compara YYYY-MM-DD)
+        const postsDoDia = data.agendamentos.filter(p => p.data_agendada.startsWith(dataStr));
+
+        if (countEl) countEl.textContent = postsDoDia.length;
+
+        if (postsDoDia.length === 0) {
+            container.innerHTML = '<p class="text-xs text-zinc-400 text-center py-3">Nenhuma publicação agendada para este dia.</p>';
+            return;
+        }
+
+        postsDoDia.forEach(post => {
+            const hora = post.data_agendada.split('T')[1]?.substring(0, 5) || '';
+            let statusColor, statusBg, statusIcon;
+
+            if (post.status === 'PUBLICADO') {
+                statusColor = 'text-green-700'; statusBg = 'bg-green-50 border-green-200'; statusIcon = 'check-circle';
+            } else if (post.status === 'ERRO') {
+                statusColor = 'text-red-700'; statusBg = 'bg-red-50 border-red-200'; statusIcon = 'alert-circle';
+            } else {
+                statusColor = 'text-pink-700'; statusBg = 'bg-pink-50 border-pink-200'; statusIcon = 'clock';
+            }
+
+            const legendaPreview = (post.legenda || '').substring(0, 80);
+
+            const div = document.createElement('div');
+            div.className = `${statusBg} border rounded-lg px-3 py-2.5 flex items-center gap-3 group`;
+            div.innerHTML = `
+                <div class="w-10 h-10 rounded-lg overflow-hidden bg-zinc-100 shrink-0 border border-white shadow-sm">
+                    <img src="/uploads/${post.arquivo}" class="w-full h-full object-cover" onerror="this.style.display='none'">
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-[11px] font-black ${statusColor} flex items-center gap-1 mb-0.5">
+                        <i data-lucide="${statusIcon}" class="w-3 h-3"></i>
+                        ${hora} • ${post.status === 'PENDENTE' ? 'Pendente' : post.status}
+                    </p>
+                    <p class="text-[10px] text-zinc-500 truncate">${legendaPreview || 'Sem legenda'}</p>
+                </div>
+                <button onclick="deletarAgendamento(${post.id})" class="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg hover:bg-red-100 text-red-500 transition-all shrink-0" title="Remover">
+                    <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                </button>
+            `;
+            container.appendChild(div);
+        });
+    } catch (e) {
+        console.error('Erro ao popular posts do dia no modal:', e);
+    }
+}
+
+// --- LISTENERS ---
 document.getElementById('foto_upload').addEventListener('change', function (e) { if (e.target.files[0]) { const reader = new FileReader(); reader.onload = function (evt) { document.getElementById('preview_img').src = evt.target.result; document.getElementById('preview_img').classList.remove('hidden'); }; reader.readAsDataURL(e.target.files[0]); } });
 
+document.getElementById('modal-lembrete-input').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') { e.preventDefault(); salvarLembreteDoModal(); }
+});
+
 document.getElementById('formAgendamento').addEventListener('submit', async function (event) {
-    event.preventDefault(); const btn = document.getElementById('btn-salvar-post'); btn.disabled = true; btn.innerHTML = 'Salvando...';
-    const formData = new FormData(); formData.append("foto", document.getElementById('foto_upload').files[0]); formData.append("legenda", document.getElementById('legenda_post').value); formData.append("data_agendada", document.getElementById('data_agendada').value);
-    await fetch('/api/agendar', { method: 'POST', body: formData });
-    document.getElementById('formAgendamento').reset(); document.getElementById('preview_img').classList.add('hidden');
-    btn.innerHTML = 'Confirmar Agendamento'; btn.disabled = false; alert("Agendado!");
+    event.preventDefault(); const btn = document.getElementById('btn-salvar-post'); btn.disabled = true; btn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Salvando...';
+    if (window.lucide) lucide.createIcons();
+    try {
+        const formData = new FormData(); formData.append("foto", document.getElementById('foto_upload').files[0]); formData.append("legenda", document.getElementById('legenda_post').value); formData.append("data_agendada", document.getElementById('data_agendada').value);
+        const res = await fetch('/api/agendar', { method: 'POST', body: formData });
+        if (!res.ok) {
+            const err = await res.json();
+            alert(err.detail || 'Erro ao agendar.');
+            return;
+        }
+        document.getElementById('formAgendamento').reset();
+        document.getElementById('preview_img').classList.add('hidden');
+        document.getElementById('preview_img').src = '';
+
+        // Refresh in-place: recarrega posts do dia no modal sem fechar
+        if (diaAtualDoModal) {
+            document.getElementById('data_agendada').value = diaAtualDoModal + "T12:00";
+            await popularPostsDoModal(diaAtualDoModal);
+            // Esconde form e mostra botão de novo post
+            document.getElementById('form-agendar-wrapper').classList.add('hidden');
+            document.getElementById('btn-toggle-form-agendar').classList.remove('hidden');
+        }
+        carregarAgendamentos(); // Refresh grid do calendário
+        if (window.lucide) lucide.createIcons();
+    } catch (err) {
+        console.error('Erro ao agendar:', err);
+    } finally {
+        btn.innerHTML = '<i data-lucide="calendar-check" class="w-5 h-5"></i> Confirmar Agendamento'; btn.disabled = false;
+        if (window.lucide) lucide.createIcons();
+    }
 });
 
 // ==========================================
@@ -591,3 +960,362 @@ if (formConfig) {
         }
     });
 }
+
+// ==========================================
+// 📅 MÓDULO CALENDÁRIO PROFISSIONAL
+// ==========================================
+let dataCalendarioAtual = new Date();
+const NOMES_MESES = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+
+function inicializarCalendario() {
+    document.getElementById('btn-mes-anterior')?.addEventListener('click', () => mudarMesCalendario(-1));
+    document.getElementById('btn-mes-proximo')?.addEventListener('click', () => mudarMesCalendario(1));
+    renderizarGradeCalendario();
+}
+
+function mudarMesCalendario(delta) {
+    dataCalendarioAtual.setMonth(dataCalendarioAtual.getMonth() + delta);
+    renderizarGradeCalendario();
+    carregarAgendamentos();
+}
+
+function renderizarGradeCalendario() {
+    const ano = dataCalendarioAtual.getFullYear();
+    const mes = dataCalendarioAtual.getMonth();
+
+    const labelMesAno = document.getElementById('label-mes-ano');
+    if (labelMesAno) labelMesAno.innerText = `${NOMES_MESES[mes]} ${ano}`;
+
+    const grid = document.getElementById('grid-calendario');
+    if (!grid) return;
+    grid.innerHTML = '';
+
+    const primeiroDiaMes = new Date(ano, mes, 1);
+    const ultimoDiaMes = new Date(ano, mes + 1, 0);
+    const diasNoMes = ultimoDiaMes.getDate();
+    const diaDaSemanaInicio = primeiroDiaMes.getDay();
+
+    const hojeReal = new Date();
+    hojeReal.setHours(0, 0, 0, 0);
+    const isMesmoMesAno = hojeReal.getFullYear() === ano && hojeReal.getMonth() === mes;
+
+    // Células vazias do mês anterior
+    for (let i = 0; i < diaDaSemanaInicio; i++) {
+        const divMorta = document.createElement('div');
+        divMorta.className = "bg-zinc-50 min-h-[130px] p-2 border-r border-b border-zinc-200";
+        grid.appendChild(divMorta);
+    }
+
+    // Células reais dos dias
+    for (let dia = 1; dia <= diasNoMes; dia++) {
+        const divDia = document.createElement('div');
+        const dataDoDia = new Date(ano, mes, dia);
+        dataDoDia.setHours(0, 0, 0, 0);
+        const isHoje = isMesmoMesAno && hojeReal.getDate() === dia;
+        const isPassado = dataDoDia < hojeReal;
+
+        const dataFormatada = `${ano}-${String(mes + 1).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
+
+        // ---- ESTILOS CONDICIONAIS ----
+        let headerClass, bgClass;
+
+        if (isHoje) {
+            headerClass = "w-7 h-7 flex items-center justify-center bg-pink-600 text-white rounded-full font-bold text-sm mx-auto shadow-sm";
+            bgClass = "bg-pink-50/30 ring-2 ring-pink-300 ring-inset";
+        } else if (isPassado) {
+            headerClass = "text-zinc-300 font-bold text-sm text-center mt-1";
+            bgClass = "bg-zinc-50/80";
+        } else {
+            headerClass = "text-zinc-500 font-bold text-sm text-center mt-1";
+            bgClass = "bg-white hover:bg-zinc-50 transition-colors";
+        }
+
+        divDia.className = `${bgClass} min-h-[130px] p-2 border-r border-b border-zinc-200 flex flex-col ${isPassado ? 'cursor-default' : 'cursor-pointer'} relative group`;
+        divDia.id = `cal-dia-${dataFormatada}`;
+        divDia.dataset.calData = dataFormatada;
+
+        // Drag and Drop: aceitar soltura apenas em dias de hoje ou futuro
+        if (!isPassado) {
+            divDia.addEventListener('dragover', (e) => { e.preventDefault(); divDia.classList.add('ring-2', 'ring-pink-400', 'ring-inset', 'bg-pink-50/40'); });
+            divDia.addEventListener('dragleave', () => { divDia.classList.remove('ring-2', 'ring-pink-400', 'ring-inset', 'bg-pink-50/40'); });
+            divDia.addEventListener('drop', (e) => onDropCard(e, dataFormatada, divDia));
+            divDia.onclick = () => abrirModalAgendamento(dataFormatada);
+        }
+
+        divDia.innerHTML = `
+            <div class="${headerClass}">${dia}</div>
+            <div class="flex-1 mt-1.5 space-y-1 overflow-y-auto custom-scrollbar" id="cal-conteudo-${dataFormatada}">
+                <!-- Mini cards -->
+            </div>
+            ${isPassado ? '' : `<div class="absolute bottom-1 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+                <button onclick="event.stopPropagation(); abrirInputLembrete('${dataFormatada}')" title="Adicionar lembrete">
+                    <i data-lucide="sticky-note" class="w-4 h-4 text-amber-400 hover:text-amber-500"></i>
+                </button>
+                <i data-lucide="plus-circle" class="w-4 h-4 text-zinc-300 hover:text-pink-500"></i>
+            </div>`}
+        `;
+
+        grid.appendChild(divDia);
+    }
+
+    // Células vazias para completar a grade
+    const celulasTotais = diaDaSemanaInicio + diasNoMes;
+    const celulasFaltantes = (Math.ceil(celulasTotais / 7) * 7) - celulasTotais;
+    for (let i = 0; i < celulasFaltantes; i++) {
+        const divMorta = document.createElement('div');
+        divMorta.className = "bg-zinc-50 min-h-[130px] p-2 border-r border-b border-zinc-200";
+        grid.appendChild(divMorta);
+    }
+
+    if (window.lucide) lucide.createIcons();
+}
+
+// ==========================================
+// 📌 SISTEMA DE LEMBRETES
+// ==========================================
+async function carregarLembretes() {
+    try {
+        const res = await fetch('/api/lembretes');
+        const data = await res.json();
+        if (!data.lembretes) return;
+
+        data.lembretes.forEach(lem => {
+            const celula = document.getElementById(`cal-conteudo-${lem.data}`);
+            if (!celula) return;
+
+            const corMap = {
+                yellow: { bg: 'bg-amber-50', border: 'border-amber-200', text: 'text-amber-700', icon: 'text-amber-500' },
+                blue: { bg: 'bg-blue-50', border: 'border-blue-200', text: 'text-blue-700', icon: 'text-blue-500' },
+                green: { bg: 'bg-emerald-50', border: 'border-emerald-200', text: 'text-emerald-700', icon: 'text-emerald-500' },
+                red: { bg: 'bg-red-50', border: 'border-red-200', text: 'text-red-700', icon: 'text-red-500' },
+            };
+            const cores = corMap[lem.cor] || corMap.yellow;
+
+            const cardHtml = `
+                <div class="${cores.bg} border ${cores.border} rounded px-2 py-1 flex items-center gap-1.5 group/lem relative cursor-pointer hover:shadow-sm transition-all"
+                     data-lembrete-id="${lem.id}"
+                     data-tipo="lembrete"
+                     draggable="true"
+                     ondragstart="onDragStartCard(event)"
+                     onclick="event.stopPropagation(); editarLembreteInline(${lem.id}, '${lem.data}', '${lem.texto.replace(/'/g, "\\'").replace(/"/g, '&quot;')}', '${lem.cor}')">
+                    <i data-lucide="sticky-note" class="w-3 h-3 ${cores.icon} shrink-0"></i>
+                    <p class="text-[10px] font-bold ${cores.text} truncate flex-1">${lem.texto}</p>
+                    <button onclick="event.stopPropagation(); deletarLembrete(${lem.id})" class="opacity-0 group-hover/lem:opacity-100 p-0.5 rounded text-red-500 hover:bg-red-100 transition-colors">
+                        <i data-lucide="x" class="w-2.5 h-2.5"></i>
+                    </button>
+                </div>
+            `;
+            celula.innerHTML += cardHtml;
+        });
+
+        if (window.lucide) lucide.createIcons();
+    } catch (e) {
+        console.error('Erro ao carregar lembretes:', e);
+    }
+}
+
+function abrirInputLembrete(dataStr) {
+    // Remove qualquer input de lembrete já aberto
+    document.querySelectorAll('.lembrete-input-box').forEach(el => el.remove());
+
+    const celula = document.getElementById(`cal-conteudo-${dataStr}`);
+    if (!celula) return;
+
+    const inputBox = document.createElement('div');
+    inputBox.className = 'lembrete-input-box bg-amber-50 border border-amber-300 rounded p-1.5 mt-1 flex items-center gap-1 shadow-sm animate-in fade-in duration-150';
+    inputBox.innerHTML = `
+        <input type="text" placeholder="Novo lembrete..." maxlength="80"
+               class="flex-1 text-[10px] font-bold bg-transparent border-none outline-none text-amber-800 placeholder:text-amber-400 min-w-0"
+               onkeydown="if(event.key==='Enter'){salvarNovoLembrete('${dataStr}', this.value); this.closest('.lembrete-input-box').remove();}">
+        <button onclick="salvarNovoLembrete('${dataStr}', this.previousElementSibling.value); this.closest('.lembrete-input-box').remove();"
+                class="shrink-0 p-0.5 rounded bg-amber-200 hover:bg-amber-300 text-amber-700 transition-colors">
+            <i data-lucide="check" class="w-3 h-3"></i>
+        </button>
+        <button onclick="this.closest('.lembrete-input-box').remove()"
+                class="shrink-0 p-0.5 rounded hover:bg-red-100 text-red-400 transition-colors">
+            <i data-lucide="x" class="w-3 h-3"></i>
+        </button>
+    `;
+    celula.appendChild(inputBox);
+    if (window.lucide) lucide.createIcons();
+    inputBox.querySelector('input').focus();
+}
+
+async function salvarNovoLembrete(data, texto) {
+    if (!texto || !texto.trim()) return;
+    try {
+        await fetch('/api/lembretes', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ data: data, texto: texto.trim(), cor: 'yellow' })
+        });
+        carregarAgendamentos();
+    } catch (e) {
+        console.error('Erro ao criar lembrete:', e);
+    }
+}
+
+function editarLembreteInline(id, data, textoAtual, corAtual) {
+    document.querySelectorAll('.lembrete-input-box').forEach(el => el.remove());
+
+    const celula = document.getElementById(`cal-conteudo-${data}`);
+    if (!celula) return;
+
+    // Encontra e esconde o card original
+    const cardOriginal = celula.querySelector(`[data-lembrete-id="${id}"]`);
+    if (cardOriginal) cardOriginal.style.display = 'none';
+
+    const editBox = document.createElement('div');
+    editBox.className = 'lembrete-input-box bg-amber-50 border-2 border-amber-400 rounded p-1.5 flex items-center gap-1 shadow-md animate-in fade-in duration-150';
+    editBox.innerHTML = `
+        <input type="text" value="${textoAtual}" maxlength="80"
+               class="flex-1 text-[10px] font-bold bg-transparent border-none outline-none text-amber-800 min-w-0"
+               onkeydown="if(event.key==='Enter'){atualizarLembrete(${id}, this.value); this.closest('.lembrete-input-box').remove();}">
+        <button onclick="atualizarLembrete(${id}, this.previousElementSibling.value); this.closest('.lembrete-input-box').remove();"
+                class="shrink-0 p-0.5 rounded bg-amber-200 hover:bg-amber-300 text-amber-700 transition-colors">
+            <i data-lucide="check" class="w-3 h-3"></i>
+        </button>
+        <button onclick="this.closest('.lembrete-input-box').remove(); document.querySelector('[data-lembrete-id=\"${id}\"]').style.display='flex';"
+                class="shrink-0 p-0.5 rounded hover:bg-red-100 text-red-400 transition-colors">
+            <i data-lucide="x" class="w-3 h-3"></i>
+        </button>
+    `;
+    celula.appendChild(editBox);
+    if (window.lucide) lucide.createIcons();
+    const inp = editBox.querySelector('input');
+    inp.focus();
+    inp.setSelectionRange(inp.value.length, inp.value.length);
+}
+
+async function atualizarLembrete(id, texto) {
+    if (!texto || !texto.trim()) return;
+    try {
+        await fetch(`/api/lembretes/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ texto: texto.trim() })
+        });
+        carregarAgendamentos();
+    } catch (e) {
+        console.error('Erro ao atualizar lembrete:', e);
+    }
+}
+
+async function deletarLembrete(id) {
+    try {
+        await fetch(`/api/lembretes/${id}`, { method: 'DELETE' });
+        carregarAgendamentos();
+    } catch (e) {
+        console.error('Erro ao deletar lembrete:', e);
+    }
+}
+
+// ==========================================
+// 🔄 DRAG AND DROP
+// ==========================================
+function onDragStartCard(e) {
+    const card = e.target.closest('[draggable]');
+    if (!card) return;
+
+    const tipo = card.dataset.tipo; // 'post' ou 'lembrete'
+    const id = tipo === 'post' ? card.dataset.agendamentoId : card.dataset.lembreteId;
+    const horaOriginal = card.dataset.hora || '12:00';
+
+    e.dataTransfer.setData('text/plain', JSON.stringify({ tipo, id, hora: horaOriginal }));
+    e.dataTransfer.effectAllowed = 'move';
+
+    card.style.opacity = '0.4';
+    setTimeout(() => { card.style.opacity = '1'; }, 300);
+}
+
+async function onDropCard(e, novaDataStr, divDia) {
+    e.preventDefault();
+    divDia.classList.remove('ring-2', 'ring-pink-400', 'ring-inset', 'bg-pink-50/40');
+
+    try {
+        const payload = JSON.parse(e.dataTransfer.getData('text/plain'));
+
+        if (payload.tipo === 'post') {
+            const novaDataCompleta = `${novaDataStr}T${payload.hora}`;
+            const res = await fetch(`/api/agendamentos/${payload.id}/data`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ nova_data: novaDataCompleta })
+            });
+            if (!res.ok) {
+                const err = await res.json();
+                alert(err.detail || 'Erro ao mover post.');
+                return;
+            }
+        } else if (payload.tipo === 'lembrete') {
+            const res = await fetch(`/api/lembretes/${payload.id}/mover`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ nova_data: novaDataStr })
+            });
+            if (!res.ok) {
+                const err = await res.json();
+                alert(err.detail || 'Erro ao mover lembrete.');
+                return;
+            }
+        }
+
+        carregarAgendamentos();
+    } catch (err) {
+        console.error('Erro no drag and drop:', err);
+    }
+}
+
+// ==========================================
+// 💬 TOOLTIP FLUTUANTE
+// ==========================================
+let tooltipEl = null;
+
+function criarTooltipEl() {
+    if (tooltipEl) return;
+    tooltipEl = document.createElement('div');
+    tooltipEl.id = 'cal-tooltip';
+    tooltipEl.className = 'fixed z-[100] pointer-events-none opacity-0 transition-opacity duration-150 bg-white border border-zinc-200 rounded-xl shadow-xl p-3 max-w-[240px] flex flex-col gap-2';
+    document.body.appendChild(tooltipEl);
+}
+
+function mostrarTooltip(e, card) {
+    criarTooltipEl();
+    const legenda = card.dataset.legenda || '';
+    const imagem = card.dataset.imagem || '';
+    const hora = card.dataset.hora || '';
+    const status = card.dataset.status || '';
+
+    if (!legenda && !imagem) return;
+
+    tooltipEl.innerHTML = `
+        ${imagem ? `<img src="${imagem}" class="w-full h-28 object-cover rounded-lg border border-zinc-100" onerror="this.style.display='none'">` : ''}
+        <div>
+            <p class="text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-0.5"><i data-lucide="clock" class="w-3 h-3 inline"></i> ${hora} • ${status}</p>
+            ${legenda ? `<p class="text-xs text-zinc-600 leading-snug">${legenda}</p>` : '<p class="text-xs text-zinc-400 italic">Sem legenda</p>'}
+        </div>
+    `;
+    if (window.lucide) lucide.createIcons();
+
+    // Posicionamento
+    const rect = card.getBoundingClientRect();
+    let top = rect.bottom + 8;
+    let left = rect.left;
+
+    // Evitar sair da tela
+    if (top + 200 > window.innerHeight) top = rect.top - 180;
+    if (left + 240 > window.innerWidth) left = window.innerWidth - 260;
+
+    tooltipEl.style.top = top + 'px';
+    tooltipEl.style.left = left + 'px';
+    tooltipEl.style.opacity = '1';
+}
+
+function esconderTooltip() {
+    if (tooltipEl) tooltipEl.style.opacity = '0';
+}
+
+// Auto-iniciar o layout
+document.addEventListener('DOMContentLoaded', () => {
+    inicializarCalendario();
+});
