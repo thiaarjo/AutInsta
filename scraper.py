@@ -177,32 +177,39 @@ def rodar_robo(config: ConfigBot):
             sleep_seguro(DELAY, task_id)
         except: pass
 
-        # 2. Access Profile
-        atualizar_status(task_id, 35, f"Buscando Perfil: @{config.alvo}...")
-        driver.get(PERFIL_ALVO)
-        sleep_seguro(DELAY + 1, task_id)
+        # 2. Acesso ao Perfil (pulado se for SOMENTE stories)
+        somente_stories = config.coletar_stories and not config.coletar_feed and not config.seguir_alvo
 
-        # Leitura inicial de seguidores
-        resultado["seguidores"] = extrair_seguidores_robusto(driver)
-        try:
-             valor_int_seguidores, _ = analisar_curtidas(resultado["seguidores"])
-             resultado["seguidores_matematica"] = valor_int_seguidores if isinstance(valor_int_seguidores, int) else 0
-        except:
-             resultado["seguidores_matematica"] = 0
-             
-        # Follow
-        if config.seguir_alvo:
-            atualizar_status(task_id, 40, "Processando Follow no Alvo...")
-            status_follow = realizar_acao_seguir(driver, task_id)
-            resultado["status_seguir"] = status_follow
+        if somente_stories:
+            # Atalho: vai direto pro Stories sem carregar o perfil inteiro
+            atualizar_status(task_id, 35, f"Modo Stories-Only: indo direto para @{config.alvo}...")
+        else:
+            # Fluxo normal: abre o perfil primeiro
+            atualizar_status(task_id, 35, f"Buscando Perfil: @{config.alvo}...")
+            driver.get(PERFIL_ALVO)
+            sleep_seguro(DELAY + 1, task_id)
 
-        # Verifica Privacidade
-        if verificar_perfil_privado(driver):
-            atualizar_status(task_id, 100, "Perfil Privado detectado. Operação concluída parcial.")
-            resultado["privado"] = True
-            resultado["acessivel"] = False
-            resultado["status"] = "Profile Private and Blocked"
-            return resultado 
+            # Leitura inicial de seguidores
+            resultado["seguidores"] = extrair_seguidores_robusto(driver)
+            try:
+                 valor_int_seguidores, _ = analisar_curtidas(resultado["seguidores"])
+                 resultado["seguidores_matematica"] = valor_int_seguidores if isinstance(valor_int_seguidores, int) else 0
+            except:
+                 resultado["seguidores_matematica"] = 0
+                 
+            # Follow
+            if config.seguir_alvo:
+                atualizar_status(task_id, 40, "Processando Follow no Alvo...")
+                status_follow = realizar_acao_seguir(driver, task_id)
+                resultado["status_seguir"] = status_follow
+
+            # Verifica Privacidade
+            if verificar_perfil_privado(driver):
+                atualizar_status(task_id, 100, "Perfil Privado detectado. Operação concluída parcial.")
+                resultado["privado"] = True
+                resultado["acessivel"] = False
+                resultado["status"] = "Profile Private and Blocked"
+                return resultado 
         
         # Analise de feed
         if config.coletar_feed:

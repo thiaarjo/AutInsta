@@ -94,28 +94,31 @@ async def painel_html():
 # Rotas de Agendamento
 @app.post("/api/agendar")
 async def receber_agendamento(
-    foto: UploadFile = File(...), 
-    legenda: str = Form(...),
-    data_agendada: str = Form(...)
+    foto: UploadFile = File(None), 
+    legenda: str = Form(""),
+    data_agendada: str = Form("")
 ):
     try:
-        print(f"\n[*] Recebendo nova solicitação de agendamento...", flush=True)
+        print(f"\n[*] Recebendo nova solicitação de agendamento/rascunho...", flush=True)
         
         # Validação de data no passado
-        try:
-            dt = datetime.strptime(data_agendada, "%Y-%m-%dT%H:%M")
-            if dt < datetime.now():
-                raise HTTPException(status_code=400, detail="Não é possível agendar para uma data no passado.")
-        except ValueError:
-            pass
+        if data_agendada:
+            try:
+                dt = datetime.strptime(data_agendada, "%Y-%m-%dT%H:%M")
+                if dt < datetime.now():
+                    raise HTTPException(status_code=400, detail="Não é possível agendar para uma data no passado.")
+            except ValueError:
+                pass
         
-        caminho_arquivo = os.path.join(PASTA_UPLOADS, foto.filename)
-        with open(caminho_arquivo, "wb") as buffer:
-            shutil.copyfileobj(foto.file, buffer)
+        caminho_arquivo = ""
+        if foto and foto.filename:
+            caminho_arquivo = os.path.join(PASTA_UPLOADS, foto.filename)
+            with open(caminho_arquivo, "wb") as buffer:
+                shutil.copyfileobj(foto.file, buffer)
+            print(f"[+] Imagem salva com sucesso em: {caminho_arquivo}", flush=True)
             
-        print(f"[+] Imagem salva com sucesso em: {caminho_arquivo}", flush=True)
-        database.agendar_novo_post(caminho_arquivo, legenda, data_agendada)
-        return {"status": "Publicação agendada com sucesso!"}
+        database.agendar_novo_post(caminho_arquivo, legenda, data_agendada if data_agendada else None)
+        return {"status": "Postagem agendada/salva como rascunho com sucesso!"}
     except HTTPException:
         raise
     except Exception as e:

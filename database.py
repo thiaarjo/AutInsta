@@ -145,20 +145,26 @@ def salvar_lote(resultados_em_lote):
 
 # Agendamento
 
-def agendar_novo_post(caminho_foto, legenda, data_agendada):
-    # Validação: impede agendamentos no passado
-    try:
-        dt_agendada = datetime.strptime(data_agendada, "%Y-%m-%dT%H:%M")
-        if dt_agendada < datetime.now():
-            raise ValueError("Não é possível agendar para uma data no passado.")
-    except ValueError as ve:
-        if "passado" in str(ve):
-            raise ve
-        # Se o formato for diferente, deixa passar
-        pass
+def agendar_novo_post(caminho_foto, legenda, data_agendada=None):
+    status = 'PENDENTE'
+    if data_agendada:
+        # Validação: impede agendamentos no passado
+        try:
+            dt_agendada = datetime.strptime(data_agendada, "%Y-%m-%dT%H:%M")
+            if dt_agendada < datetime.now():
+                raise ValueError("Não é possível agendar para uma data no passado.")
+        except ValueError as ve:
+            if "passado" in str(ve):
+                raise ve
+            # Se o formato for diferente, deixa passar
+            pass
+    else:
+        status = 'RASCUNHO'
+        data_agendada = None
+        
     with conectar() as conexao:
         cursor = conexao.cursor()
-        cursor.execute("INSERT INTO postagens_agendadas (caminho_foto, legenda, data_agendada, status) VALUES (?, ?, ?, 'PENDENTE')", (caminho_foto, legenda, data_agendada))
+        cursor.execute("INSERT INTO postagens_agendadas (caminho_foto, legenda, data_agendada, status) VALUES (?, ?, ?, ?)", (caminho_foto, legenda, data_agendada, status))
         conexao.commit()
 
 def buscar_todos_agendamentos():
@@ -174,18 +180,23 @@ def excluir_agendamento(post_id):
         conexao.commit()
 
 def atualizar_data_agendamento(post_id, nova_data):
-    """Atualiza apenas a data de um agendamento (usado no Drag and Drop)."""
-    try:
-        dt = datetime.strptime(nova_data, "%Y-%m-%dT%H:%M")
-        if dt < datetime.now():
-            raise ValueError("Não é possível mover para uma data no passado.")
-    except ValueError as ve:
-        if "passado" in str(ve):
-            raise ve
-        pass
+    """Atualiza apenas a data de um agendamento (usado no Drag and Drop). Se tiver data, muda para PENDENTE."""
+    status = 'PENDENTE'
+    if nova_data:
+        try:
+            dt = datetime.strptime(nova_data, "%Y-%m-%dT%H:%M")
+            if dt < datetime.now():
+                raise ValueError("Não é possível mover para uma data no passado.")
+        except ValueError as ve:
+            if "passado" in str(ve):
+                raise ve
+            pass
+    else:
+        status = 'RASCUNHO'
+        
     with conectar() as conexao:
         cursor = conexao.cursor()
-        cursor.execute("UPDATE postagens_agendadas SET data_agendada = ? WHERE id = ?", (nova_data, post_id))
+        cursor.execute("UPDATE postagens_agendadas SET data_agendada = ?, status = ? WHERE id = ?", (nova_data, status, post_id))
         conexao.commit()
 
 # Lembretes CRUD
