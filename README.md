@@ -1,51 +1,52 @@
 # AutInsta (Instagram Monitor Pro)
 
-AutInsta é um sistema de monitoramento e automação para Instagram construído em Python. Ele unifica uma API local construída com FastAPI, automação de navegador usando Selenium e agendamento de postagens automatizado usando APScheduler.
+O AutInsta é um sistema corporativo de monitoramento e automação de extração de dados voltado para a plataforma Instagram. A aplicação integra uma API RESTful de alta performance desenvolvida em FastAPI, rotinas de automação Web com Selenium WebDriver e gerenciadores analíticos de publicação através do APScheduler.
 
-## 🚀 Funcionalidades
+## Funcionalidades Principais
 
-- **Extração Avançada:** Coleta dados de perfis, posts, curtidas, seguidores e stories.
-- **Painel de Controle (Dashboard):** Acompanhamento visual da automação e status das extrações pelo navegador.
-- **Gestão no Banco de Dados:** Salva e organiza os dados colhidos usando SQLite (histórico de execuções).
-- **Agendador de Postagens:** Interface para hospedar mídias locais e uma fila (_Vigia_) para publicar automaticamente na Meta API nos horários agendados.
-- **Relatórios:** Exporta o engajamento extraído em formato CSV e mostra gráficos de evolução.
+- **Extração de Dados Avançada:** Coleta estruturada de engajamento em perfis-alvo (seguidores, publicações do feed e stories). Conta com roteamento direto para extração isolada e eficiente de stories.
+- **Calendário de Conteúdo Interativo:** Interface avançada de agendamento em grid (Hub do Dia) permitindo manipulação via Drag & Drop e arquivamento em uma coluna de ideias persistente.
+- **Painel de Controle Escalonável:** Desenvolvido puramente em módulos JavaScript ES6, com notificações UI dinâmicas não obstrutivas (Toasts UI) baseadas no status do backend.
+- **Armazenamento e Histórico Rígido:** Centralização dos dados extraídos e históricos de tarefas em um banco de dados relacional SQLite, modelado em cascata.
+- **Publicação Automatizada (Meta Cloud):** Motor em segundo plano que processa e despacha arquivos de mídia local diretamente por meio da Meta Graph API oficial.
+- **Relatórios Analíticos:** Exportação do processamento em datasets tabulares (CSV) e renderização matemática do crescimento dos perfis em gráficos (ChartJS).
 
-## 🛠️ Tecnologias Utilizadas
+## Especificações Técnicas
 
-- **Backend / API:** [FastAPI](https://fastapi.tiangolo.com/) e [Uvicorn](https://www.uvicorn.org/)
-- **Scraping / Bot:** [Selenium](https://selenium-python.readthedocs.io/)
-- **Agendamento (CRON):** [APScheduler](https://apscheduler.readthedocs.io/)
-- **Banco de Dados:** SQLite3 Nativo
-- **Frontend:** Vanilla HTML/JS interativo
+- **Backend / API:** Framework FastAPI com servidor Uvicorn ASGI
+- **Web Scraping:** Selenium WebDriver com prevenção ativa contra memory leaks no Chromium
+- **Agendamento de Jobs:** APScheduler em background
+- **Persistência de Dados:** SQLite3 
+- **Frontend Interativo:** Vanilla HTML5, CSS Nativo e Módulos ECMAScript 6 (ES6)
 
-## 📦 Instalação e Uso
+## Instruções de Instalação e Execução
 
-1. **Clone o repositório:**
+1. **Clonar o Repositório:**
 ```bash
 git clone https://github.com/SEU_USUARIO/AutInsta.git
 cd AutInsta
 ```
 
-2. **Crie e ative o ambiente virtual:**
+2. **Inicializar o Ambiente Virtual Python:**
 ```bash
 python -m venv venv
-venv\Scripts\activate   # No Windows
+venv\Scripts\activate   # Em ambientes Windows
 ```
 
-3. **Instale as dependências:**
+3. **Instalar as Dependências:**
 ```bash
 pip install -r requirements.txt
 ```
 
-4. **Inicie o servidor localmente:**
+4. **Executar o Servidor de Desenvolvimento:**
 ```bash
 uvicorn main:app --reload
 ```
-O sistema abrirá automaticamente o navegador na porta HTTP `http://localhost:8000`.
+A interface do sistema abrirá automaticamente através do servidor local na porta HTTP `http://localhost:8000`.
 
-## ⚠️ Avisos e Configurações de Deploy
-* Crie sua integração nas plataformas de desenvolvedor da **Meta** e insira suas credenciais em `meta_api.py`.
-* Verifique o caminho base da sua instalação do Google Chrome para o ChromeDriver.
+## Requisitos Base de Configuração 
+* Autenticação e aprovação de permissões no portal **Meta for Developers** para as credenciais injetadas nativamente no submódulo `meta_api.py`.
+* Verificação estrutural do driver base do Google Chrome mapeado no sistema operacional principal.
 
-## 🛡️ Aviso Legal
-Este projeto é para propósitos educacionais. O uso de bots para raspagem de dados no Instagram pode infligir os Termos de Serviço da plataforma. Use com responsabilidade e saiba que limites de taxa podem aplicar restrições na sua conta.
+## Aviso e Disclaimer de Proteção
+O desenvolvimento deste projeto possui propósitos estritamente focados em engenharia de extração e automação. O uso de robôs web em ecossistemas fechados, a exemplo do Instagram, pode resultar no rompimento dos Termos de Serviço proprietários. É de inteira responsabilidade do desenvolvedor-fim a manipulação dos bloqueios de sub-rede e restrições da taxa-limite (*rate limit*) através das opções administrativas disponíveis no painel de controle.

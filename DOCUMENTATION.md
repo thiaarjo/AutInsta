@@ -6,12 +6,12 @@ O AutInsta é um sistema completo desenvolvido em Python para automação, monit
 
 ## 1. Arquitetura do Sistema
 
-O sistema utiliza uma arquitetura modularizada, separando as responsabilidades de extração de dados, armazenamento, agendamento de tarefas e interface visual.
+O sistema utiliza uma arquitetura modularizada em camadas, separando as responsabilidades de extração de dados, armazenamento, agendamento de tarefas e interface visual.
 
-- **Frontend (Painel de Controle):** Interface visual construída com HTML, estilizada com CSS nativo e interações controladas por JavaScript modular. Os arquivos estáticos estão separados no diretório `frontend` (`frontend/css/style.css` e `frontend/js/app.js`), sendo servidos a partir do `index.html`. Permite ao usuário interagir com o bot, agendar postagens, definir configurações globais (salvas em `localStorage`), ver relatórios analíticos, consultar status ao vivo através de uma barra de progresso (via endpoints de polling) e acompanhar o histórico.
-- **Backend (API FastAPI):** O arquivo `main.py` hospeda o servidor Uvicorn. Ele provê todas as rotas de API (`/executar_bot`, `/api/agendar`, `/api/historico_graficos`, `/cancelar_bot`, etc.) para que o painel consiga operar os scripts em Python por debaixo dos panos.
-- **Motor de Execução (Scraper):** Módulo `scraper.py` contendo as rotinas em Selenium para acessar a versão Web do Instagram, realizar login, driblar pop-ups, navegar nos perfis, rolar a página para forçar carregamento e extrair dados usando estratégias de tolerância a falhas (lida com perfis públicos e privados).
-- **Gerenciador de Trabalhos em Segundo Plano (O Vigia):** Implementado no `main.py` utilizando `APScheduler`. Esta entidade invisível acorda a cada 1 minuto e checa a fila no Banco de Dados para efetuar postagens na Meta API.
+- **Frontend (Painel de Controle e Calendário):** Interface visual construída com HTML5 e estilizada com utilitários CSS e Vanilla CSS. O Javascript, inicialmente monolítico, foi **completamente refatorado em Módulos ES6** (ex: `api.js`, `calendar.js`, `modals.js`, `dragDrop.js`) orquestrados pelo arquivo `main.js`. Isso traz robustez de produção e facilita a manutenção. Permite interações ricas como **Drag & Drop** de ideias para o calendário, gestão do **Hub do Dia** (modal centralizador de tarefas diárias), acompanhamento ao vivo via polling e sistema de **Notificações Toast** amigáveis e não-obstrutivas.
+- **Backend (API FastAPI):** O arquivo `main.py` hospeda o servidor Uvicorn. Ele provê todas as rotas de API RESTful para que o painel consiga operar os scripts em Python por debaixo dos panos, gerenciar o CRUD no banco de dados e manipular arquivos estáticos de upload.
+- **Motor de Execução (Scraper):** Módulo `scraper.py` contendo as rotinas em Selenium para acessar a versão Web do Instagram, driblar pop-ups e extrair dados usando estratégias de tolerância a falhas. Conta com otimizações de fluxo (ex: navegação direta para URLs de Stories quando solicitados de forma isolada, poupando carregamentos desnecessários).
+- **Gerenciador de Trabalhos em Segundo Plano (O Vigia):** Implementado no `main.py` utilizando `APScheduler`. Esta entidade invisível acorda periodicamente (ex: a cada 1 minuto) e checa a fila no Banco de Dados para efetuar postagens na Meta API.
 
 ---
 
