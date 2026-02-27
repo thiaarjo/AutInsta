@@ -343,16 +343,54 @@ async function carregarAgendamentos() {
         const res = await fetch('/api/agendamentos');
         const data = await res.json();
 
-        // Limpa todos os slots diários correntes
+        // Limpa todos os slots diários correntes e a gaveta de rascunhos
         document.querySelectorAll('[id^="cal-conteudo-"]').forEach(el => el.innerHTML = '');
+        const listaRascunhos = document.getElementById('lista-rascunhos');
+        if (listaRascunhos) listaRascunhos.innerHTML = '';
+        let countRascunhos = 0;
 
         if (!data.agendamentos || data.agendamentos.length === 0) {
+            if (listaRascunhos) listaRascunhos.innerHTML = '<p class="text-xs text-zinc-400 text-center py-4">Nenhuma ideia guardada.</p>';
             // Ainda carrega lembretes mesmo sem agendamentos
             await carregarLembretes();
             return;
         }
 
         data.agendamentos.forEach(item => {
+            if (item.status === 'RASCUNHO' || !item.data_agendada) {
+                // RENDERIZAR NA GAVETA DE RASCUNHOS
+                countRascunhos++;
+                if (listaRascunhos) {
+                    let legendaPreview = (item.legenda || '').substring(0, 80);
+                    let rascunhoHtml = `
+                        <div class="bg-white border border-amber-200 rounded-lg p-3 shadow-sm cursor-grab hover:shadow-md hover:-translate-y-0.5 transition-all group relative flex gap-3 items-center"
+                             draggable="true"
+                             data-agendamento-id="${item.id}"
+                             data-tipo="post"
+                             ondragstart="onDragStartCard(event)"
+                             ondragend="onDragEndCard(event)">
+                            
+                            ${item.arquivo ? `
+                            <div class="w-12 h-12 rounded bg-zinc-100 shrink-0 overflow-hidden border border-zinc-200">
+                                <img src="/uploads/${item.arquivo}" class="w-full h-full object-cover">
+                            </div>` : `
+                            <div class="w-12 h-12 rounded bg-amber-50 shrink-0 flex items-center justify-center border border-amber-100 text-amber-400">
+                                <i data-lucide="type" class="w-5 h-5"></i>
+                            </div>`}
+                            
+                            <div class="flex-1 min-w-0">
+                                <p class="text-xs text-zinc-600 line-clamp-2">${legendaPreview || '<em class="text-zinc-400">Sem texto</em>'}</p>
+                            </div>
+                            
+                            <button onclick="deletarAgendamento(${item.id}); event.stopPropagation();" class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 p-1.5 rounded-md hover:bg-red-50 text-red-500 transition-all shrink-0" title="Apagar Ideia">
+                                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                            </button>
+                        </div>
+                    `;
+                    listaRascunhos.innerHTML += rascunhoHtml;
+                }
+                return; // Pula a renderização no calendário
+            }
             let partesDataStr = item.data_agendada.split('T');
             let diaIdBase = partesDataStr[0];
             let horaAbreviada = partesDataStr[1] ? partesDataStr[1].substring(0, 5) : '';
@@ -387,6 +425,7 @@ async function carregarAgendamentos() {
                      data-hora="${horaAbreviada}"
                      data-status="${statusLabel}"
                      ondragstart="onDragStartCard(event)"
+                     ondragend="onDragEndCard(event)"
                      onmouseenter="mostrarTooltip(event, this)"
                      onmouseleave="esconderTooltip()"
                      onclick="event.stopPropagation()">
@@ -404,8 +443,15 @@ async function carregarAgendamentos() {
             celulaAlvo.innerHTML += cardHtml;
         });
 
+        if (countRascunhos === 0 && listaRascunhos) {
+            listaRascunhos.innerHTML = '<p class="text-xs text-zinc-400 text-center py-4">Nenhuma ideia guardada.</p>';
+        }
+
         // Carrega lembretes depois dos posts
         await carregarLembretes();
+
+        // Popula a aba lateral de agendados
+        popularAgendadosLateral(data.agendamentos);
 
         if (window.lucide) lucide.createIcons();
     } catch (e) {
@@ -467,6 +513,8 @@ function fecharModalAgendamento() {
     if (form) form.reset();
     const previewImg = document.getElementById('preview_img');
     if (previewImg) { previewImg.classList.add('hidden'); previewImg.src = ''; }
+    const previewTexto = document.getElementById('preview-legenda-texto');
+    if (previewTexto) previewTexto.innerHTML = 'Sua legenda aparecerá aqui...';
 }
 
 function toggleFormAgendamento() {
@@ -480,6 +528,96 @@ function toggleFormAgendamento() {
             btn.classList.remove('hidden');
         }
     }
+}
+
+// ==========================================
+// 💡 PAINEL LATERAL (IDEIAS + AGENDADOS)
+// ==========================================
+
+function trocarAbaLateral(aba) {
+    const tabIdeias = document.getElementById('tab-ideias');
+    const tabAgendados = document.getElementById('tab-agendados');
+    const painelIdeias = document.getElementById('painel-ideias');
+    const painelAgendados = document.getElementById('painel-agendados');
+
+    if (aba === 'ideias') {
+        tabIdeias.className = 'flex-1 text-xs font-black uppercase tracking-widest py-3 text-center transition-colors text-amber-600 border-b-2 border-amber-500 bg-white';
+        tabAgendados.className = 'flex-1 text-xs font-black uppercase tracking-widest py-3 text-center transition-colors text-zinc-400 border-b-2 border-transparent hover:text-zinc-600';
+        painelIdeias.classList.remove('hidden');
+        painelAgendados.classList.add('hidden');
+    } else {
+        tabAgendados.className = 'flex-1 text-xs font-black uppercase tracking-widest py-3 text-center transition-colors text-pink-600 border-b-2 border-pink-500 bg-white';
+        tabIdeias.className = 'flex-1 text-xs font-black uppercase tracking-widest py-3 text-center transition-colors text-zinc-400 border-b-2 border-transparent hover:text-zinc-600';
+        painelAgendados.classList.remove('hidden');
+        painelIdeias.classList.add('hidden');
+    }
+    if (window.lucide) lucide.createIcons();
+}
+
+function popularAgendadosLateral(agendamentos) {
+    const container = document.getElementById('lista-agendados-lateral');
+    if (!container) return;
+    container.innerHTML = '';
+
+    // Filtra apenas os agendados (não rascunhos)
+    const agendados = agendamentos.filter(p => p.data_agendada && p.status !== 'RASCUNHO');
+    if (agendados.length === 0) {
+        container.innerHTML = '<p class="text-xs text-zinc-400 text-center py-4">Nenhum post agendado.</p>';
+        return;
+    }
+
+    // Agrupa por data (YYYY-MM-DD)
+    const grupos = {};
+    agendados.forEach(p => {
+        const dia = p.data_agendada.split('T')[0];
+        if (!grupos[dia]) grupos[dia] = [];
+        grupos[dia].push(p);
+    });
+
+    // Ordena as datas
+    const datasOrdenadas = Object.keys(grupos).sort();
+
+    const MESES = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+
+    datasOrdenadas.forEach(dataStr => {
+        const parts = dataStr.split('-');
+        const dt = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+        const labelDia = `${dt.getDate()} ${MESES[dt.getMonth()]}`;
+
+        let headerHtml = `<div class="text-[10px] font-black text-zinc-400 uppercase tracking-widest pt-3 pb-1 px-1 border-b border-zinc-100 mb-1.5">${labelDia}</div>`;
+        container.innerHTML += headerHtml;
+
+        grupos[dataStr].forEach(post => {
+            const hora = post.data_agendada.split('T')[1]?.substring(0, 5) || '';
+            let statusColor = 'text-pink-600', statusBg = 'bg-pink-50', border = 'border-pink-200';
+            if (post.status === 'PUBLICADO') { statusColor = 'text-green-600'; statusBg = 'bg-green-50'; border = 'border-green-200'; }
+            else if (post.status === 'ERRO') { statusColor = 'text-red-600'; statusBg = 'bg-red-50'; border = 'border-red-200'; }
+
+            const legendaPreview = (post.legenda || '').substring(0, 50);
+            container.innerHTML += `
+                <div class="${statusBg} border ${border} rounded-lg px-2.5 py-2 flex items-center gap-2 mb-1.5">
+                    ${post.arquivo ? `<div class="w-8 h-8 rounded shrink-0 bg-white border overflow-hidden"><img src="/uploads/${post.arquivo}" class="w-full h-full object-cover"></div>` : ''}
+                    <div class="min-w-0 flex-1">
+                        <p class="text-[10px] font-black ${statusColor} flex items-center gap-1"><i data-lucide="clock" class="w-2.5 h-2.5"></i> ${hora} • ${post.status}</p>
+                        <p class="text-[10px] text-zinc-500 truncate">${legendaPreview || 'Sem legenda'}</p>
+                    </div>
+                </div>
+            `;
+        });
+    });
+}
+
+function abrirModalNovoRascunho() {
+    const modal = document.getElementById('modal-rascunho');
+    if (modal) modal.classList.remove('hidden');
+    if (window.lucide) lucide.createIcons();
+}
+
+function fecharModalRascunho() {
+    const modal = document.getElementById('modal-rascunho');
+    if (modal) modal.classList.add('hidden');
+    const form = document.getElementById('formNovoRascunho');
+    if (form) form.reset();
 }
 
 // --- LEMBRETES DO MODAL ---
@@ -659,6 +797,20 @@ async function popularPostsDoModal(dataStr) {
 }
 
 // --- LISTENERS ---
+document.getElementById('legenda_post').addEventListener('input', function (e) {
+    const text = e.target.value;
+    const previewEl = document.getElementById('preview-legenda-texto');
+    if (!text.trim()) {
+        previewEl.innerHTML = 'Sua legenda aparecerá aqui...';
+        return;
+    }
+    // Formata quebras de linha e pinta hashtags/menções de azul (estilo Instagram)
+    let formattedText = text.replace(/\n/g, '<br>');
+    formattedText = formattedText.replace(/(#\w+)/g, '<span class="text-blue-500 font-medium hover:underline cursor-pointer">$1</span>');
+    formattedText = formattedText.replace(/(@\w+)/g, '<span class="text-blue-500 font-medium hover:underline cursor-pointer">$1</span>');
+    previewEl.innerHTML = formattedText;
+});
+
 document.getElementById('foto_upload').addEventListener('change', function (e) { if (e.target.files[0]) { const reader = new FileReader(); reader.onload = function (evt) { document.getElementById('preview_img').src = evt.target.result; document.getElementById('preview_img').classList.remove('hidden'); }; reader.readAsDataURL(e.target.files[0]); } });
 
 document.getElementById('modal-lembrete-input').addEventListener('keydown', function (e) {
@@ -679,6 +831,8 @@ document.getElementById('formAgendamento').addEventListener('submit', async func
         document.getElementById('formAgendamento').reset();
         document.getElementById('preview_img').classList.add('hidden');
         document.getElementById('preview_img').src = '';
+        const previewTexto = document.getElementById('preview-legenda-texto');
+        if (previewTexto) previewTexto.innerHTML = 'Sua legenda aparecerá aqui...';
 
         // Refresh in-place: recarrega posts do dia no modal sem fechar
         if (diaAtualDoModal) {
@@ -1030,7 +1184,7 @@ function renderizarGradeCalendario() {
             bgClass = "bg-white hover:bg-zinc-50 transition-colors";
         }
 
-        divDia.className = `${bgClass} min-h-[130px] p-2 border-r border-b border-zinc-200 flex flex-col ${isPassado ? 'cursor-default' : 'cursor-pointer'} relative group`;
+        divDia.className = `${bgClass} min-h-[85px] p-1.5 border-r border-b border-zinc-200 flex flex-col ${isPassado ? 'cursor-default' : 'cursor-pointer'} relative group`;
         divDia.id = `cal-dia-${dataFormatada}`;
         divDia.dataset.calData = dataFormatada;
 
@@ -1058,12 +1212,12 @@ function renderizarGradeCalendario() {
         grid.appendChild(divDia);
     }
 
-    // Células vazias para completar a grade
+    // Células vazias para completar a grade (SEMPRE 6 linhas = 42 células para altura fixa)
     const celulasTotais = diaDaSemanaInicio + diasNoMes;
-    const celulasFaltantes = (Math.ceil(celulasTotais / 7) * 7) - celulasTotais;
+    const celulasFaltantes = 42 - celulasTotais;
     for (let i = 0; i < celulasFaltantes; i++) {
         const divMorta = document.createElement('div');
-        divMorta.className = "bg-zinc-50 min-h-[130px] p-2 border-r border-b border-zinc-200";
+        divMorta.className = "bg-zinc-50 min-h-[85px] p-1.5 border-r border-b border-zinc-200";
         grid.appendChild(divMorta);
     }
 
@@ -1097,6 +1251,7 @@ async function carregarLembretes() {
                      data-tipo="lembrete"
                      draggable="true"
                      ondragstart="onDragStartCard(event)"
+                     ondragend="onDragEndCard(event)"
                      onclick="event.stopPropagation(); editarLembreteInline(${lem.id}, '${lem.data}', '${lem.texto.replace(/'/g, "\\'").replace(/"/g, '&quot;')}', '${lem.cor}')">
                     <i data-lucide="sticky-note" class="w-3 h-3 ${cores.icon} shrink-0"></i>
                     <p class="text-[10px] font-bold ${cores.text} truncate flex-1">${lem.texto}</p>
@@ -1226,6 +1381,15 @@ function onDragStartCard(e) {
 
     card.style.opacity = '0.4';
     setTimeout(() => { card.style.opacity = '1'; }, 300);
+
+    // Permite soltar no calendário mesmo se a gaveta escura ("overlay") estiver por cima
+    const overlay = document.getElementById('drawer-overlay');
+    if (overlay) overlay.style.pointerEvents = 'none';
+}
+
+function onDragEndCard(e) {
+    const overlay = document.getElementById('drawer-overlay');
+    if (overlay) overlay.style.pointerEvents = 'auto';
 }
 
 async function onDropCard(e, novaDataStr, divDia) {
@@ -1314,6 +1478,45 @@ function mostrarTooltip(e, card) {
 function esconderTooltip() {
     if (tooltipEl) tooltipEl.style.opacity = '0';
 }
+
+// ==========================================
+// 🚀 EVENT LISTENERS DE FORMULÁRIOS ADICIONAIS
+// ==========================================
+document.getElementById('formNovoRascunho').addEventListener('submit', async function (event) {
+    event.preventDefault();
+    const btn = document.getElementById('btn-salvar-rascunho');
+    btn.disabled = true;
+    btn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Salvando...';
+    if (window.lucide) lucide.createIcons();
+
+    try {
+        const formData = new FormData();
+        const fotoInput = document.getElementById('foto_rascunho');
+        if (fotoInput.files.length > 0) {
+            formData.append("foto", fotoInput.files[0]);
+        }
+        formData.append("legenda", document.getElementById('legenda_rascunho').value);
+        formData.append("data_agendada", ""); // Vazio para RASCUNHO
+
+        const res = await fetch('/api/agendar', { method: 'POST', body: formData });
+        if (!res.ok) {
+            const err = await res.json();
+            alert(err.detail || 'Erro ao salvar rascunho.');
+            return;
+        }
+
+        fecharModalRascunho();
+        trocarAbaLateral('ideias'); // Mostra a aba de ideias para ver o novo rascunho
+        carregarAgendamentos();  // Atualiza a lista
+    } catch (err) {
+        console.error('Erro ao salvar rascunho:', err);
+        alert('Erro de conexão ao salvar rascunho.');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i data-lucide="save" class="w-4 h-4"></i> Guardar Ideia';
+        if (window.lucide) lucide.createIcons();
+    }
+});
 
 // Auto-iniciar o layout
 document.addEventListener('DOMContentLoaded', () => {

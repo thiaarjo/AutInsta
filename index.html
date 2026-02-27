@@ -369,7 +369,7 @@
         </div>
     </div>
 
-    <main id="view-lista" class="hidden max-w-[1200px] mx-auto py-12 px-6">
+    <main id="view-lista" class="hidden max-w-[1440px] mx-auto py-12 px-6">
         <div class="flex items-center justify-between mb-6 pb-4 border-b border-zinc-200">
             <div>
                 <h2 class="text-xl font-bold text-zinc-900 flex items-center gap-2"><i data-lucide="calendar"
@@ -396,43 +396,92 @@
             </div>
         </div>
 
-        <div class="flex items-stretch gap-2">
-            <!-- Seta lateral esquerda -->
-            <div class="flex items-center">
-                <button onclick="mudarMesCalendario(-1)"
-                    class="w-9 h-9 flex items-center justify-center rounded-full bg-pink-100 hover:bg-pink-200 text-pink-600 hover:text-pink-700 shadow-sm hover:shadow transition-all group"
-                    title="Mês anterior">
-                    <i data-lucide="chevron-left" class="w-5 h-5 group-hover:scale-110 transition-transform"></i>
-                </button>
+        <div class="flex gap-4 items-start">
+            <!-- COLUNA ESQUERDA: Calendário -->
+            <div class="flex-1 flex items-stretch gap-2 min-w-0">
+                <!-- Seta lateral esquerda -->
+                <div class="flex items-center">
+                    <button onclick="mudarMesCalendario(-1)"
+                        class="w-9 h-9 flex items-center justify-center rounded-full bg-pink-100 hover:bg-pink-200 text-pink-600 hover:text-pink-700 shadow-sm hover:shadow transition-all group"
+                        title="Mês anterior">
+                        <i data-lucide="chevron-left" class="w-5 h-5 group-hover:scale-110 transition-transform"></i>
+                    </button>
+                </div>
+
+                <!-- Calendário -->
+                <div class="flex-1 bg-white border border-zinc-200 rounded-xl shadow-sm overflow-hidden">
+                    <!-- Cabeçalho dos Dias da Semana -->
+                    <div class="grid grid-cols-7 border-b border-zinc-200 bg-zinc-50/50">
+                        <div class="py-3 text-center text-xs font-black text-zinc-400 uppercase tracking-widest">Dom
+                        </div>
+                        <div class="py-3 text-center text-xs font-black text-zinc-500 uppercase tracking-widest">Seg
+                        </div>
+                        <div class="py-3 text-center text-xs font-black text-zinc-500 uppercase tracking-widest">Ter
+                        </div>
+                        <div class="py-3 text-center text-xs font-black text-zinc-500 uppercase tracking-widest">Qua
+                        </div>
+                        <div class="py-3 text-center text-xs font-black text-zinc-500 uppercase tracking-widest">Qui
+                        </div>
+                        <div class="py-3 text-center text-xs font-black text-zinc-500 uppercase tracking-widest">Sex
+                        </div>
+                        <div class="py-3 text-center text-xs font-black text-zinc-400 uppercase tracking-widest">Sáb
+                        </div>
+                    </div>
+                    <!-- Grade do Calendário -->
+                    <div id="grid-calendario" class="grid grid-cols-7 bg-zinc-100 gap-[1px]">
+                        <!-- Javascript preenche os dias aqui -->
+                    </div>
+                </div>
+
+                <!-- Seta lateral direita -->
+                <div class="flex items-center">
+                    <button onclick="mudarMesCalendario(1)"
+                        class="w-9 h-9 flex items-center justify-center rounded-full bg-pink-100 hover:bg-pink-200 text-pink-600 hover:text-pink-700 shadow-sm hover:shadow transition-all group"
+                        title="Próximo mês">
+                        <i data-lucide="chevron-right" class="w-5 h-5 group-hover:scale-110 transition-transform"></i>
+                    </button>
+                </div>
             </div>
 
-            <!-- Calendário -->
-            <div class="flex-1 bg-white border border-zinc-200 rounded-xl shadow-sm overflow-hidden">
-                <!-- Cabeçalho dos Dias da Semana -->
-                <div class="grid grid-cols-7 border-b border-zinc-200 bg-zinc-50/50">
-                    <div class="py-3 text-center text-xs font-black text-zinc-400 uppercase tracking-widest">Dom</div>
-                    <div class="py-3 text-center text-xs font-black text-zinc-500 uppercase tracking-widest">Seg</div>
-                    <div class="py-3 text-center text-xs font-black text-zinc-500 uppercase tracking-widest">Ter</div>
-                    <div class="py-3 text-center text-xs font-black text-zinc-500 uppercase tracking-widest">Qua</div>
-                    <div class="py-3 text-center text-xs font-black text-zinc-500 uppercase tracking-widest">Qui</div>
-                    <div class="py-3 text-center text-xs font-black text-zinc-500 uppercase tracking-widest">Sex</div>
-                    <div class="py-3 text-center text-xs font-black text-zinc-400 uppercase tracking-widest">Sáb</div>
+            <!-- COLUNA DIREITA: Painel de Ideias & Agendados -->
+            <div class="w-72 shrink-0 bg-white border border-zinc-200 rounded-xl shadow-sm flex flex-col overflow-hidden"
+                style="max-height: 75vh;">
+                <!-- Tabs -->
+                <div class="flex border-b border-zinc-200 bg-zinc-50/30">
+                    <button id="tab-ideias" onclick="trocarAbaLateral('ideias')"
+                        class="flex-1 text-xs font-black uppercase tracking-widest py-3 text-center transition-colors text-amber-600 border-b-2 border-amber-500 bg-white">
+                        <i data-lucide="lightbulb" class="w-3.5 h-3.5 inline mr-1"></i> Ideias
+                    </button>
+                    <button id="tab-agendados" onclick="trocarAbaLateral('agendados')"
+                        class="flex-1 text-xs font-black uppercase tracking-widest py-3 text-center transition-colors text-zinc-400 border-b-2 border-transparent hover:text-zinc-600">
+                        <i data-lucide="calendar-check" class="w-3.5 h-3.5 inline mr-1"></i> Agendados
+                    </button>
                 </div>
-                <!-- Grade do Calendário -->
-                <div id="grid-calendario" class="grid grid-cols-7 bg-zinc-100 gap-[1px]">
-                    <!-- Javascript preenche os dias aqui -->
-                </div>
-            </div>
 
-            <!-- Seta lateral direita -->
-            <div class="flex items-center">
-                <button onclick="mudarMesCalendario(1)"
-                    class="w-9 h-9 flex items-center justify-center rounded-full bg-pink-100 hover:bg-pink-200 text-pink-600 hover:text-pink-700 shadow-sm hover:shadow transition-all group"
-                    title="Próximo mês">
-                    <i data-lucide="chevron-right" class="w-5 h-5 group-hover:scale-110 transition-transform"></i>
-                </button>
+                <!-- Conteúdo da Aba: Ideias -->
+                <div id="painel-ideias" class="flex-1 overflow-y-auto">
+                    <div class="p-3 space-y-2" id="lista-rascunhos">
+                        <p class="text-xs text-zinc-400 text-center py-4">Nenhuma ideia guardada.</p>
+                    </div>
+                </div>
+
+                <!-- Conteúdo da Aba: Agendados -->
+                <div id="painel-agendados" class="flex-1 overflow-y-auto hidden">
+                    <div class="p-3 space-y-1" id="lista-agendados-lateral">
+                        <p class="text-xs text-zinc-400 text-center py-4">Nenhum post agendado.</p>
+                    </div>
+                </div>
+
+                <!-- Botão de nova ideia (sempre visível) -->
+                <div class="p-3 border-t border-zinc-100 bg-white">
+                    <button onclick="abrirModalNovoRascunho()"
+                        class="w-full bg-amber-50 border border-amber-200 text-amber-600 hover:bg-amber-100 text-xs font-bold uppercase tracking-widest py-2.5 rounded-lg transition-all flex justify-center items-center gap-2">
+                        <i data-lucide="plus" class="w-3.5 h-3.5"></i> Nova Ideia
+                    </button>
+                </div>
             </div>
         </div>
+
     </main>
 
     <main id="view-comparativo" class="hidden max-w-[1200px] mx-auto py-12 px-6">
@@ -653,6 +702,42 @@
             </form>
         </div>
     </main>
+
+    <!-- MODAL NOVO RASCUNHO (GAVETA DE IDEIAS) -->
+    <div id="modal-rascunho"
+        class="fixed inset-0 bg-zinc-900/40 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col">
+            <div class="px-6 py-4 border-b border-zinc-100 flex items-center justify-between bg-amber-50/50">
+                <h2 class="text-sm font-black text-amber-700 uppercase tracking-widest"><i data-lucide="lightbulb"
+                        class="w-4 h-4 inline mr-2 text-amber-500"></i>Nova Ideia (Rascunho)</h2>
+                <button onclick="fecharModalRascunho()"
+                    class="text-zinc-400 hover:text-red-500 transition-colors p-1"><i data-lucide="x"
+                        class="w-5 h-5"></i></button>
+            </div>
+
+            <form id="formNovoRascunho" class="p-6 flex flex-col gap-4">
+                <div>
+                    <label class="block text-xs font-black text-zinc-400 uppercase tracking-widest mb-1">Legenda
+                        (Opcional)</label>
+                    <textarea id="legenda_rascunho"
+                        class="w-full text-sm font-medium text-zinc-700 bg-zinc-50 border border-zinc-200 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 resize-none h-24 transition-all"
+                        placeholder="Escreva sua ideia..."></textarea>
+                </div>
+                <div>
+                    <label class="block text-xs font-black text-zinc-400 uppercase tracking-widest mb-1">Imagem
+                        (Opcional)</label>
+                    <input type="file" id="foto_rascunho" accept="image/*"
+                        class="w-full text-sm text-zinc-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-amber-50 file:text-amber-700 hover:file:bg-amber-100 transition cursor-pointer">
+                </div>
+                <div class="mt-2 pt-4 border-t border-zinc-100 flex justify-end">
+                    <button type="submit" id="btn-salvar-rascunho"
+                        class="bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold uppercase tracking-widest py-3 px-6 rounded-lg transition-colors flex items-center gap-2 shadow-sm">
+                        <i data-lucide="save" class="w-4 h-4"></i> Guardar Ideia
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <script src="/frontend/js/app.js"></script>
 </body>
