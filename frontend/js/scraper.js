@@ -121,7 +121,10 @@ document.getElementById('bot-form').onsubmit = async (e) => {
                             </div>
                             <div class="grid grid-cols-2 gap-3 mt-auto">
                                 <div class="bg-zinc-50 border border-zinc-100 p-2.5 rounded text-center"><p class="text-[8px] uppercase text-zinc-400 font-bold mb-0.5">Curtidas</p><p class="text-sm font-black text-zinc-800 truncate">${p.curtidas}</p></div>
-                                <div class="bg-${cor}-50 border border-${cor}-100 p-2.5 rounded text-center"><p class="text-[8px] uppercase text-${cor}-600 font-bold mb-0.5">Engajamento</p><p class="text-sm font-black text-${cor}-700 truncate">${eng}%</p></div>
+                                <div class="${cor === 'green' ? 'bg-green-50 border border-green-100 text-green-700' : (cor === 'amber' ? 'bg-amber-50 border border-amber-100 text-amber-700' : 'bg-red-50 border border-red-100 text-red-700')} p-2.5 rounded text-center">
+                                    <p class="text-[8px] uppercase ${cor === 'green' ? 'text-green-600' : (cor === 'amber' ? 'text-amber-600' : 'text-red-600')} font-bold mb-0.5">Engajamento</p>
+                                    <p class="text-sm font-black truncate">${eng}%</p>
+                                </div>
                             </div>
                             ${divComentarios}
                         </div>
@@ -131,16 +134,46 @@ document.getElementById('bot-form').onsubmit = async (e) => {
             // STORIES LOGIC
             let storiesHtml = '';
             if (res.stories && res.stories.length > 0) {
-                const videos = res.stories.filter(s => s.tipo === 'Video').length;
-                const fotos = res.stories.filter(s => s.tipo !== 'Video').length;
+                const videos = res.stories.filter(s => s.tipo === 'VIDEO').length;
+                const fotos = res.stories.filter(s => s.tipo !== 'VIDEO').length;
+
+                let storyCards = res.stories.map(s => {
+                    const isVideo = s.tipo && s.tipo.toUpperCase() === 'VIDEO';
+                    const iconTipo = isVideo ? 'video' : 'image';
+                    const corTipo = isVideo ? 'bg-blue-600 text-white' : 'bg-orange-500 text-white';
+                    const labelTipo = isVideo ? 'VÍDEO' : 'FOTO';
+
+                    return `
+                    <div class="bg-white rounded-lg border border-zinc-200 overflow-hidden shadow-sm flex flex-col">
+                        <div class="relative bg-zinc-100 aspect-[9/16] flex items-center justify-center overflow-hidden">
+                            ${s.caminho_imagem
+                            ? `<img src="${s.caminho_imagem}" class="w-full h-full object-cover" onerror="this.style.display='none'; this.nextElementSibling.classList.remove('hidden');">
+                                   <div class="hidden flex flex-col items-center justify-center absolute inset-0 bg-zinc-100">
+                                       <i data-lucide="image-off" class="w-6 h-6 text-zinc-300 mb-1"></i>
+                                       <span class="text-[10px] text-zinc-400 font-bold">Removida</span>
+                                   </div>`
+                            : `<div class="flex flex-col items-center justify-center">
+                                       <i data-lucide="${iconTipo}" class="w-6 h-6 text-zinc-300 mb-1"></i>
+                                       <span class="text-[10px] text-zinc-400 font-bold">Sem print</span>
+                                   </div>`
+                        }
+                            <span class="${corTipo} text-[8px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider shadow-sm absolute top-1 right-1 flex items-center gap-0.5">
+                                <i data-lucide="${iconTipo}" class="w-2.5 h-2.5"></i> ${labelTipo}
+                            </span>
+                        </div>
+                        <div class="p-2 text-center">
+                            <span class="text-[10px] font-bold text-zinc-500">${s.tempo || 'N/A'}</span>
+                        </div>
+                    </div>`;
+                }).join('');
 
                 storiesHtml = `
                 <div class="bg-zinc-50 border border-zinc-200 rounded-lg p-4 mb-5 shadow-sm">
                     <h4 class="text-xs font-bold text-zinc-700 uppercase tracking-wider mb-3 flex items-center gap-2">
-                        <i data-lucide="play-square" class="w-4 h-4 text-pink-500"></i> Resumo de Stories 
+                        <i data-lucide="play-square" class="w-4 h-4 text-pink-500"></i> Stories Capturados
                         <span class="bg-pink-100 text-pink-700 text-[10px] px-2 py-0.5 rounded-full ml-auto">${res.stories.length} Ativos</span>
                     </h4>
-                    <div class="grid grid-cols-2 gap-3">
+                    <div class="grid grid-cols-2 gap-3 mb-3">
                         <div class="bg-white p-3 rounded border border-zinc-100 flex items-center gap-3">
                             <div class="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center"><i data-lucide="video" class="w-4 h-4 text-blue-500"></i></div>
                             <div><p class="text-sm font-black text-zinc-800">${videos}</p><p class="text-[10px] text-zinc-400 font-bold uppercase">Vídeos</p></div>
@@ -149,6 +182,9 @@ document.getElementById('bot-form').onsubmit = async (e) => {
                             <div class="w-8 h-8 rounded-full bg-orange-50 flex items-center justify-center"><i data-lucide="image" class="w-4 h-4 text-orange-500"></i></div>
                             <div><p class="text-sm font-black text-zinc-800">${fotos}</p><p class="text-[10px] text-zinc-400 font-bold uppercase">Fotos</p></div>
                         </div>
+                    </div>
+                    <div class="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                        ${storyCards}
                     </div>
                 </div>`;
             } else if (payload.coletar_stories) {
@@ -159,11 +195,33 @@ document.getElementById('bot-form').onsubmit = async (e) => {
                 </div>`;
             }
 
+            // Header do Perfil Limpo
+            let profileHeaderHtml = `
+                <div class="flex items-center gap-4 border-b border-zinc-100 pb-4 mb-5">
+                    <div class="w-12 h-12 rounded-full bg-gradient-to-tr from-yellow-400 to-pink-600 p-[2px] shadow-sm">
+                        <div class="w-full h-full bg-white rounded-full flex items-center justify-center border-2 border-white overflow-hidden">
+                            <i data-lucide="user" class="w-5 h-5 text-zinc-300"></i>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-black text-zinc-900 tracking-tight">@${res.alvo}</h3>
+                        <p class="text-xs font-bold text-zinc-400 flex items-center gap-1.5 mt-0.5"><i data-lucide="scan" class="w-3 h-3"></i> Snapshot Concluído</p>
+                    </div>
+                </div>
+            `;
+
             resDiv.innerHTML += `
-                <div class="bg-white border border-zinc-200 rounded-xl p-6 shadow-sm">
-                    <h3 class="text-xl font-black mb-4">@${res.alvo}</h3>
+                <div class="bg-white border border-zinc-200 rounded-2xl p-6 shadow-sm mb-6 last:mb-0">
+                    ${profileHeaderHtml}
                     ${storiesHtml}
-                    ${feedHtml ? `<div class="space-y-4">${feedHtml}</div>` : ''}
+                    ${feedHtml ? `
+                        <h4 class="text-xs font-bold text-zinc-700 uppercase tracking-wider mb-3 mt-6 flex items-center gap-2">
+                            <i data-lucide="grid" class="w-4 h-4 text-pink-500"></i> Publicações do Feed
+                        </h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            ${feedHtml}
+                        </div>
+                    ` : ''}
                 </div>`;
         });
         lucide.createIcons();

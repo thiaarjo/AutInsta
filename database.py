@@ -70,6 +70,7 @@ def criar_tabelas():
                 ordem INTEGER,
                 tipo_midia TEXT,
                 tempo_publicacao TEXT,
+                caminho_imagem TEXT,
                 FOREIGN KEY (perfil_id) REFERENCES perfis_extraidos (id) ON DELETE CASCADE
             );
             
@@ -102,6 +103,11 @@ def criar_tabelas():
         except sqlite3.OperationalError:
             pass 
 
+        try:
+            cursor.execute("ALTER TABLE stories ADD COLUMN caminho_imagem TEXT;")
+        except sqlite3.OperationalError:
+            pass
+
         conexao.commit()
 
 # Insercao
@@ -113,8 +119,8 @@ def _inserir_comentarios(cursor, post_id, comentarios):
 
 def _inserir_stories(cursor, perfil_id, stories):
     if not stories: return
-    valores = [(perfil_id, s.get("numero"), s.get("tipo"), s.get("tempo")) for s in stories]
-    cursor.executemany("INSERT INTO stories (perfil_id, ordem, tipo_midia, tempo_publicacao) VALUES (?, ?, ?, ?)", valores)
+    valores = [(perfil_id, s.get("numero"), s.get("tipo"), s.get("tempo"), s.get("caminho_imagem")) for s in stories]
+    cursor.executemany("INSERT INTO stories (perfil_id, ordem, tipo_midia, tempo_publicacao, caminho_imagem) VALUES (?, ?, ?, ?, ?)", valores)
 
 def salvar_lote(resultados_em_lote):
     if not resultados_em_lote: return
@@ -325,6 +331,53 @@ def buscar_historico_detalhado(perfil_alvo):
             })
             
         return historico
+
+def buscar_stories_por_perfil(perfil_alvo):
+    """Busca todos os stories extraídos de um perfil, com dados de imagem e data de extração."""
+    with conectar() as conexao:
+        cursor = conexao.cursor()
+        cursor.execute("""
+            SELECT s.ordem, s.tipo_midia, s.tempo_publicacao, s.caminho_imagem, el.data_execucao
+            FROM stories s
+            JOIN perfis_extraidos pe ON s.perfil_id = pe.id
+            JOIN execucoes_lote el ON pe.lote_id = el.id
+            WHERE pe.alvo = ?
+            ORDER BY el.data_execucao DESC, s.ordem ASC
+        """, (perfil_alvo,))
+        
+        return [{
+            "ordem": r[0],
+            "tipo": r[1],
+            "tempo": r[2],
+            "print": r[3],
+            "data_extracao": r[4]
+        } for r in cursor.fetchall()]
+
+def limpar_dados_perfil(perfil_alvo):
+    """Limpa posts_feed, stories e comentarios de um perfil sem apagar o perfil em si."""
+    with conectar() as conexao:
+        cursor = conexao.cursor()
+        # Busca todos os perfil_ids desse alvo
+        cursor.execute("SELECT id FROM perfis_extraidos WHERE alvo = ?", (perfil_alvo,))
+        ids = [r[0] for r in cursor.fetchall()]
+        if not ids:
+            return 0
+        
+        placeholders = ",".join("?" * len(ids))
+        
+        # Apaga comentários (vinculados a posts)
+        cursor.execute(f"""
+            DELETE FROM comentarios WHERE post_id IN (
+                SELECT id FROM posts_feed WHERE perfil_id IN ({placeholders})
+            )
+        """, ids)
+        
+        # Apaga posts e stories
+        cursor.execute(f"DELETE FROM posts_feed WHERE perfil_id IN ({placeholders})", ids)
+        cursor.execute(f"DELETE FROM stories WHERE perfil_id IN ({placeholders})", ids)
+        
+        conexao.commit()
+        return len(ids)
 
 # Melhor Horario
 def obter_ranking_horarios(perfil_alvo):

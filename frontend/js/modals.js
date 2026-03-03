@@ -130,17 +130,31 @@ function fecharModalConfirmacao() {
     if (m) m.classList.add('hidden');
 }
 
-function confirmarAcao(mensagem) {
+function confirmarAcao(mensagem, tipo = 'confirm', titulo = 'Atenção') {
     return new Promise((resolve) => {
         const m = document.getElementById('modal-confirmacao');
         const mTexto = document.getElementById('texto-modal-confirmacao');
+        const mTitulo = document.getElementById('titulo-modal-confirmacao');
         const btnConfirma = document.getElementById('btn-modal-confirmar');
+        const btnCancelar = document.getElementById('btn-modal-cancelar');
+
         if (!m || !mTexto || !btnConfirma) {
-            resolve(confirm(mensagem)); // Fallback para o nativo em caso de erro
+            console.error('Modal de confirmação não configurado corretamente no HTML.');
+            resolve(false);
             return;
         }
 
         mTexto.innerText = mensagem;
+        if (mTitulo) mTitulo.innerText = titulo;
+
+        if (tipo === 'alert') {
+            if (btnCancelar) btnCancelar.style.display = 'none';
+            btnConfirma.innerText = 'OK';
+        } else {
+            if (btnCancelar) btnCancelar.style.display = 'block';
+            btnConfirma.innerText = 'Confirmar';
+        }
+
         m.classList.remove('hidden');
         if (window.lucide) lucide.createIcons();
 
@@ -153,8 +167,6 @@ function confirmarAcao(mensagem) {
             resolve(true);
         };
 
-        // Sobrescreve o Cancelar global para também resolver falso e evitar vazamento de memória da promise
-        const btnCancelar = m.querySelector('button[onclick="fecharModalConfirmacao()"]');
         if (btnCancelar) {
             const novoCancelar = btnCancelar.cloneNode(true);
             btnCancelar.parentNode.replaceChild(novoCancelar, btnCancelar);
@@ -166,6 +178,10 @@ function confirmarAcao(mensagem) {
     });
 }
 
+function alertaGeral(mensagem, titulo = 'Aviso') {
+    return confirmarAcao(mensagem, 'alert', titulo);
+}
+
 
 // --- EXPORTANDO PARA O ESCOPO GLOBAL ---
 window.abrirModalAgendamento = abrirModalAgendamento;
@@ -175,3 +191,4 @@ window.abrirModalNovoRascunho = abrirModalNovoRascunho;
 window.fecharModalRascunho = fecharModalRascunho;
 window.fecharModalConfirmacao = fecharModalConfirmacao;
 window.confirmarAcao = confirmarAcao;
+window.alertaGeral = alertaGeral;

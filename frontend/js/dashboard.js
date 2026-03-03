@@ -6,7 +6,8 @@ async function iniciarDashboard() {
     const seletor = document.getElementById('seletor-perfil');
     const btnSync = document.getElementById('btn-sync-graficos');
 
-    const perfilSalvo = seletor.value || ''; // Salva qual perfil o usuário estava olhando
+    const isSyncClicked = !!btnSync; // true = chamado pelo botão Sync, false = navegação normal da tab
+    const perfilSalvo = isSyncClicked ? (seletor.value || '') : ''; // Só restaura no Sync
     const htmlOrigBtn = btnSync ? btnSync.innerHTML : '';
 
     if (btnSync) {
@@ -21,8 +22,14 @@ async function iniciarDashboard() {
         let perfisUnicos = new Set([...window.dadosHistoricosDB.seguidores.map(s => s.perfil), ...window.dadosHistoricosDB.posts.map(p => p.perfil)]);
 
         seletor.innerHTML = '';
+
+        // Sempre adiciona opção vazia no topo
+        let optVazio = document.createElement('option');
+        optVazio.value = '';
+        optVazio.text = 'Selecione um perfil...';
+        seletor.appendChild(optVazio);
+
         if (perfisUnicos.size === 0) {
-            seletor.innerHTML = '<option value="">Nenhum dado no banco</option>';
             loading.classList.replace('flex', 'hidden');
             if (btnSync) btnSync.innerHTML = htmlOrigBtn;
             return;
@@ -30,24 +37,31 @@ async function iniciarDashboard() {
 
         perfisUnicos.forEach(p => { let opt = document.createElement('option'); opt.value = p; opt.text = '@' + p; seletor.appendChild(opt); });
 
-        // Restaura a visualização que ele estava
+        // Restaura APENAS se veio do Sync (usuário já estava olhando um perfil)
         if (perfilSalvo && perfisUnicos.has(perfilSalvo)) {
             seletor.value = perfilSalvo;
+            atualizarGraficosTela(perfilSalvo);
+        } else {
+            // Se entrou na aba "do zero", garante que a visualização está 100% limpa (sem heranças do browser)
+            seletor.value = '';
+            limparTelaUI();
         }
-
-        // Não limpamos postSelecionadoAtual ao dar Sync
-        atualizarGraficosTela(seletor.value);
 
         // Se for a primeira vez que entra na tela o evento deve ser atrelado
         if (!seletor.dataset.escutando) {
             seletor.addEventListener('change', (e) => {
                 window.postSelecionadoAtual = "";
-                atualizarGraficosTela(e.target.value);
+                if (e.target.value) {
+                    atualizarGraficosTela(e.target.value);
+                } else {
+                    limparTelaUI();
+                }
             });
             seletor.dataset.escutando = "true";
         }
 
         loading.classList.replace('flex', 'hidden'); painel.classList.remove('hidden'); painel.classList.add('flex');
+        conectarBotaoLimpar();
     } catch (erro) {
         console.error(erro);
         loading.innerHTML = `<i data-lucide="alert-triangle" class="w-8 h-8 mb-3 text-red-500"></i><p class="font-medium text-sm text-red-600">Erro ao buscar histórico do banco.</p>`; lucide.createIcons();
@@ -57,6 +71,40 @@ async function iniciarDashboard() {
             if (window.lucide) lucide.createIcons();
         }
     }
+}
+
+function limparTelaUI() {
+    const seletor = document.getElementById('seletor-perfil');
+    if (seletor) seletor.value = '';
+
+    const ids = ['card-total-posts', 'card-media-7', 'card-media-30', 'card-media-geral'];
+    ids.forEach(id => { const el = document.getElementById(id); if (el) el.innerText = '0'; });
+
+    if (window.chartSeguidores) { window.chartSeguidores.destroy(); window.chartSeguidores = null; }
+    if (window.chartPosts) { window.chartPosts.destroy(); window.chartPosts = null; }
+
+    ['graficoSeguidores', 'graficoPosts'].forEach(id => {
+        const canvas = document.getElementById(id);
+        if (canvas) {
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+    });
+
+    const galPosts = document.getElementById('galeria-posts');
+    if (galPosts) galPosts.innerHTML = '<p class="col-span-full text-center text-zinc-400 text-sm py-6">Selecione um perfil para ver os posts.</p>';
+    const contPosts = document.getElementById('galeria-contador');
+    if (contPosts) contPosts.textContent = '0 posts';
+
+    const galStories = document.getElementById('galeria-stories');
+    if (galStories) galStories.innerHTML = '<p class="col-span-full text-center text-zinc-400 text-sm py-6">Selecione um perfil para ver os stories.</p>';
+    const contStories = document.getElementById('galeria-stories-contador');
+    if (contStories) contStories.textContent = '0 stories';
+
+    const tbody = document.getElementById('tabela-historico-detalhado');
+    if (tbody) tbody.innerHTML = '<tr><td colspan="2" class="py-8 text-center text-zinc-400 text-sm">Aguardando dados...</td></tr>';
+
+    window.postSelecionadoAtual = "";
 }
 
 
@@ -245,6 +293,9 @@ function atualizarGraficosTela(perfilSelecionado) {
     // Galeria visual de Posts
     popularGaleriaPosts(perfilSelecionado);
 
+    // Galeria visual de Stories
+    popularGaleriaStories(perfilSelecionado);
+
     // Tabela Secundária (Chamada de API dedicada)
     carregarTabelaHistorico(perfilSelecionado);
 }
@@ -301,3 +352,91 @@ window.iniciarDashboard = iniciarDashboard;
 window.carregarTabelaHistorico = carregarTabelaHistorico;
 window.popularGaleriaPosts = popularGaleriaPosts;
 window.atualizarGraficosTela = atualizarGraficosTela;
+window.popularGaleriaStories = popularGaleriaStories;
+
+// --- GALERIA DE STORIES ---
+async function popularGaleriaStories(perfilSelecionado) {
+    const galeria = document.getElementById('galeria-stories');
+    const contador = document.getElementById('galeria-stories-contador');
+    if (!galeria) return;
+
+    const perfilLimpo = perfilSelecionado.replace('@', '').toLowerCase();
+
+    galeria.innerHTML = '<p class="col-span-full text-center text-zinc-400 text-sm py-4"><i data-lucide="loader-2" class="w-4 h-4 animate-spin inline mr-2"></i> Carregando stories...</p>';
+    if (window.lucide) lucide.createIcons();
+
+    try {
+        const res = await fetch(`/api/stories/${perfilLimpo}`);
+        const data = await res.json();
+        const stories = data.stories || [];
+
+        if (contador) contador.textContent = stories.length + ' stor' + (stories.length !== 1 ? 'ies' : 'y');
+
+        if (stories.length === 0) {
+            galeria.innerHTML = '<p class="col-span-full text-center text-zinc-400 text-sm py-6">Nenhum story extraído para este perfil.</p>';
+            return;
+        }
+
+        // Formata data "2026-02-26 15:30:00" -> "26/02 15:30"
+        function fmtData(d) {
+            if (!d) return 'N/A';
+            try {
+                const partes = d.split(' ');
+                const ymd = partes[0].split('-');
+                const hora = partes[1] ? partes[1].substring(0, 5) : '';
+                return `${ymd[2]}/${ymd[1]} ${hora}`;
+            } catch { return d; }
+        }
+
+        galeria.innerHTML = '';
+        stories.forEach(s => {
+            const isVideo = s.tipo && s.tipo.toUpperCase() === 'VIDEO';
+            const iconTipo = isVideo ? 'video' : 'image';
+            const corTipo = isVideo ? 'bg-blue-600 text-white' : 'bg-orange-500 text-white';
+            const labelTipo = isVideo ? 'VÍDEO' : 'FOTO';
+
+            const card = document.createElement('div');
+            card.className = 'bg-white rounded-lg border border-zinc-200 overflow-hidden shadow-sm hover:border-violet-400 hover:shadow-md transition-all flex flex-col';
+
+            card.innerHTML = `
+                <div class="relative bg-zinc-100 aspect-[9/16] flex items-center justify-center overflow-hidden">
+                    ${s.print
+                    ? `<img src="${s.print}" class="w-full h-full object-cover" onerror="this.style.display='none'; this.parentElement.querySelector('.placeholder-icon').classList.remove('hidden');">
+                           <div class="placeholder-icon hidden flex flex-col items-center justify-center absolute inset-0 bg-zinc-100">
+                               <i data-lucide="image-off" class="w-8 h-8 text-zinc-300 mb-1"></i>
+                               <span class="text-[10px] text-zinc-400 font-bold">Imagem removida</span>
+                           </div>`
+                    : `<div class="flex flex-col items-center justify-center">
+                               <i data-lucide="${iconTipo}" class="w-8 h-8 text-zinc-300 mb-1"></i>
+                               <span class="text-[10px] text-zinc-400 font-bold">Sem print</span>
+                           </div>`
+                }
+                    <span class="${corTipo} text-[8px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider shadow-sm absolute top-2 right-2 flex items-center gap-1">
+                        <i data-lucide="${iconTipo}" class="w-2.5 h-2.5"></i> ${labelTipo}
+                    </span>
+                </div>
+                <div class="p-2.5 space-y-1">
+                    <span class="text-[10px] font-bold text-zinc-500 flex items-center gap-1"><i data-lucide="clock" class="w-3 h-3"></i> ${s.tempo || 'N/A'}</span>
+                    <span class="text-[10px] font-bold text-zinc-400 flex items-center gap-1"><i data-lucide="scan-search" class="w-3 h-3"></i> Extração: ${fmtData(s.data_extracao)}</span>
+                </div>
+            `;
+            galeria.appendChild(card);
+        });
+        if (window.lucide) lucide.createIcons();
+    } catch (e) {
+        console.error('[STORIES GALERIA] Erro:', e);
+        galeria.innerHTML = '<p class="col-span-full text-center text-red-500 text-sm py-6 font-bold">Erro ao carregar stories.</p>';
+    }
+}
+
+// --- BOTÃO LIMPAR TELA (Reset visual, não apaga do banco) ---
+function conectarBotaoLimpar() {
+    const btnLimpar = document.getElementById('btn-limpar-perfil');
+    if (!btnLimpar || btnLimpar.dataset.conectado) return;
+    btnLimpar.dataset.conectado = "true";
+
+    btnLimpar.addEventListener('click', () => {
+        limparTelaUI();
+        if (window.mostrarToast) window.mostrarToast('🧹 Tela limpa! Selecione outro perfil.', 'sucesso');
+    });
+}

@@ -32,7 +32,9 @@ async function onDropCard(e, novaDataStr, divDia) {
         const payload = JSON.parse(e.dataTransfer.getData('text/plain'));
 
         if (payload.tipo === 'post') {
-            const novaDataCompleta = `${novaDataStr}T${payload.hora}`;
+            // Garante que o formato retorne os segundos (ex: T12:00:00) para o backend não reclamar
+            const horaPadrao = payload.hora.length === 5 ? `${payload.hora}:00` : payload.hora;
+            const novaDataCompleta = `${novaDataStr}T${horaPadrao}`;
             const res = await fetch(`/api/agendamentos/${payload.id}/data`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },

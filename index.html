@@ -4,12 +4,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IG Monitor Pro - Analytics</title>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Instagram Auto Manager</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-    <link rel="stylesheet" href="/frontend/css/style.css">
+    <link rel="stylesheet" href="/frontend/css/style.css?v=2.0">
 </head>
 
 <body class="bg-zinc-50 text-zinc-800 antialiased selection:bg-pink-500 selection:text-white">
@@ -766,12 +769,12 @@
                     class="w-12 h-12 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
                     <i data-lucide="alert-triangle" class="w-6 h-6"></i>
                 </div>
-                <h3 class="text-lg font-black text-zinc-900 mb-2">Atenção</h3>
+                <h3 id="titulo-modal-confirmacao" class="text-lg font-black text-zinc-900 mb-2">Atenção</h3>
                 <p id="texto-modal-confirmacao" class="text-sm font-medium text-zinc-500">Deseja realmente prosseguir?
                 </p>
             </div>
             <div class="bg-zinc-50 px-6 py-4 flex gap-3">
-                <button type="button" onclick="fecharModalConfirmacao()"
+                <button type="button" id="btn-modal-cancelar" onclick="fecharModalConfirmacao()"
                     class="flex-1 bg-white border border-zinc-200 text-zinc-700 hover:bg-zinc-50 text-sm font-bold py-2.5 rounded-lg transition-colors">Cancelar</button>
                 <button type="button" id="btn-modal-confirmar"
                     class="flex-1 bg-red-500 hover:bg-red-600 text-white text-sm font-bold py-2.5 rounded-lg transition-colors shadow-sm">Confirmar</button>
@@ -780,7 +783,7 @@
     </div>
 
     <!-- Script Principal Modular -->
-    <script src="/frontend/js/main.js" type="module"></script>
+    <script src="/frontend/js/main.js?v=3.0" type="module"></script>
 </body>
 
 </html>

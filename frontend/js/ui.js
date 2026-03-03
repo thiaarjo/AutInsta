@@ -136,14 +136,26 @@ function mostrarTooltip(e, card) {
     `;
     if (window.lucide) lucide.createIcons();
 
-    // Posicionamento
+    // Posicionamento base inicial
     const rect = card.getBoundingClientRect();
     let top = rect.bottom + 8;
     let left = rect.left;
 
-    // Evitar sair da tela
-    if (top + 200 > window.innerHeight) top = rect.top - 180;
-    if (left + 240 > window.innerWidth) left = window.innerWidth - 260;
+    // Dimensões do tooltip (estimativa baseada em classes width)
+    const tooltipWidth = 240;
+    const tooltipHeight = 220; // Estimativa média
+
+    // Evitar sair da tela pela Direita
+    if (left + tooltipWidth > window.innerWidth) {
+        left = window.innerWidth - tooltipWidth - 20; // margem real
+    }
+
+    // Evitar sair da tela por Baixo (se não couber embaixo, joga pra cima do card)
+    if (top + tooltipHeight > window.innerHeight) {
+        top = rect.top - tooltipHeight - 8;
+        // Se ainda assim vazar pra cima (tela mt pequena), prende na margem
+        if (top < 10) top = 10;
+    }
 
     window.tooltipEl.style.top = top + 'px';
     window.tooltipEl.style.left = left + 'px';
