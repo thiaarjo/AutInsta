@@ -63,8 +63,21 @@ function toggleFormAgendamento() {
 }
 
 function abrirModalNovoRascunho() {
+    // Se o modal de agendamento do dia estiver aberto, esconde ele pra não encavalar
+    const modalAgendar = document.getElementById('modal-agendar');
+    if (modalAgendar && !modalAgendar.classList.contains('hidden')) {
+        modalAgendar.classList.add('hidden');
+    }
+
     const modal = document.getElementById('modal-rascunho');
     if (modal) modal.classList.remove('hidden');
+
+    // Foca no textarea para facilitar digitação
+    setTimeout(() => {
+        const txtA = document.getElementById('legenda_rascunho');
+        if (txtA) txtA.focus();
+    }, 100);
+
     if (window.lucide) lucide.createIcons();
 }
 
@@ -111,9 +124,54 @@ document.getElementById('formNovoRascunho').addEventListener('submit', async fun
     }
 });
 
+// --- MODAL DE CONFIRMAÇÃO GLOBAL ---
+function fecharModalConfirmacao() {
+    const m = document.getElementById('modal-confirmacao');
+    if (m) m.classList.add('hidden');
+}
+
+function confirmarAcao(mensagem) {
+    return new Promise((resolve) => {
+        const m = document.getElementById('modal-confirmacao');
+        const mTexto = document.getElementById('texto-modal-confirmacao');
+        const btnConfirma = document.getElementById('btn-modal-confirmar');
+        if (!m || !mTexto || !btnConfirma) {
+            resolve(confirm(mensagem)); // Fallback para o nativo em caso de erro
+            return;
+        }
+
+        mTexto.innerText = mensagem;
+        m.classList.remove('hidden');
+        if (window.lucide) lucide.createIcons();
+
+        // Remove listeners antigos
+        const novoBtnConfirma = btnConfirma.cloneNode(true);
+        btnConfirma.parentNode.replaceChild(novoBtnConfirma, btnConfirma);
+
+        novoBtnConfirma.onclick = () => {
+            fecharModalConfirmacao();
+            resolve(true);
+        };
+
+        // Sobrescreve o Cancelar global para também resolver falso e evitar vazamento de memória da promise
+        const btnCancelar = m.querySelector('button[onclick="fecharModalConfirmacao()"]');
+        if (btnCancelar) {
+            const novoCancelar = btnCancelar.cloneNode(true);
+            btnCancelar.parentNode.replaceChild(novoCancelar, btnCancelar);
+            novoCancelar.onclick = () => {
+                fecharModalConfirmacao();
+                resolve(false);
+            };
+        }
+    });
+}
+
+
 // --- EXPORTANDO PARA O ESCOPO GLOBAL ---
 window.abrirModalAgendamento = abrirModalAgendamento;
 window.fecharModalAgendamento = fecharModalAgendamento;
 window.toggleFormAgendamento = toggleFormAgendamento;
 window.abrirModalNovoRascunho = abrirModalNovoRascunho;
 window.fecharModalRascunho = fecharModalRascunho;
+window.fecharModalConfirmacao = fecharModalConfirmacao;
+window.confirmarAcao = confirmarAcao;
