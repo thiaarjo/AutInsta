@@ -19,7 +19,11 @@ async function iniciarDashboard() {
 
     try {
         const res = await fetch('/api/historico_graficos'); window.dadosHistoricosDB = await res.json();
-        let perfisUnicos = new Set([...window.dadosHistoricosDB.seguidores.map(s => s.perfil), ...window.dadosHistoricosDB.posts.map(p => p.perfil)]);
+
+        // Busca todos os perfis do banco (não depende de ter posts/seguidores)
+        const resPerfis = await fetch('/api/perfis');
+        const dataPerfis = await resPerfis.json();
+        let perfisUnicos = new Set(dataPerfis.perfis || []);
 
         seletor.innerHTML = '';
 
@@ -370,7 +374,7 @@ async function popularGaleriaStories(perfilSelecionado) {
         const data = await res.json();
         const stories = data.stories || [];
 
-        if (contador) contador.textContent = stories.length + ' stor' + (stories.length !== 1 ? 'ies' : 'y');
+        if (contador) contador.textContent = stories.length + ' stor' + (stories.length !== 1 ? 'ies únicos' : 'y');
 
         if (stories.length === 0) {
             galeria.innerHTML = '<p class="col-span-full text-center text-zinc-400 text-sm py-6">Nenhum story extraído para este perfil.</p>';
@@ -394,9 +398,11 @@ async function popularGaleriaStories(perfilSelecionado) {
             const iconTipo = isVideo ? 'video' : 'image';
             const corTipo = isVideo ? 'bg-blue-600 text-white' : 'bg-orange-500 text-white';
             const labelTipo = isVideo ? 'VÍDEO' : 'FOTO';
+            const vezesVisto = s.vezes_visto || 1;
 
             const card = document.createElement('div');
-            card.className = 'bg-white rounded-lg border border-zinc-200 overflow-hidden shadow-sm hover:border-violet-400 hover:shadow-md transition-all flex flex-col';
+            card.className = 'bg-white rounded-lg border border-zinc-200 overflow-hidden shadow-sm hover:border-violet-400 hover:shadow-md transition-all flex flex-col w-[160px] shrink-0';
+            card.style.scrollSnapAlign = 'start';
 
             card.innerHTML = `
                 <div class="relative bg-zinc-100 aspect-[9/16] flex items-center justify-center overflow-hidden">
@@ -414,10 +420,14 @@ async function popularGaleriaStories(perfilSelecionado) {
                     <span class="${corTipo} text-[8px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider shadow-sm absolute top-2 right-2 flex items-center gap-1">
                         <i data-lucide="${iconTipo}" class="w-2.5 h-2.5"></i> ${labelTipo}
                     </span>
+                    ${vezesVisto > 1 ? `
+                    <span class="bg-violet-600 text-white text-[8px] font-bold px-1.5 py-0.5 rounded shadow-sm absolute top-2 left-2 flex items-center gap-0.5">
+                        <i data-lucide="repeat" class="w-2.5 h-2.5"></i> ${vezesVisto}x visto
+                    </span>` : ''}
                 </div>
-                <div class="p-2.5 space-y-1">
-                    <span class="text-[10px] font-bold text-zinc-500 flex items-center gap-1"><i data-lucide="clock" class="w-3 h-3"></i> ${s.tempo || 'N/A'}</span>
-                    <span class="text-[10px] font-bold text-zinc-400 flex items-center gap-1"><i data-lucide="scan-search" class="w-3 h-3"></i> Extração: ${fmtData(s.data_extracao)}</span>
+                <div class="p-2.5 space-y-1.5 border-t border-zinc-100">
+                    <span class="text-[10px] font-bold text-zinc-600 flex items-center gap-1"><i data-lucide="calendar-clock" class="w-3 h-3 text-violet-500"></i> ${fmtData(s.data_extracao)}</span>
+                    <span class="text-[10px] font-medium text-zinc-400 flex items-center gap-1"><i data-lucide="clock" class="w-3 h-3"></i> Postado há ${s.tempo || 'N/A'}</span>
                 </div>
             `;
             galeria.appendChild(card);

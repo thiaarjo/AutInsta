@@ -1,14 +1,14 @@
-import './globals.js?v=3.0';
-import './toast.js?v=3.0';
-import './ui.js?v=3.0';
-import './dashboard.js?v=3.0';
-import './agendamentos.js?v=3.0';
-import './modals.js?v=3.0';
-import './lembretes.js?v=3.0';
-import './scraper.js?v=3.0';
-import './config.js?v=3.0';
-import './calendar.js?v=3.0';
-import './dragDrop.js?v=3.0';
+import './globals.js?v=4.0';
+import './toast.js?v=4.0';
+import './ui.js?v=4.0';
+import './dashboard.js?v=4.0';
+import './agendamentos.js?v=4.0';
+import './modals.js?v=4.0';
+import './lembretes.js?v=4.0';
+import './scraper.js?v=4.0';
+import './config.js?v=4.0';
+import './calendar.js?v=4.0';
+import './dragDrop.js?v=4.0';
 
 // Auto-iniciar o layout
 document.addEventListener('DOMContentLoaded', () => {

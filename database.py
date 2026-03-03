@@ -108,6 +108,11 @@ def criar_tabelas():
         except sqlite3.OperationalError:
             pass
 
+        try:
+            cursor.execute("ALTER TABLE stories ADD COLUMN media_url TEXT;")
+        except sqlite3.OperationalError:
+            pass
+
         conexao.commit()
 
 # Insercao
@@ -119,8 +124,8 @@ def _inserir_comentarios(cursor, post_id, comentarios):
 
 def _inserir_stories(cursor, perfil_id, stories):
     if not stories: return
-    valores = [(perfil_id, s.get("numero"), s.get("tipo"), s.get("tempo"), s.get("caminho_imagem")) for s in stories]
-    cursor.executemany("INSERT INTO stories (perfil_id, ordem, tipo_midia, tempo_publicacao, caminho_imagem) VALUES (?, ?, ?, ?, ?)", valores)
+    valores = [(perfil_id, s.get("numero"), s.get("tipo"), s.get("tempo"), s.get("caminho_imagem"), s.get("media_url")) for s in stories]
+    cursor.executemany("INSERT INTO stories (perfil_id, ordem, tipo_midia, tempo_publicacao, caminho_imagem, media_url) VALUES (?, ?, ?, ?, ?, ?)", valores)
 
 def salvar_lote(resultados_em_lote):
     if not resultados_em_lote: return
@@ -257,6 +262,13 @@ def atualizar_status_post(post_id, novo_status):
 
 # Analises
 
+def buscar_todos_perfis():
+    """Retorna todos os perfis únicos já extraídos, ordenados alfabeticamente."""
+    with conectar() as conexao:
+        cursor = conexao.cursor()
+        cursor.execute("SELECT DISTINCT alvo FROM perfis_extraidos ORDER BY alvo ASC")
+        return [r[0] for r in cursor.fetchall()]
+
 def buscar_ultimo_lote_com_engajamento():
     with conectar() as conexao:
         cursor = conexao.cursor()
@@ -333,25 +345,89 @@ def buscar_historico_detalhado(perfil_alvo):
         return historico
 
 def buscar_stories_por_perfil(perfil_alvo):
-    """Busca todos os stories extraídos de um perfil, com dados de imagem e data de extração."""
+    """Busca stories únicos de um perfil, deduplicados por media_url.
+    Para stories com media_url: agrupa e retorna apenas a versão mais recente.
+    Para stories sem media_url (legado): retorna somente da extração mais recente.
+    Inclui contagem de quantas vezes o story foi capturado (vezes_visto).
+    """
     with conectar() as conexao:
         cursor = conexao.cursor()
+
+        # Stories COM media_url: deduplicados (mantém o mais recente)
+        cursor.execute("""
+            SELECT s.ordem, s.tipo_midia, s.tempo_publicacao, s.caminho_imagem, 
+                   el.data_execucao, s.media_url, COUNT(*) as vezes_visto
+            FROM stories s
+            JOIN perfis_extraidos pe ON s.perfil_id = pe.id
+            JOIN execucoes_lote el ON pe.lote_id = el.id
+            WHERE pe.alvo = ? AND s.media_url IS NOT NULL AND s.media_url != ''
+            GROUP BY s.media_url
+            HAVING s.id = MAX(s.id)
+            ORDER BY el.data_execucao DESC, s.ordem ASC
+        """, (perfil_alvo,))
+        
+        stories_unicos = [{
+            "ordem": r[0],
+            "tipo": r[1],
+            "tempo": r[2],
+            "print": r[3],
+            "data_extracao": r[4],
+            "vezes_visto": r[6]
+        } for r in cursor.fetchall()]
+
+        # Stories SEM media_url (legado): pega somente da extração MAIS RECENTE
+        # para evitar duplicatas que não podem ser identificadas sem media_url
         cursor.execute("""
             SELECT s.ordem, s.tipo_midia, s.tempo_publicacao, s.caminho_imagem, el.data_execucao
             FROM stories s
             JOIN perfis_extraidos pe ON s.perfil_id = pe.id
             JOIN execucoes_lote el ON pe.lote_id = el.id
-            WHERE pe.alvo = ?
-            ORDER BY el.data_execucao DESC, s.ordem ASC
-        """, (perfil_alvo,))
+            WHERE pe.alvo = ? AND (s.media_url IS NULL OR s.media_url = '')
+              AND el.data_execucao = (
+                  SELECT MAX(el2.data_execucao) 
+                  FROM stories s2
+                  JOIN perfis_extraidos pe2 ON s2.perfil_id = pe2.id
+                  JOIN execucoes_lote el2 ON pe2.lote_id = el2.id
+                  WHERE pe2.alvo = ? AND (s2.media_url IS NULL OR s2.media_url = '')
+              )
+            ORDER BY s.ordem ASC
+        """, (perfil_alvo, perfil_alvo))
         
-        return [{
+        stories_legado = [{
             "ordem": r[0],
             "tipo": r[1],
             "tempo": r[2],
             "print": r[3],
-            "data_extracao": r[4]
+            "data_extracao": r[4],
+            "vezes_visto": 1
         } for r in cursor.fetchall()]
+
+        # Combina e ordena globalmente do mais recente pro mais antigo
+        todos = stories_unicos + stories_legado
+        todos.sort(key=lambda s: s.get("data_extracao", ""), reverse=True)
+        return todos
+
+def buscar_print_story_existente(alvo, media_url):
+    """Verifica se já existe um print salvo para essa media_url. Retorna o caminho_imagem ou None."""
+    if not media_url:
+        return None
+    with conectar() as conexao:
+        cursor = conexao.cursor()
+        cursor.execute("""
+            SELECT s.caminho_imagem
+            FROM stories s
+            JOIN perfis_extraidos pe ON s.perfil_id = pe.id
+            WHERE pe.alvo = ? AND s.media_url = ? AND s.caminho_imagem IS NOT NULL
+            ORDER BY s.id DESC LIMIT 1
+        """, (alvo, media_url))
+        resultado = cursor.fetchone()
+        if resultado and resultado[0]:
+            # Verifica se o arquivo ainda existe no disco
+            nome_arquivo = resultado[0].replace("/fotos/", "")
+            caminho_completo = os.path.join(os.path.dirname(os.path.abspath(__file__)), "prints", nome_arquivo)
+            if os.path.exists(caminho_completo):
+                return resultado[0]
+        return None
 
 def limpar_dados_perfil(perfil_alvo):
     """Limpa posts_feed, stories e comentarios de um perfil sem apagar o perfil em si."""

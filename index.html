@@ -20,9 +20,8 @@
     <header class="bg-white border-b border-zinc-200 sticky top-0 z-50 shadow-sm">
         <div class="max-w-[1400px] mx-auto flex items-center justify-between px-6 py-4">
             <div class="flex items-center gap-3">
-                <div class="w-8 h-8 rounded-lg bg-ig-gradient flex items-center justify-center text-white">
-                    <i data-lucide="instagram" class="w-5 h-5"></i>
-                </div>
+                <img src="/frontend/img/logo.png" alt="IG Monitor Pro"
+                    class="w-8 h-8 rounded-lg object-cover shadow-sm">
                 <div>
                     <h1 class="text-xl font-bold tracking-tight text-zinc-900 leading-none">IG Monitor <span
                             class="font-normal text-zinc-400">Pro</span></h1>
@@ -608,8 +607,9 @@
                         class="text-[10px] font-bold text-violet-600 bg-violet-50 px-2 py-0.5 rounded-full ml-auto">0
                         stories</span>
                 </h3>
-                <div id="galeria-stories" class="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    <p class="col-span-full text-center text-zinc-400 text-sm py-6">Selecione um perfil para ver os
+                <div id="galeria-stories" class="flex gap-3 overflow-x-auto pb-3"
+                    style="scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;">
+                    <p class="text-center text-zinc-400 text-sm py-6 w-full shrink-0">Selecione um perfil para ver os
                         stories.</p>
                 </div>
             </div>
@@ -783,7 +783,7 @@
     </div>
 
     <!-- Script Principal Modular -->
-    <script src="/frontend/js/main.js?v=3.0" type="module"></script>
+    <script src="/frontend/js/main.js?v=4.0" type="module"></script>
 </body>
 
 </html>
