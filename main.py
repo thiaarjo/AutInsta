@@ -87,7 +87,14 @@ async def painel_html():
     if os.path.exists(caminho_html):
         with open(caminho_html, "r", encoding="utf-8") as arquivo:
             html_conteudo = arquivo.read()
-        return HTMLResponse(content=html_conteudo)
+        return HTMLResponse(
+            content=html_conteudo, 
+            headers={
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Pragma": "no-cache",
+                "Expires": "0"
+            }
+        )
     else:
         return HTMLResponse(content=f"<h1>ERRO 404: Arquivo index.html não encontrado!</h1><p>Verifique a pasta: <b>{DIRETORIO_BASE}</b></p>")
 
@@ -296,6 +303,24 @@ async def ranking_horarios(perfil: str):
         return {"ranking": dados}
     except Exception as e:
         print(f"[!] Erro ao buscar ranking de horários: {e}", flush=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/stories/{perfil}")
+async def buscar_stories(perfil: str):
+    try:
+        dados = database.buscar_stories_por_perfil(perfil)
+        return {"stories": dados}
+    except Exception as e:
+        print(f"[!] Erro ao buscar stories: {e}", flush=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/limpar_perfil/{perfil}")
+async def limpar_perfil(perfil: str):
+    try:
+        qtd = database.limpar_dados_perfil(perfil)
+        return {"status": f"Dados limpos com sucesso ({qtd} registros afetados)."}
+    except Exception as e:
+        print(f"[!] Erro ao limpar dados do perfil: {e}", flush=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 # Rotas de Configuracao

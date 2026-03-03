@@ -63,8 +63,21 @@ function toggleFormAgendamento() {
 }
 
 function abrirModalNovoRascunho() {
+    // Se o modal de agendamento do dia estiver aberto, esconde ele pra não encavalar
+    const modalAgendar = document.getElementById('modal-agendar');
+    if (modalAgendar && !modalAgendar.classList.contains('hidden')) {
+        modalAgendar.classList.add('hidden');
+    }
+
     const modal = document.getElementById('modal-rascunho');
     if (modal) modal.classList.remove('hidden');
+
+    // Foca no textarea para facilitar digitação
+    setTimeout(() => {
+        const txtA = document.getElementById('legenda_rascunho');
+        if (txtA) txtA.focus();
+    }, 100);
+
     if (window.lucide) lucide.createIcons();
 }
 
@@ -111,9 +124,71 @@ document.getElementById('formNovoRascunho').addEventListener('submit', async fun
     }
 });
 
+// --- MODAL DE CONFIRMAÇÃO GLOBAL ---
+function fecharModalConfirmacao() {
+    const m = document.getElementById('modal-confirmacao');
+    if (m) m.classList.add('hidden');
+}
+
+function confirmarAcao(mensagem, tipo = 'confirm', titulo = 'Atenção') {
+    return new Promise((resolve) => {
+        const m = document.getElementById('modal-confirmacao');
+        const mTexto = document.getElementById('texto-modal-confirmacao');
+        const mTitulo = document.getElementById('titulo-modal-confirmacao');
+        const btnConfirma = document.getElementById('btn-modal-confirmar');
+        const btnCancelar = document.getElementById('btn-modal-cancelar');
+
+        if (!m || !mTexto || !btnConfirma) {
+            console.error('Modal de confirmação não configurado corretamente no HTML.');
+            resolve(false);
+            return;
+        }
+
+        mTexto.innerText = mensagem;
+        if (mTitulo) mTitulo.innerText = titulo;
+
+        if (tipo === 'alert') {
+            if (btnCancelar) btnCancelar.style.display = 'none';
+            btnConfirma.innerText = 'OK';
+        } else {
+            if (btnCancelar) btnCancelar.style.display = 'block';
+            btnConfirma.innerText = 'Confirmar';
+        }
+
+        m.classList.remove('hidden');
+        if (window.lucide) lucide.createIcons();
+
+        // Remove listeners antigos
+        const novoBtnConfirma = btnConfirma.cloneNode(true);
+        btnConfirma.parentNode.replaceChild(novoBtnConfirma, btnConfirma);
+
+        novoBtnConfirma.onclick = () => {
+            fecharModalConfirmacao();
+            resolve(true);
+        };
+
+        if (btnCancelar) {
+            const novoCancelar = btnCancelar.cloneNode(true);
+            btnCancelar.parentNode.replaceChild(novoCancelar, btnCancelar);
+            novoCancelar.onclick = () => {
+                fecharModalConfirmacao();
+                resolve(false);
+            };
+        }
+    });
+}
+
+function alertaGeral(mensagem, titulo = 'Aviso') {
+    return confirmarAcao(mensagem, 'alert', titulo);
+}
+
+
 // --- EXPORTANDO PARA O ESCOPO GLOBAL ---
 window.abrirModalAgendamento = abrirModalAgendamento;
 window.fecharModalAgendamento = fecharModalAgendamento;
 window.toggleFormAgendamento = toggleFormAgendamento;
 window.abrirModalNovoRascunho = abrirModalNovoRascunho;
 window.fecharModalRascunho = fecharModalRascunho;
+window.fecharModalConfirmacao = fecharModalConfirmacao;
+window.confirmarAcao = confirmarAcao;
+window.alertaGeral = alertaGeral;

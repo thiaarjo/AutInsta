@@ -9,7 +9,7 @@ async function popularLembretesDoModal(dataStr) {
     if (!dataStr) return;
 
     try {
-        const res = await fetch('/api/lembretes');
+        const res = await fetch('/api/lembretes', { cache: 'no-store' });
         const data = await res.json();
         if (!data.lembretes) return;
 
@@ -91,8 +91,10 @@ async function salvarEdicaoLembreteModal(id) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ texto: inp.value.trim() })
         });
-        await popularLembretesDoModal(window.diaAtualDoModal);
-        carregarAgendamentos();
+        await carregarAgendamentos();
+        if (window.diaAtualDoModal) {
+            await popularLembretesDoModal(window.diaAtualDoModal);
+        }
         if (window.lucide) lucide.createIcons();
     } catch (e) {
         console.error('Erro ao editar lembrete:', e);
@@ -100,10 +102,14 @@ async function salvarEdicaoLembreteModal(id) {
 }
 
 async function deletarLembreteDoModal(id) {
+    const isConfirmado = await confirmarAcao('Remover este lembrete do dia?');
+    if (!isConfirmado) return;
     try {
         await fetch(`/api/lembretes/${id}`, { method: 'DELETE' });
-        await popularLembretesDoModal(window.diaAtualDoModal);
-        carregarAgendamentos();
+        await carregarAgendamentos();
+        if (window.diaAtualDoModal) {
+            await popularLembretesDoModal(window.diaAtualDoModal);
+        }
         if (window.lucide) lucide.createIcons();
     } catch (e) {
         console.error('Erro ao deletar lembrete:', e);
@@ -124,7 +130,7 @@ async function popularPostsDoModal(dataStr) {
     }
 
     try {
-        const res = await fetch('/api/agendamentos');
+        const res = await fetch('/api/agendamentos', { cache: 'no-store' });
         const data = await res.json();
         if (!data.agendamentos) return;
 
@@ -182,7 +188,7 @@ document.getElementById('modal-lembrete-input').addEventListener('keydown', func
 
 async function carregarLembretes() {
     try {
-        const res = await fetch('/api/lembretes');
+        const res = await fetch('/api/lembretes', { cache: 'no-store' });
         const data = await res.json();
         if (!data.lembretes) return;
 
@@ -310,6 +316,8 @@ async function atualizarLembrete(id, texto) {
 }
 
 async function deletarLembrete(id) {
+    const isConfirmado = await confirmarAcao('Excluir este lembrete do sistema?');
+    if (!isConfirmado) return;
     try {
         await fetch(`/api/lembretes/${id}`, { method: 'DELETE' });
         carregarAgendamentos();

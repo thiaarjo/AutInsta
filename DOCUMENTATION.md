@@ -1,6 +1,6 @@
-# Documentação Técnica: AutInsta (Instagram Monitor Pro)
+# Documentação Técnica: AutPost (Instagram Monitor Pro)
 
-O AutInsta é um sistema completo desenvolvido em Python para automação, monitoramento e extração de dados da plataforma Instagram. Esta documentação abrange o funcionamento interno, arquitetura, e estrutura do banco de dados para auxiliar no desenvolvimento contínuo e manutenção.
+O AutPost é um sistema completo desenvolvido em Python para automação, monitoramento e extração de dados da plataforma Instagram. Esta documentação abrange o funcionamento interno, arquitetura, e estrutura do banco de dados para auxiliar no desenvolvimento contínuo e manutenção.
 
 ---
 

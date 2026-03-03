@@ -2,7 +2,7 @@ import { converterDataString, getTimestamp, NOMES_DIAS_SEMANA, NOMES_MESES_CURTO
 
 async function carregarAgendamentos() {
     try {
-        const res = await fetch('/api/agendamentos');
+        const res = await fetch('/api/agendamentos', { cache: 'no-store' });
         const data = await res.json();
 
         // Limpa todos os slots diários correntes e a gaveta de rascunhos
@@ -13,6 +13,7 @@ async function carregarAgendamentos() {
 
         if (!data.agendamentos || data.agendamentos.length === 0) {
             if (listaRascunhos) listaRascunhos.innerHTML = '<p class="text-xs text-zinc-400 text-center py-4">Nenhuma ideia guardada.</p>';
+            popularAgendadosLateral([]); // CLEAR THE TAB!
             // Ainda carrega lembretes mesmo sem agendamentos
             await carregarLembretes();
             return;
@@ -78,12 +79,12 @@ async function carregarAgendamentos() {
             let legendaPreview = (item.legenda || '').substring(0, 60);
 
             let cardHtml = `
-                <div class="${colorBg} border ${colorBorder} rounded px-2 py-1.5 flex items-center gap-2 group/card relative shadow-sm cursor-grab hover:shadow hover:-translate-y-0.5 transition-all"
+                <div class="${colorBg} border ${colorBorder} rounded px-1.5 py-1.5 flex flex-col gap-1.5 group/card relative shadow-sm cursor-grab hover:shadow-md hover:-translate-y-0.5 transition-all"
                      draggable="true"
                      data-agendamento-id="${item.id}"
                      data-tipo="post"
                      data-legenda="${legendaPreview.replace(/"/g, '&quot;')}"
-                     data-imagem="/uploads/${item.arquivo}"
+                     data-imagem="${item.arquivo ? '/uploads/' + item.arquivo : ''}"
                      data-hora="${horaAbreviada}"
                      data-status="${statusLabel}"
                      ondragstart="onDragStartCard(event)"
@@ -91,15 +92,26 @@ async function carregarAgendamentos() {
                      onmouseenter="mostrarTooltip(event, this)"
                      onmouseleave="esconderTooltip()"
                      onclick="event.stopPropagation()">
-                    <div class="w-6 h-6 rounded shrink-0 overflow-hidden bg-white/50 border border-white/40">
-                        <img src="/uploads/${item.arquivo}" class="w-full h-full object-cover">
+                     
+                    <!-- Cabeçalho (Hora + Status + Botão Lixeira) -->
+                    <div class="flex items-center justify-between w-full pr-1">
+                        <span class="text-[9px] font-black ${txtColor} flex items-center gap-1 leading-none tracking-wide"><i data-lucide="${statusIcon}" class="w-2.5 h-2.5"></i> ${horaAbreviada}</span>
+                        <button onclick="deletarAgendamento(${item.id}); event.stopPropagation();" class="opacity-0 group-hover/card:opacity-100 rounded text-red-500 hover:text-red-700 transition-colors shrink-0" title="Apagar">
+                            <i data-lucide="x" class="w-3 h-3"></i>
+                        </button>
                     </div>
-                    <div class="flex-1 min-w-0">
-                        <p class="text-[10px] font-black ${txtColor} truncate flex items-center gap-1"><i data-lucide="${statusIcon}" class="w-2.5 h-2.5"></i> ${horaAbreviada} • ${statusLabel}</p>
-                    </div>
-                    <button onclick="deletarAgendamento(${item.id}); event.stopPropagation();" class="absolute top-1 right-1 opacity-0 group-hover/card:opacity-100 p-0.5 rounded text-red-500 hover:bg-red-100 transition-colors">
-                        <i data-lucide="x" class="w-3 h-3"></i>
-                    </button>
+
+                    <!-- Mídia / Ícone Placeholder -->
+                    ${item.arquivo ? `
+                    <div class="h-10 w-full rounded overflow-hidden bg-white border border-white/40 shadow-sm relative">
+                        <img src="/uploads/${item.arquivo}" class="w-full h-full object-cover" onerror="this.style.display='none'; this.nextElementSibling.classList.remove('hidden');">
+                        <div class="hidden absolute inset-0 bg-white/50 flex items-center justify-center">
+                            <i data-lucide="image-off" class="w-4 h-4 text-zinc-400"></i>
+                        </div>
+                    </div>` : `
+                    <div class="h-10 w-full rounded bg-white/50 border border-white/40 shadow-sm flex items-center justify-center">
+                        <i data-lucide="type" class="w-4 h-4 text-zinc-400"></i>
+                    </div>`}
                 </div>
             `;
             celulaAlvo.innerHTML += cardHtml;
@@ -120,7 +132,16 @@ async function carregarAgendamentos() {
         console.error("Erro ao popular posts no DB do calendário", e);
     }
 }
-async function deletarAgendamento(id) { if (confirm('Remover post da programação?')) { await fetch('/api/agendamentos/' + id, { method: 'DELETE' }); carregarAgendamentos(); if (window.diaAtualDoModal) abrirModalAgendamento(window.diaAtualDoModal); } }
+async function deletarAgendamento(id) {
+    const isConfirmado = await confirmarAcao('Remover post da programação?');
+    if (isConfirmado) {
+        await fetch('/api/agendamentos/' + id, { method: 'DELETE' });
+        await carregarAgendamentos();
+        if (window.diaAtualDoModal) {
+            await popularPostsDoModal(window.diaAtualDoModal);
+        }
+    }
+}
 
 document.getElementById('formAgendamento').addEventListener('submit', async function (event) {
     event.preventDefault(); const btn = document.getElementById('btn-salvar-post'); btn.disabled = true; btn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Salvando...';

@@ -4,12 +4,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IG Monitor Pro - Analytics</title>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Instagram Auto Manager</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-    <link rel="stylesheet" href="/frontend/css/style.css">
+    <link rel="stylesheet" href="/frontend/css/style.css?v=2.0">
 </head>
 
 <body class="bg-zinc-50 text-zinc-800 antialiased selection:bg-pink-500 selection:text-white">
@@ -531,6 +534,9 @@
                 <a href="/api/exportar_csv" download
                     class="text-xs font-bold bg-green-600 hover:bg-green-700 text-white px-4 py-1.5 rounded-md flex items-center gap-1.5 transition shadow-sm shrink-0 ml-auto"><i
                         data-lucide="file-spreadsheet" class="w-3.5 h-3.5"></i> Excel</a>
+                <button id="btn-limpar-perfil" type="button"
+                    class="text-xs font-bold bg-zinc-50 hover:bg-zinc-100 text-zinc-600 border border-zinc-200 px-4 py-1.5 rounded-md flex items-center gap-1.5 transition shadow-sm shrink-0"><i
+                        data-lucide="eraser" class="w-3.5 h-3.5"></i> Limpar Tela</button>
             </div>
         </div>
 
@@ -591,6 +597,20 @@
                 <div id="galeria-posts" class="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <p class="col-span-full text-center text-zinc-400 text-sm py-6">Selecione um perfil para ver os
                         posts.</p>
+                </div>
+            </div>
+
+            <!-- GALERIA DE STORIES EXTRAÍDOS -->
+            <div class="bg-white border border-zinc-200 rounded-xl p-5 shadow-sm">
+                <h3 class="text-sm font-bold text-zinc-800 mb-4 flex items-center gap-2">
+                    <i data-lucide="play-square" class="w-4 h-4 text-pink-500"></i> Stories Extraídos
+                    <span id="galeria-stories-contador"
+                        class="text-[10px] font-bold text-violet-600 bg-violet-50 px-2 py-0.5 rounded-full ml-auto">0
+                        stories</span>
+                </h3>
+                <div id="galeria-stories" class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <p class="col-span-full text-center text-zinc-400 text-sm py-6">Selecione um perfil para ver os
+                        stories.</p>
                 </div>
             </div>
 
@@ -738,8 +758,32 @@
             </form>
         </div>
     </div>
+
+    <!-- MODAL CONFIRMAÇÃO GLOBAL -->
+    <div id="modal-confirmacao"
+        class="fixed inset-0 bg-zinc-900/60 backdrop-blur-sm z-[100] hidden flex items-center justify-center p-4">
+        <div
+            class="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden flex flex-col transform transition-all">
+            <div class="p-6 text-center">
+                <div
+                    class="w-12 h-12 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i data-lucide="alert-triangle" class="w-6 h-6"></i>
+                </div>
+                <h3 id="titulo-modal-confirmacao" class="text-lg font-black text-zinc-900 mb-2">Atenção</h3>
+                <p id="texto-modal-confirmacao" class="text-sm font-medium text-zinc-500">Deseja realmente prosseguir?
+                </p>
+            </div>
+            <div class="bg-zinc-50 px-6 py-4 flex gap-3">
+                <button type="button" id="btn-modal-cancelar" onclick="fecharModalConfirmacao()"
+                    class="flex-1 bg-white border border-zinc-200 text-zinc-700 hover:bg-zinc-50 text-sm font-bold py-2.5 rounded-lg transition-colors">Cancelar</button>
+                <button type="button" id="btn-modal-confirmar"
+                    class="flex-1 bg-red-500 hover:bg-red-600 text-white text-sm font-bold py-2.5 rounded-lg transition-colors shadow-sm">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Script Principal Modular -->
-    <script src="/frontend/js/main.js" type="module"></script>
+    <script src="/frontend/js/main.js?v=3.0" type="module"></script>
 </body>
 
 </html>

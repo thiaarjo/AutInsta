@@ -10,6 +10,7 @@ from selenium.webdriver.support import expected_conditions as EC
 # Dependencias locais
 from config import ConfigBot, PASTA_PRINTS, gerenciador_tarefas
 from utils import sleep_seguro, analisar_curtidas, atualizar_status
+from scraper_stories import extrair_stories_perfil
 
 # Process termination
 def aniquilar_processo_chrome(pid):
@@ -410,44 +411,9 @@ def rodar_robo(config: ConfigBot):
                     except: pass
                     continue 
 
-        # Analise de Stories
+        # Analise de Stories (delegado ao modulo dedicado)
         if config.coletar_stories:
-            atualizar_status(task_id, 85, "Acessando Stories Ativos...")
-            driver.get(STORY_ALVO)
-            sleep_seguro(DELAY + 1, task_id)
-            
-            try:
-                driver.find_element(By.XPATH, "//div[@role='button' and contains(., 'Ver story')]").click()
-                sleep_seguro(DELAY, task_id)
-            except: pass 
-
-            if driver.current_url != PERFIL_ALVO:
-                stories_sessao = 0
-                while True:
-                    sleep_seguro(0.5, task_id)
-                    stories_sessao += 1
-                    atualizar_status(task_id, 85 + min(10, stories_sessao), f"Lendo Story {stories_sessao}...")
-                    
-                    tempo = "N/A"; midia = "FOTO"
-                    try:
-                        if driver.find_elements(By.TAG_NAME, "time"): tempo = driver.find_elements(By.TAG_NAME, "time")[0].text
-                        if len(driver.find_elements(By.TAG_NAME, "video")) > 0: midia = "VIDEO"
-                    except: pass
-
-                    resultado["stories"].append({"numero": stories_sessao, "tipo": midia, "tempo": tempo})
-
-                    navegou = False
-                    tentativas = 0
-                    while tentativas < 3:
-                        try:
-                            driver.find_element(By.XPATH, "//*[@aria-label='Avançar' or @aria-label='Next']").click()
-                            sleep_seguro(2, task_id)
-                            if config.alvo.lower() not in driver.current_url.lower():
-                                navegou = True; break
-                            navegou = True; break
-                        except: sleep_seguro(1, task_id); tentativas += 1
-                    
-                    if not navegou or (config.alvo.lower() not in driver.current_url.lower()): break
+            extrair_stories_perfil(driver, config, task_id, resultado)
 
         atualizar_status(task_id, 100, "Extração Finalizada. Salvando banco de dados...")
 

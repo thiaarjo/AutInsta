@@ -1,6 +1,6 @@
-# AutInsta (Instagram Monitor Pro)
+# AutPost (Instagram Monitor Pro)
 
-O AutInsta é um sistema corporativo de monitoramento e automação de extração de dados voltado para a plataforma Instagram. A aplicação integra uma API RESTful de alta performance desenvolvida em FastAPI, rotinas de automação Web com Selenium WebDriver e gerenciadores analíticos de publicação através do APScheduler.
+O AutPost é um sistema corporativo de monitoramento e automação de extração de dados voltado para a plataforma Instagram. A aplicação integra uma API RESTful de alta performance desenvolvida em FastAPI, rotinas de automação Web com Selenium WebDriver e gerenciadores analíticos de publicação através do APScheduler.
 
 ## Funcionalidades Principais
 
@@ -23,8 +23,8 @@ O AutInsta é um sistema corporativo de monitoramento e automação de extraçã
 
 1. **Clonar o Repositório:**
 ```bash
-git clone https://github.com/SEU_USUARIO/AutInsta.git
-cd AutInsta
+git clone https://github.com/SEU_USUARIO/AutPost.git
+cd AutPost
 ```
 
 2. **Inicializar o Ambiente Virtual Python:**
