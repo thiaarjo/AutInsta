@@ -36,40 +36,44 @@ btnTabMonitor.click();
 
 
 function trocarAbaLateral(aba) {
-    const tabIdeias = document.getElementById('tab-ideias');
     const tabAgendados = document.getElementById('tab-agendados');
-    const painelIdeias = document.getElementById('painel-ideias');
+    const tabPublicados = document.getElementById('tab-publicados');
     const painelAgendados = document.getElementById('painel-agendados');
+    const painelPublicados = document.getElementById('painel-publicados');
 
-    if (aba === 'ideias') {
-        tabIdeias.className = 'flex-1 text-xs font-black uppercase tracking-widest py-3 text-center transition-colors text-amber-600 border-b-2 border-amber-500 bg-white';
-        tabAgendados.className = 'flex-1 text-xs font-black uppercase tracking-widest py-3 text-center transition-colors text-zinc-400 border-b-2 border-transparent hover:text-zinc-600';
-        painelIdeias.classList.remove('hidden');
-        painelAgendados.classList.add('hidden');
-    } else {
-        tabAgendados.className = 'flex-1 text-xs font-black uppercase tracking-widest py-3 text-center transition-colors text-pink-600 border-b-2 border-pink-500 bg-white';
-        tabIdeias.className = 'flex-1 text-xs font-black uppercase tracking-widest py-3 text-center transition-colors text-zinc-400 border-b-2 border-transparent hover:text-zinc-600';
+    // Estilos base
+    const abaInativa = 'flex-1 text-xs font-black uppercase py-3 text-center transition-colors text-zinc-400 border-b-2 border-transparent hover:text-zinc-600';
+    tabAgendados.className = abaInativa;
+    tabPublicados.className = abaInativa;
+
+    // Esconde todos
+    painelAgendados.classList.add('hidden');
+    painelPublicados.classList.add('hidden');
+
+    if (aba === 'agendados') {
+        tabAgendados.className = 'flex-1 text-xs font-black uppercase py-3 text-center transition-colors text-pink-600 border-b-2 border-pink-500 bg-white';
         painelAgendados.classList.remove('hidden');
-        painelIdeias.classList.add('hidden');
+    } else if (aba === 'publicados') {
+        tabPublicados.className = 'flex-1 text-xs font-black uppercase py-3 text-center transition-colors text-green-600 border-b-2 border-green-500 bg-white';
+        painelPublicados.classList.remove('hidden');
     }
     if (window.lucide) lucide.createIcons();
 }
 
-function popularAgendadosLateral(agendamentos) {
-    const container = document.getElementById('lista-agendados-lateral');
+function renderizarListaLateral(container, posts, statusEsperado, emptyMsg) {
     if (!container) return;
     container.innerHTML = '';
 
-    // Filtra apenas os agendados (não rascunhos)
-    const agendados = agendamentos.filter(p => p.data_agendada && p.status !== 'RASCUNHO');
-    if (agendados.length === 0) {
-        container.innerHTML = '<p class="text-xs text-zinc-400 text-center py-4">Nenhum post agendado.</p>';
+    // Filtro pelo status desejado e data presente
+    const filtrados = posts.filter(p => p.data_agendada && p.status === statusEsperado);
+    if (filtrados.length === 0) {
+        container.innerHTML = `<p class="text-xs text-zinc-400 text-center py-4">${emptyMsg}</p>`;
         return;
     }
 
     // Agrupa por data (YYYY-MM-DD)
     const grupos = {};
-    agendados.forEach(p => {
+    filtrados.forEach(p => {
         const dia = p.data_agendada.split('T')[0];
         if (!grupos[dia]) grupos[dia] = [];
         grupos[dia].push(p);
@@ -77,6 +81,9 @@ function popularAgendadosLateral(agendamentos) {
 
     // Ordena as datas
     const datasOrdenadas = Object.keys(grupos).sort();
+    if (statusEsperado === 'PUBLICADO') {
+        datasOrdenadas.reverse(); // Publicados: os mais recentes primeiro
+    }
 
     const MESES = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
 
@@ -91,21 +98,31 @@ function popularAgendadosLateral(agendamentos) {
         grupos[dataStr].forEach(post => {
             const hora = post.data_agendada.split('T')[1]?.substring(0, 5) || '';
             let statusColor = 'text-pink-600', statusBg = 'bg-pink-50', border = 'border-pink-200';
-            if (post.status === 'PUBLICADO') { statusColor = 'text-green-600'; statusBg = 'bg-green-50'; border = 'border-green-200'; }
-            else if (post.status === 'ERRO') { statusColor = 'text-red-600'; statusBg = 'bg-red-50'; border = 'border-red-200'; }
+            let icon = 'clock';
+            if (post.status === 'PUBLICADO') { statusColor = 'text-green-600'; statusBg = 'bg-green-50'; border = 'border-green-200'; icon = 'check-circle'; }
+            else if (post.status === 'ERRO') { statusColor = 'text-red-600'; statusBg = 'bg-red-50'; border = 'border-red-200'; icon = 'alert-circle'; }
 
             const legendaPreview = (post.legenda || '').substring(0, 50);
             container.innerHTML += `
-                <div class="${statusBg} border ${border} rounded-lg px-2.5 py-2 flex items-center gap-2 mb-1.5">
+                <div class="${statusBg} border ${border} rounded-lg px-2.5 py-2 flex items-center gap-2 mb-1.5 group relative">
                     ${post.arquivo ? `<div class="w-8 h-8 rounded shrink-0 bg-white border overflow-hidden"><img src="/uploads/${post.arquivo}" class="w-full h-full object-cover"></div>` : ''}
                     <div class="min-w-0 flex-1">
-                        <p class="text-[10px] font-black ${statusColor} flex items-center gap-1"><i data-lucide="clock" class="w-2.5 h-2.5"></i> ${hora} • ${post.status}</p>
+                        <p class="text-[10px] font-black ${statusColor} flex items-center gap-1"><i data-lucide="${icon}" class="w-2.5 h-2.5"></i> ${hora}</p>
                         <p class="text-[10px] text-zinc-500 truncate">${legendaPreview || 'Sem legenda'}</p>
                     </div>
+                    
+                    <button onclick="deletarAgendamento(${post.id}); event.stopPropagation();" class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-red-100 text-red-500 transition-all shrink-0 bg-white shadow-sm border border-red-100" title="Apagar Registro">
+                        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                    </button>
                 </div>
             `;
         });
     });
+}
+
+function popularAgendadosLateral(agendamentos) {
+    renderizarListaLateral(document.getElementById('lista-agendados-lateral'), agendamentos, 'PENDENTE', 'Nenhum post agendado.');
+    renderizarListaLateral(document.getElementById('lista-publicados-lateral'), agendamentos, 'PUBLICADO', 'Nenhum post publicado.');
 }
 
 

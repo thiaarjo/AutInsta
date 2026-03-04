@@ -80,11 +80,11 @@ function renderizarGradeCalendario() {
             <div class="flex-1 mt-1.5 space-y-1 overflow-y-auto custom-scrollbar" id="cal-conteudo-${dataFormatada}">
                 <!-- Mini cards -->
             </div>
-            ${isPassado ? '' : `<div class="absolute bottom-1 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+            ${isPassado ? '' : `<div class="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-2">
                 <button onclick="event.stopPropagation(); abrirInputLembrete('${dataFormatada}')" title="Adicionar lembrete">
-                    <i data-lucide="sticky-note" class="w-4 h-4 text-amber-400 hover:text-amber-500"></i>
+                    <i data-lucide="sticky-note" class="w-4 h-4 text-amber-500 hover:text-amber-600"></i>
                 </button>
-                <i data-lucide="plus-circle" class="w-4 h-4 text-zinc-300 hover:text-pink-500"></i>
+                <i data-lucide="plus-circle" class="w-4 h-4 text-zinc-400 hover:text-pink-500"></i>
             </div>`}
         `;
 

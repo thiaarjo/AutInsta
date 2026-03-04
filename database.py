@@ -89,6 +89,15 @@ def criar_tabelas():
                 cor TEXT DEFAULT 'yellow'
             );
 
+            CREATE TABLE IF NOT EXISTS logs_postagens (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                post_id INTEGER,
+                data_hora TEXT,
+                tipo TEXT,
+                mensagem TEXT,
+                FOREIGN KEY (post_id) REFERENCES postagens_agendadas(id) ON DELETE CASCADE
+            );
+
             CREATE TABLE IF NOT EXISTS configuracoes_globais (
                 id INTEGER PRIMARY KEY DEFAULT 1 CHECK (id = 1),
                 usuario TEXT,
@@ -162,7 +171,7 @@ def agendar_novo_post(caminho_foto, legenda, data_agendada=None):
         # Validação: impede agendamentos no passado
         try:
             dt_agendada = datetime.strptime(data_agendada, "%Y-%m-%dT%H:%M")
-            if dt_agendada < datetime.now():
+            if dt_agendada < datetime.now().replace(second=0, microsecond=0):
                 raise ValueError("Não é possível agendar para uma data no passado.")
         except ValueError as ve:
             if "passado" in str(ve):
@@ -176,7 +185,9 @@ def agendar_novo_post(caminho_foto, legenda, data_agendada=None):
     with conectar() as conexao:
         cursor = conexao.cursor()
         cursor.execute("INSERT INTO postagens_agendadas (caminho_foto, legenda, data_agendada, status) VALUES (?, ?, ?, ?)", (caminho_foto, legenda, data_agendada, status))
+        post_id = cursor.lastrowid
         conexao.commit()
+        return post_id
 
 def buscar_todos_agendamentos():
     with conectar() as conexao:
@@ -196,7 +207,7 @@ def atualizar_data_agendamento(post_id, nova_data):
     if nova_data:
         try:
             dt = datetime.strptime(nova_data, "%Y-%m-%dT%H:%M")
-            if dt < datetime.now():
+            if dt < datetime.now().replace(second=0, microsecond=0):
                 raise ValueError("Não é possível mover para uma data no passado.")
         except ValueError as ve:
             if "passado" in str(ve):
@@ -259,6 +270,18 @@ def atualizar_status_post(post_id, novo_status):
         cursor = conexao.cursor()
         cursor.execute("UPDATE postagens_agendadas SET status = ? WHERE id = ?", (novo_status, post_id))
         conexao.commit()
+
+# Logs de Postagem
+def inserir_log_postagem(post_id, tipo, mensagem):
+    data_hora_atual = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    with conectar() as conexao:
+        cursor = conexao.cursor()
+        cursor.execute("""
+            INSERT INTO logs_postagens (post_id, data_hora, tipo, mensagem)
+            VALUES (?, ?, ?, ?)
+        """, (post_id, data_hora_atual, tipo, mensagem))
+        conexao.commit()
+
 
 # Analises
 
@@ -428,6 +451,24 @@ def buscar_print_story_existente(alvo, media_url):
             if os.path.exists(caminho_completo):
                 return resultado[0]
         return None
+
+def buscar_logs_postagem(post_id):
+    """Busca todos os logs associados a um post específico, ordenados cronologicamente."""
+    with conectar() as conexao:
+        conexao.row_factory = sqlite3.Row
+        cursor = conexao.cursor()
+        cursor.execute("""
+            SELECT id, data_hora, tipo, mensagem 
+            FROM logs_postagens 
+            WHERE post_id = ? 
+            ORDER BY id ASC
+        """, (post_id,))
+        
+        logs = []
+        for row in cursor.fetchall():
+            logs.append(dict(row))
+            
+        return logs
 
 def limpar_dados_perfil(perfil_alvo):
     """Limpa posts_feed, stories e comentarios de um perfil sem apagar o perfil em si."""

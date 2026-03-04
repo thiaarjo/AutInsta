@@ -7,12 +7,13 @@ import io
 import glob
 from time import sleep
 from datetime import datetime
+from typing import List
 from pydantic import BaseModel
-from fastapi import FastAPI, UploadFile, File, Form, HTTPException
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Request, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import HTMLResponse, StreamingResponse
-import meta_api
+from fastapi.responses import HTMLResponse, JSONResponse
+import ig_poster_selenium
 
 # Scheduler
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -53,7 +54,7 @@ def verificar_fila_postagens():
             post_id, caminho_foto, legenda, data_agendada = post
             print(f"[*] Preparando disparo -> ID: {post_id} | Data Marcada: {data_agendada}", flush=True)
             
-            sucesso = meta_api.publicar_no_instagram(caminho_foto, legenda)
+            sucesso = ig_poster_selenium.publicar_no_instagram_local(caminho_foto, legenda, post_id=post_id)
             
             if sucesso:
                 database.atualizar_status_post(post_id, 'PUBLICADO')
@@ -98,10 +99,65 @@ async def painel_html():
     else:
         return HTMLResponse(content=f"<h1>ERRO 404: Arquivo index.html não encontrado!</h1><p>Verifique a pasta: <b>{DIRETORIO_BASE}</b></p>")
 
+# Route Helper para executar em Background
+def _executar_publicacao_bg(string_caminhos, legenda, post_id):
+    try:
+        sucesso = ig_poster_selenium.publicar_no_instagram_local(string_caminhos, legenda, post_id)
+        if sucesso:
+            database.atualizar_status_post(post_id, 'PUBLICADO')
+        else:
+            database.atualizar_status_post(post_id, 'ERRO')
+    except Exception as e:
+        print(f"[BG TASK ERRO] {e}", flush=True)
+        database.atualizar_status_post(post_id, 'ERRO')
+
+# Rota de Publicação Imediata (Selenium)
+@app.post("/api/publicar_agora")
+async def publicar_agora(
+    bg_tasks: BackgroundTasks,
+    midias: List[UploadFile] = File(...),
+    legenda: str = Form("")
+):
+    try:
+        print(f"\n[*] Solicitação de PUBLICAÇÃO IMEDIATA recebida!", flush=True)
+        
+        if not midias or len(midias) == 0:
+            raise HTTPException(status_code=400, detail="Nenhuma imagem enviada.")
+        
+        caminhos_salvos = []
+        for index, midia in enumerate(midias):
+            if midia and midia.filename:
+                # Add index to avoid name collision if the user uploads 2 files with the same name
+                nome_seguro = f"{int(datetime.now().timestamp())}_{index}_{midia.filename}"
+                caminho_arquivo = os.path.join(PASTA_UPLOADS, nome_seguro)
+                with open(caminho_arquivo, "wb") as buffer:
+                    shutil.copyfileobj(midia.file, buffer)
+                caminhos_salvos.append(caminho_arquivo)
+                print(f"[+] Imagem/Vídeo {index+1} salvo: {caminho_arquivo}", flush=True)
+        
+        string_caminhos = ",".join(caminhos_salvos)
+
+        # Registra no BD como 'PUBLICANDO' para ter onde atrelar os logs
+        data_agora = datetime.now().strftime("%Y-%m-%dT%H:%M")
+        post_id = database.agendar_novo_post(string_caminhos, legenda, data_agora)
+        database.atualizar_status_post(post_id, 'PUBLICANDO')
+        
+        # Executa o Selenium em background task para não travar a UI
+        bg_tasks.add_task(_executar_publicacao_bg, string_caminhos, legenda, post_id)
+        
+        return {"status": "Publicação iniciada! Acompanhe os logs.", "sucesso": True, "post_id": post_id}
+            
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"[!] Erro na publicação imediata: {e}", flush=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
 # Rotas de Agendamento
 @app.post("/api/agendar")
 async def receber_agendamento(
-    foto: UploadFile = File(None), 
+    midias: List[UploadFile] = File(None), 
     legenda: str = Form(""),
     data_agendada: str = Form("")
 ):
@@ -112,19 +168,25 @@ async def receber_agendamento(
         if data_agendada:
             try:
                 dt = datetime.strptime(data_agendada, "%Y-%m-%dT%H:%M")
-                if dt < datetime.now():
+                if dt < datetime.now().replace(second=0, microsecond=0):
                     raise HTTPException(status_code=400, detail="Não é possível agendar para uma data no passado.")
             except ValueError:
                 pass
         
-        caminho_arquivo = ""
-        if foto and foto.filename:
-            caminho_arquivo = os.path.join(PASTA_UPLOADS, foto.filename)
-            with open(caminho_arquivo, "wb") as buffer:
-                shutil.copyfileobj(foto.file, buffer)
-            print(f"[+] Imagem salva com sucesso em: {caminho_arquivo}", flush=True)
+        caminhos_salvos = []
+        if midias:
+            for index, midia in enumerate(midias):
+                if midia and midia.filename:
+                    nome_seguro = f"{int(datetime.now().timestamp())}_{index}_{midia.filename}"
+                    caminho_arquivo = os.path.join(PASTA_UPLOADS, nome_seguro)
+                    with open(caminho_arquivo, "wb") as buffer:
+                        shutil.copyfileobj(midia.file, buffer)
+                    caminhos_salvos.append(caminho_arquivo)
+                    print(f"[+] Imagem/Vídeo {index+1} salvo em: {caminho_arquivo}", flush=True)
             
-        database.agendar_novo_post(caminho_arquivo, legenda, data_agendada if data_agendada else None)
+        string_caminhos = ",".join(caminhos_salvos)
+            
+        database.agendar_novo_post(string_caminhos, legenda, data_agendada if data_agendada else None)
         return {"status": "Postagem agendada/salva como rascunho com sucesso!"}
     except HTTPException:
         raise
@@ -145,6 +207,14 @@ async def excluir_agendamento(post_id: int):
     try:
         database.excluir_agendamento(post_id)
         return {"status": "Agendamento cancelado com sucesso."}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/logs_postagem/{post_id}")
+async def listar_logs_postagem(post_id: int):
+    try:
+        logs = database.buscar_logs_postagem(post_id)
+        return {"logs": logs}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -279,6 +349,7 @@ async def estatisticas_ultimo_lote():
     return {"dados": dados}
 
 # Rotas Analiticas
+
 
 @app.get("/api/perfis")
 async def listar_perfis():

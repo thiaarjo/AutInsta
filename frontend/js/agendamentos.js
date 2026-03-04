@@ -93,12 +93,15 @@ async function carregarAgendamentos() {
                      onmouseleave="esconderTooltip()"
                      onclick="event.stopPropagation()">
                      
-                    <!-- Cabeçalho (Hora + Status + Botão Lixeira) -->
+                    <!-- Cabeçalho (Hora + Status + Botões) -->
                     <div class="flex items-center justify-between w-full pr-1">
                         <span class="text-[9px] font-black ${txtColor} flex items-center gap-1 leading-none tracking-wide"><i data-lucide="${statusIcon}" class="w-2.5 h-2.5"></i> ${horaAbreviada}</span>
-                        <button onclick="deletarAgendamento(${item.id}); event.stopPropagation();" class="opacity-0 group-hover/card:opacity-100 rounded text-red-500 hover:text-red-700 transition-colors shrink-0" title="Apagar">
-                            <i data-lucide="x" class="w-3 h-3"></i>
-                        </button>
+                        <div class="flex gap-1">
+
+                            <button onclick="deletarAgendamento(${item.id}); event.stopPropagation();" class="opacity-0 group-hover/card:opacity-100 rounded text-red-500 hover:text-red-700 transition-colors shrink-0" title="Apagar">
+                                <i data-lucide="x" class="w-3 h-3"></i>
+                            </button>
+                        </div>
                     </div>
 
                     <!-- Mídia / Ícone Placeholder -->
@@ -147,7 +150,23 @@ document.getElementById('formAgendamento').addEventListener('submit', async func
     event.preventDefault(); const btn = document.getElementById('btn-salvar-post'); btn.disabled = true; btn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Salvando...';
     if (window.lucide) lucide.createIcons();
     try {
-        const formData = new FormData(); formData.append("foto", document.getElementById('foto_upload').files[0]); formData.append("legenda", document.getElementById('legenda_post').value); formData.append("data_agendada", document.getElementById('data_agendada').value);
+        const midiasFinais = await window.obterMidiasProcessadas();
+        if (!midiasFinais || midiasFinais.length === 0) {
+            window.mostrarToast('Selecione pelo menos uma imagem ou vídeo para publicar.', 'erro');
+            return;
+        }
+
+        const dataEscolhida = document.getElementById('data_agendada').value;
+        if (!dataEscolhida) {
+            window.mostrarToast('Escolha um horário para publicar o post no futuro.', 'erro');
+            return;
+        }
+
+        const formData = new FormData();
+        midiasFinais.forEach(m => formData.append("midias", m));
+        formData.append("legenda", document.getElementById('legenda_post').value);
+        formData.append("data_agendada", dataEscolhida);
+
         const res = await fetch('/api/agendar', { method: 'POST', body: formData });
         if (!res.ok) {
             const err = await res.json();
@@ -155,8 +174,7 @@ document.getElementById('formAgendamento').addEventListener('submit', async func
             return;
         }
         document.getElementById('formAgendamento').reset();
-        document.getElementById('preview_img').classList.add('hidden');
-        document.getElementById('preview_img').src = '';
+        if (window.limparCropper) window.limparCropper();
         const previewTexto = document.getElementById('preview-legenda-texto');
         if (previewTexto) previewTexto.innerHTML = 'Sua legenda aparecerá aqui...';
 
@@ -177,6 +195,116 @@ document.getElementById('formAgendamento').addEventListener('submit', async func
         if (window.lucide) lucide.createIcons();
     }
 });
+
+// --- PUBLICAR AGORA (Imediato via Selenium) ---
+const btnPublicarAgora = document.getElementById('btn-publicar-agora');
+if (btnPublicarAgora) {
+    btnPublicarAgora.addEventListener('click', async function () {
+        const btn = this;
+        const legendaInput = document.getElementById('legenda_post');
+
+        if (!window.janelaMidias || window.janelaMidias.length === 0) {
+            window.mostrarToast('Selecione pelo menos uma mídia antes de publicar.', 'erro');
+            return;
+        }
+
+        const isConfirmado = await window.confirmarAcao('Publicar agora no Instagram? O robô abrirá o navegador e fará o post imediatamente.');
+        if (!isConfirmado) return;
+
+        btn.disabled = true;
+        btn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Publicando...';
+        if (window.lucide) lucide.createIcons();
+
+        try {
+            const midiasFinais = await window.obterMidiasProcessadas();
+            if (!midiasFinais || midiasFinais.length === 0) {
+                window.mostrarToast('Erro ao processar as mídias.', 'erro');
+                btn.innerHTML = '<i data-lucide="send" class="w-5 h-5"></i> Publicar Agora';
+                btn.disabled = false;
+                return;
+            }
+
+            const formData = new FormData();
+            midiasFinais.forEach(m => formData.append("midias", m));
+            formData.append("legenda", legendaInput.value);
+
+            const res = await fetch('/api/publicar_agora', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!res.ok) {
+                const err = await res.json();
+                window.mostrarToast(err.detail || 'Erro ao publicar imediatamente.', 'erro');
+                btn.innerHTML = '<i data-lucide="send" class="w-5 h-5"></i> Publicar Agora';
+                btn.disabled = false;
+                if (window.lucide) lucide.createIcons();
+                return;
+            }
+
+            const dados = await res.json();
+
+            if (dados.post_id) {
+                // Inicia o rastreio via botão
+                btn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Iniciando robô...';
+                if (window.lucide) lucide.createIcons();
+
+                let checkLogs = setInterval(async () => {
+                    try {
+                        const logsRes = await fetch(`/api/logs_postagem/${dados.post_id}`);
+                        if (logsRes.ok) {
+                            const logs = await logsRes.json();
+                            if (logs && logs.length > 0) {
+                                // Pega a ultima mensagem
+                                const uLog = logs[logs.length - 1];
+                                btn.innerHTML = `<i data-lucide="${uLog.tipo === 'ERRO' || uLog.tipo === 'ERROR' ? 'alert-circle' : 'loader-2'}" class="w-4 h-4 ${uLog.tipo === 'ERRO' || uLog.tipo === 'ERROR' ? 'text-red-500' : 'animate-spin'}"></i> ${uLog.mensagem.substring(0, 30)}...`;
+                                if (window.lucide) lucide.createIcons();
+
+                                const hasEnded = logs.find(log => log.tipo === 'SUCESSO' || log.tipo === 'ERRO' || log.tipo === 'ERROR');
+                                if (hasEnded) {
+                                    clearInterval(checkLogs);
+
+                                    if (hasEnded.tipo === 'SUCESSO') {
+                                        window.mostrarToast('Postagem publicada com sucesso no Instagram!', 'sucesso');
+                                        document.getElementById('formAgendamento').reset();
+                                        if (window.limparCropper) window.limparCropper();
+                                        const previewTexto = document.getElementById('preview-legenda-texto');
+                                        if (previewTexto) previewTexto.innerHTML = 'Sua legenda aparecerá aqui...';
+
+                                        if (window.diaAtualDoModal) {
+                                            document.getElementById('form-agendar-wrapper').classList.add('hidden');
+                                            document.getElementById('btn-toggle-form-agendar').classList.remove('hidden');
+                                        }
+                                        await carregarAgendamentos();
+                                    } else {
+                                        window.mostrarToast('Erro durante a publicação automática.', 'erro');
+                                    }
+
+                                    btn.innerHTML = '<i data-lucide="send" class="w-5 h-5"></i> Publicar Agora';
+                                    btn.disabled = false;
+                                    if (window.lucide) lucide.createIcons();
+                                }
+                            }
+                        }
+                    } catch (e) {
+                        console.error("Erro no polling de logs do botao:", e);
+                    }
+                }, 2000);
+            } else {
+                throw new Error("ID não retornado pelo servidor");
+            }
+
+        } catch (err) {
+            console.error('Erro ao publicar:', err);
+            window.mostrarToast('Erro interno ao tentar publicar.', 'erro');
+            btn.innerHTML = '<i data-lucide="send" class="w-5 h-5"></i> Publicar Agora';
+            btn.disabled = false;
+            if (window.lucide) lucide.createIcons();
+        }
+    });
+} else {
+    console.warn('[agendamentos.js] Botão #btn-publicar-agora não encontrado no DOM.');
+}
 
 // --- EXPORTANDO PARA O ESCOPO GLOBAL ---
 window.carregarAgendamentos = carregarAgendamentos;

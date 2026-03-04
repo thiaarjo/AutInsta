@@ -174,6 +174,13 @@ function popularGaleriaPosts(perfilSelecionado) {
         return d.split(' ')[0];
     }
 
+    // Sort from newest to oldest by original publication date (data_pub)
+    postsUnicos.sort((a, b) => {
+        const dateA = a.data_pub ? getTimestamp(a.data_pub) : 0;
+        const dateB = b.data_pub ? getTimestamp(b.data_pub) : 0;
+        return dateB - dateA;
+    });
+
     galeria.innerHTML = '';
 
     postsUnicos.forEach(p => {

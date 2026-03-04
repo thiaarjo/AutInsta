@@ -43,8 +43,7 @@ function fecharModalAgendamento() {
     // Reset form
     const form = document.getElementById('formAgendamento');
     if (form) form.reset();
-    const previewImg = document.getElementById('preview_img');
-    if (previewImg) { previewImg.classList.add('hidden'); previewImg.src = ''; }
+    if (window.limparCropper) window.limparCropper();
     const previewTexto = document.getElementById('preview-legenda-texto');
     if (previewTexto) previewTexto.innerHTML = 'Sua legenda aparecerá aqui...';
 }
