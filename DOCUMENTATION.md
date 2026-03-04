@@ -8,46 +8,75 @@ O AutPost é um sistema completo desenvolvido em Python para automação, monito
 
 O sistema utiliza uma arquitetura modularizada em camadas, separando as responsabilidades de extração de dados, armazenamento, agendamento de tarefas e interface visual.
 
-- **Frontend (Painel de Controle e Calendário):** Interface visual construída com HTML5 e estilizada com utilitários CSS e Vanilla CSS. O Javascript, inicialmente monolítico, foi **completamente refatorado em Módulos ES6** (ex: `api.js`, `calendar.js`, `modals.js`, `dragDrop.js`) orquestrados pelo arquivo `main.js`. Isso traz robustez de produção e facilita a manutenção. Permite interações ricas como **Drag & Drop** de ideias para o calendário, gestão do **Hub do Dia** (modal centralizador de tarefas diárias), acompanhamento ao vivo via polling e sistema de **Notificações Toast** amigáveis e não-obstrutivas.
-- **Backend (API FastAPI):** O arquivo `main.py` hospeda o servidor Uvicorn. Ele provê todas as rotas de API RESTful para que o painel consiga operar os scripts em Python por debaixo dos panos, gerenciar o CRUD no banco de dados e manipular arquivos estáticos de upload.
-- **Motor de Execução (Scraper):** Módulo `scraper.py` contendo as rotinas em Selenium para acessar a versão Web do Instagram, driblar pop-ups e extrair dados usando estratégias de tolerância a falhas. Conta com otimizações de fluxo (ex: navegação direta para URLs de Stories quando solicitados de forma isolada, poupando carregamentos desnecessários).
-- **Gerenciador de Trabalhos em Segundo Plano (O Vigia):** Implementado no `main.py` utilizando `APScheduler`. Esta entidade invisível acorda periodicamente (ex: a cada 1 minuto) e checa a fila no Banco de Dados para efetuar postagens na Meta API.
+- **Frontend (Painel de Controle e Calendário):** Interface visual construída com HTML5 e estilizada com Tailwind CSS + Vanilla CSS. O Javascript foi **completamente refatorado em Módulos ES6** (`dashboard.js`, `scraper.js`, `modals.js`, `agendamentos.js`, `calendar.js`, `dragDrop.js`, `toast.js`, `ui.js`, `config.js`, `globals.js`, `lembretes.js`) orquestrados pelo arquivo `main.js`. Permite interações ricas como **Drag & Drop**, gestão do calendário de posts, acompanhamento ao vivo via polling e sistema de **Notificações Toast** não-obstrutivas. Utiliza **cache-busting por versão** (`?v=X.0`) nos imports para evitar problemas de cache agressivo do navegador.
+- **Backend (API FastAPI):** O arquivo `main.py` hospeda o servidor Uvicorn. Provê todas as rotas de API RESTful para operação dos scripts, CRUD no banco de dados e manipulação de arquivos estáticos. Inclui endpoint dedicado `/api/perfis` para listar todos os perfis já extraídos.
+- **Motor de Extração (Scraper Feed):** Módulo `scraper.py` contendo as rotinas em Selenium para acessar o Instagram, driblar pop-ups e extrair dados do feed usando estratégias de tolerância a falhas.
+- **Motor de Extração (Scraper Stories):** Módulo `scraper_stories.py` dedicado à extração de stories. Implementa **deduplicação inteligente**: antes de capturar um screenshot, verifica no banco se a `media_url` (src da mídia) já foi registrada. Se já existir, reutiliza o print anterior, evitando arquivos duplicados na pasta `prints/`.
+- **Gerenciador de Trabalhos em Segundo Plano (O Vigia):** Implementado no `main.py` utilizando `APScheduler`. Acorda periodicamente (a cada 1 minuto) e checa a fila de postagens pendentes no banco.
 
 ---
 
 ## 2. Módulos e Funcionalidades
 
 ### main.py (O Cérebro)
-Ponto de entrada do projeto. Inicia a FastApi e carrega middlewares CORS para permitir integração Frontend-Backend.
-- Gerencia o "estado ativo" do painel de administração via polling adaptado (rotas `/api/status_tarefa`).
-- Recebe e isola requisições de execuções de Bots via IDs de Tarefa únicos (`task_id`). Quando acionado, executa a varredura (`scraper.py`) numa thread paralela (`asyncio.to_thread`) para não travar o backend, permitindo também o cancelamento assíncrono.
-- Lida com a montagem das pastas locais `/fotos`, `/uploads` e servir os arquivos estáticos (`/frontend/css`, `/frontend/js`).
+Ponto de entrada do projeto. Inicia a FastAPI e carrega middlewares CORS.
+- Gerencia o "estado ativo" do painel via polling (`/api/status_tarefa`).
+- Recebe requisições de extração via IDs de Tarefa únicos (`task_id`) e executa em thread paralela (`asyncio.to_thread`).
+- Servir arquivos estáticos (`/fotos`, `/uploads`, `/frontend`).
+- **Rotas analíticas:** `/api/perfis`, `/api/historico_graficos`, `/api/stories/{perfil}`, `/api/historico_detalhado/{perfil}`.
 
-### scraper.py (O Moto-Scraper)
-Funções baseadas em Selenium Webdriver.
-- **rodar_robo**: Orquestra todo o fluxo de uma extração (Login -> Acessar Alvo -> Extrair Perfil -> Extrair Dados de Seguidores -> Clicar nos Posts -> Varredura de Fotos, Curtidas e Comentários).
-- **Proteção de RAM (aniquilar_processo_chrome)**: Função vital que destrói ativamente processos filhos do Google Chrome que falham ao ser encerrados, prevenindo o congelamento de servidores VPS por estouro de memória.
-- **Limitações de Segurança:** O bot é configurado via interface (limite de posts, tempos de espera, modo headless) para prevenir bloqueios anti-spam do Instagram.
+### scraper.py (Extração do Feed)
+Funções baseadas em Selenium WebDriver.
+- **rodar_robo**: Orquestra toda a extração (Login → Acessar Alvo → Extrair Perfil → Seguidores → Posts → Curtidas/Comentários).
+- **Proteção de RAM (aniquilar_processo_chrome)**: Destrói processos filhos do Chrome que falham ao encerrar.
+- **Limitações de Segurança:** Configurável via interface (limite de posts, tempos de espera, modo headless).
+
+### scraper_stories.py (Extração de Stories)
+Módulo dedicado à captura de stories com deduplicação.
+- **_extrair_media_url**: Extrai a URL da mídia (`src` da `<img>` ou `<video>`) do DOM como identificador único.
+- **_capturar_print_story**: Localiza o elemento de mídia no DOM e faz screenshot isolado.
+- **extrair_stories_perfil**: Orquestra a extração percorrendo todos os stories ativos. Antes de capturar, consulta `buscar_print_story_existente()` no banco. Se o print já existe, reutiliza o arquivo sem criar duplicata.
+- **Logs descritivos:** Exibe no terminal `♻️ Reutilizando print existente` ou `📸 Novo print capturado`.
 
 ### database.py (Camada de Dados)
-Implementado em SQLite3 com ativação de `PRAGMA foreign_keys = ON`.
-- Possui o `conectar()` como Context Manager para fechar o banco com segurança sempre que uma busca/inserção falhar ou concluir.
-- **obter_ranking_horarios**: Robô analítico local que pega os dados armazenados de uma conta e analisa os dias da semana de maior engajamento usando cálculo de médias.
+Implementado em SQLite3 com `PRAGMA foreign_keys = ON`.
+- `conectar()`: Context Manager seguro para conexões.
+- `buscar_todos_perfis()`: Retorna todos os perfis únicos já extraídos (alimenta o dropdown dinâmico).
+- `buscar_stories_por_perfil()`: Deduplicação inteligente por `media_url` (GROUP BY). Stories legado (sem `media_url`) retornam apenas da extração mais recente. Inclui campo `vezes_visto` contando capturas.
+- `buscar_print_story_existente()`: Verifica se já existe um print para uma `media_url`, incluindo checagem de existência do arquivo no disco.
+- `obter_ranking_horarios()`: Análise de dias da semana com maior engajamento.
+
+### Frontend JS (Módulos ES6)
+
+| Arquivo | Responsabilidade |
+|---|---|
+| `main.js` | Ponto de entrada, orquestra imports com cache-busting |
+| `dashboard.js` | Dashboard de crescimento, gráficos, galeria de stories/posts, dropdown dinâmico |
+| `scraper.js` | Interface da extração em tempo real, cards de resultado |
+| `modals.js` | Sistema de modais customizados (substituindo `alert()`/`confirm()` nativos) |
+| `agendamentos.js` | CRUD de agendamentos de posts |
+| `calendar.js` | Calendário de conteúdo |
+| `dragDrop.js` | Drag & Drop de agendamentos e lembretes |
+| `toast.js` | Notificações toast (sucesso/erro/info) |
+| `ui.js` | Navegação de abas, UI geral |
+| `config.js` | Configurações globais |
+| `globals.js` | Constantes, utilitários de data |
+| `lembretes.js` | CRUD de lembretes |
 
 ### meta_api.py (Integrações Externas)
-Conector com a API Oficial Graph do Facebook/Instagram (versão 19.0).
-- Projetado de forma arquitetonicamente correta com duas fases de publicação (Container Request -> Publish Request).
-- Conta com uma barreira de segurança preventiva: Caso o desenvolvedor não insira um Super Token válido, ele finge o disparo, retorna "Sucesso" para o Banco de Dados para seguir com o andamento sistêmico, e emite um alerta "Modo Simulação" no console.
+Conector com a API Graph do Facebook/Instagram (v19.0).
+- Publicação em duas fases (Container Request → Publish Request).
+- Modo Simulação quando não há Super Token válido.
 
 ### utils.py (Ferramentas Menores)
-- **analisar_curtidas(texto)**: Usando expressões regulares (regex), pega textos retornados pelo Instagram (como "1,5 mi curtiram", "240 mil") e os converte em valores matemáticos (1.500.000, 240.000) passíveis de serem agrupados em gráficos evolutivos.
-- **sleep_seguro()**: Substitui o `time.sleep` comum. Enquanto "dorme", vigia o dicionário global de cancelamentos, permitindo cancelamento instantâneo se a Thread for morta pelo painel frontal.
+- **analisar_curtidas(texto)**: Converte textos do Instagram ("1,5 mi", "240 mil") em valores numéricos.
+- **sleep_seguro()**: Sleep interruptível que permite cancelamento instantâneo.
 
 ---
 
 ## 3. Diagrama do Banco de Dados (Entidade-Relacionamento)
 
-O banco de dados (SQLite `banco_dados.db`) foi modelado prevendo relações de causa e consequência (Tabela-Pai e Tabela-Filho). Exclusões acontecem em cascata (`ON DELETE CASCADE`).
+O banco de dados (SQLite `banco_dados.db`) utiliza relações com exclusão em cascata (`ON DELETE CASCADE`).
 
 ```mermaid
 erDiagram
@@ -57,6 +86,8 @@ erDiagram
     POSTS_FEED ||--o{ COMENTARIOS : gera
 
     POSTAGENS_AGENDADAS
+    LEMBRETES
+    CONFIGURACOES_GLOBAIS
 
     EXECUCOES_LOTE {
         integer id PK
@@ -80,6 +111,24 @@ erDiagram
         boolean fixado
         string curtidas_texto
         integer curtidas_valor
+        string caminho_imagem
+    }
+
+    STORIES {
+        integer id PK
+        integer perfil_id FK
+        integer ordem
+        string tipo_midia
+        string tempo_publicacao
+        string caminho_imagem
+        string media_url
+    }
+
+    COMENTARIOS {
+        integer id PK
+        integer post_id FK
+        string usuario_autor
+        string texto_comentario
     }
 
     POSTAGENS_AGENDADAS {
@@ -89,24 +138,61 @@ erDiagram
         string data_agendada
         string status
     }
+
+    LEMBRETES {
+        integer id PK
+        string data
+        string texto
+        string cor
+    }
+
+    CONFIGURACOES_GLOBAIS {
+        integer id PK
+        string usuario
+        string senha
+        integer delay_base
+        boolean modo_invisivel
+    }
 ```
 
 ---
 
 ## 4. Fluxograma de Execução (Modo Scraper)
 
-1. Usuário configura suas credenciais globais na aba "Configurações Globais".
-2. Usuário clica no botão "Iniciar Extração" no painel principal, enviando um `task_id`.
-3. O servidor (FastAPI) registra a tarefa e envia os dados (alvo, limites, flags bool) para o `scraper.py` via uma thread asssíncrona.
-4. O Frontend inicia um polling a cada 1 segundo mapeando a evolução técnica via `/api/status_tarefa/{task_id}`.
-5. O Selenium navega de forma Oculta ou Visível (Headless), extrai o feed temporariamente para a memória RAM (Listas de Dicionários Python).
-6. Se não cancelado via botão abortar, empurra tudo massivamente (`executemany`) de uma vez por transação única no SQLite3 através de `database.salvar_lote`.
-7. Backend envia status "100% - Tarefa concluída", e o Frontend renderiza os dados em tela e atualiza o Gráficos do Dashboard.
+1. Usuário configura credenciais na aba "Configurações Globais".
+2. Usuário clica em "Iniciar Extração", enviando um `task_id`.
+3. O servidor executa `scraper.py` (feed) e/ou `scraper_stories.py` (stories) em thread assíncrona.
+4. O Frontend faz polling a cada 1 segundo via `/api/status_tarefa/{task_id}`.
+5. O Selenium navega de forma oculta ou visível (Headless), extrai dados para memória.
+6. **Para stories:** Antes de capturar screenshot, verifica deduplicação por `media_url`.
+7. Se não cancelado, salva tudo via `database.salvar_lote()` em transação única.
+8. Backend envia status "100%", Frontend renderiza os dados e atualiza gráficos/galeria.
 
 ---
 
-## 5. Como Contribuir e Modificar
+## 5. Deduplicação de Stories
 
-- **Adicionar Coluna Nova de Raspagem:** Adicione o extrator XPath no `scraper.py`. Em seguida adicione ao dicionário final retornado na função e, só por último, inclua no insert SQL no `database.py`.
-- **Modificar Frontend:** Altere as regras de negócio de visualizações e abas editando o objeto `mapTabs` dentro de `frontend/js/app.js`. Os estilos visuais moram em `frontend/css/style.css` e o esqueleto base em `index.html`.
-- **Criar Novos Gráficos:** Crie o algoritmo de média matemática puxando as colunas "_valor", implemente um getter SQL em `database.py` (como `buscar_historico_graficos()`) e atualize o ChartJS instanciado na lógica do Dashboard no Javascript.
+O sistema implementa deduplicação inteligente de screenshots para evitar acúmulo de arquivos repetidos:
+
+```
+Story exibido no navegador
+    ↓
+Extrai a URL da mídia (src da <img> ou <video>)
+    ↓
+Consulta o banco: "Já existe um print com essa media_url?"
+    ├─ SIM → Reutiliza o caminho_imagem existente (sem novo screenshot)
+    └─ NÃO → Tira o screenshot normalmente e salva
+    ↓
+Salva no banco COM a media_url para futuras consultas
+```
+
+A galeria de stories exibe cada story **uma única vez**, com um badge "Nx visto" indicando quantas vezes foi capturado. Stories legados (antes da deduplicação) mostram apenas os da extração mais recente.
+
+---
+
+## 6. Como Contribuir e Modificar
+
+- **Adicionar Coluna Nova de Raspagem:** Adicione o extrator XPath no `scraper.py` ou `scraper_stories.py`. Inclua ao dicionário retornado e ao insert SQL no `database.py`. Use `ALTER TABLE` com `try/except` na `criar_tabelas()` para migração automática.
+- **Modificar Frontend:** Edite o módulo JS correspondente em `frontend/js/`. Os estilos visuais ficam em `frontend/css/style.css` e o esqueleto em `index.html`. **Lembre-se de incrementar a versão** nos imports de `main.js` e na tag `<script>` de `index.html` para quebrar o cache.
+- **Criar Novos Gráficos:** Implemente um getter SQL em `database.py` e atualize o ChartJS em `dashboard.js`.
+- **Adicionar Novo Perfil:** Perfis são adicionados automaticamente ao banco na primeira extração e aparecem no dropdown do dashboard via `/api/perfis`.

@@ -6,6 +6,63 @@ from selenium.webdriver.support import expected_conditions as EC
 
 from config import PASTA_PRINTS
 from utils import sleep_seguro, atualizar_status
+from database import buscar_print_story_existente
+
+
+def _extrair_media_url(driver):
+    """
+    Extrai a URL da mídia (src) do story em exibição.
+    Retorna (media_url, tipo_midia) ou (None, tipo_midia).
+    Essa URL serve como identificador único do story para deduplicação.
+    """
+    tipo_midia = "FOTO"
+
+    try:
+        # Detecta se é vídeo ou foto
+        videos = driver.find_elements(By.TAG_NAME, "video")
+        if len(videos) > 0:
+            tipo_midia = "VIDEO"
+            # Extrai src do <video> ou do <source> filho
+            try:
+                src = videos[0].get_attribute("src")
+                if not src:
+                    sources = videos[0].find_elements(By.TAG_NAME, "source")
+                    if sources:
+                        src = sources[0].get_attribute("src")
+                if src:
+                    return src, tipo_midia
+            except:
+                pass
+        else:
+            # Tenta extrair src de <img> do story
+            try:
+                img = driver.find_element(By.XPATH,
+                    "//img[@draggable='false' and contains(@style, 'object-fit')]"
+                )
+                src = img.get_attribute("src")
+                if src:
+                    return src, tipo_midia
+            except:
+                pass
+
+            try:
+                imgs = driver.find_elements(By.XPATH, 
+                    "//section//img[not(contains(@alt, 'profile'))]"
+                )
+                for img in imgs:
+                    tamanho = img.size
+                    if tamanho.get("height", 0) > 300:
+                        src = img.get_attribute("src")
+                        if src:
+                            return src, tipo_midia
+            except:
+                pass
+
+    except Exception as e:
+        if "CANCELADO_PELO_USUARIO" in str(e):
+            raise e
+
+    return None, tipo_midia
 
 
 def _capturar_print_story(driver, alvo, numero_story, task_id):
@@ -90,6 +147,7 @@ def extrair_stories_perfil(driver, config, task_id, resultado):
     Função dedicada para extrair stories de um perfil.
     Recebe o driver Selenium já logado e navega para a URL de stories do alvo.
     Preenche resultado["stories"] com os dados coletados incluindo prints.
+    Usa deduplicação baseada em media_url para evitar screenshots repetidos.
     """
     DELAY = config.tempo_espera
     STORY_ALVO = f"https://www.instagram.com/stories/{config.alvo}/"
@@ -126,14 +184,29 @@ def extrair_stories_perfil(driver, config, task_id, resultado):
         except:
             pass
 
-        # Captura o print e detecta tipo de mídia (FOTO/VIDEO)
-        url_print, tipo_midia = _capturar_print_story(driver, config.alvo, stories_sessao, task_id)
+        # DEDUPLICAÇÃO: Extrai a URL da mídia para identificar o story
+        media_url, tipo_midia = _extrair_media_url(driver)
+
+        # Verifica se já temos um print salvo para essa media_url
+        url_print = None
+        if media_url:
+            print_existente = buscar_print_story_existente(config.alvo, media_url)
+            if print_existente:
+                url_print = print_existente
+                print(f"[STORIES] ♻️ Reutilizando print existente para story {stories_sessao} (@{config.alvo})", flush=True)
+
+        # Se não encontrou print existente, captura um novo
+        if url_print is None:
+            url_print, tipo_midia = _capturar_print_story(driver, config.alvo, stories_sessao, task_id)
+            if url_print:
+                print(f"[STORIES] 📸 Novo print capturado para story {stories_sessao} (@{config.alvo})", flush=True)
 
         resultado["stories"].append({
             "numero": stories_sessao,
             "tipo": tipo_midia,
             "tempo": tempo,
-            "caminho_imagem": url_print
+            "caminho_imagem": url_print,
+            "media_url": media_url
         })
 
         # Tenta navegar para o próximo story

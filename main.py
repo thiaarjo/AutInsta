@@ -279,6 +279,15 @@ async def estatisticas_ultimo_lote():
     return {"dados": dados}
 
 # Rotas Analiticas
+
+@app.get("/api/perfis")
+async def listar_perfis():
+    try:
+        perfis = database.buscar_todos_perfis()
+        return {"perfis": perfis}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.get("/api/historico_graficos")
 async def historico_graficos():
     try:
