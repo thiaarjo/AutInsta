@@ -185,17 +185,11 @@ function popularGaleriaPosts(perfilSelecionado) {
 
     postsUnicos.forEach(p => {
         const imgSrc = p.print || null;
-        const isAtivo = window.postSelecionadoAtual === p.url_post;
 
         const card = document.createElement('div');
-        card.className = `bg-white rounded-lg border-2 overflow-hidden cursor-pointer transition-all hover:shadow-md hover:border-pink-400 flex flex-col sm:flex-row ${isAtivo ? 'border-pink-500 ring-2 ring-pink-200' : 'border-zinc-200'}`;
+        card.className = `bg-white rounded-lg border-2 overflow-hidden cursor-pointer transition-all hover:shadow-md hover:border-pink-400 flex flex-col sm:flex-row border-zinc-200`;
         card.onclick = () => {
-            if (window.postSelecionadoAtual === p.url_post) {
-                window.postSelecionadoAtual = ""; // Toggle OFF
-            } else {
-                window.postSelecionadoAtual = p.url_post; // Toggle ON
-            }
-            atualizarGraficosTela(perfilSelecionado);
+            abrirModalAnalyticsPost(p, perfilSelecionado);
         };
 
         card.innerHTML = `
@@ -457,3 +451,115 @@ function conectarBotaoLimpar() {
         if (window.mostrarToast) window.mostrarToast('🧹 Tela limpa! Selecione outro perfil.', 'sucesso');
     });
 }
+
+// --- MODAL ANALYTICS POST ---
+function abrirModalAnalyticsPost(postResumo, perfilSelecionado) {
+    const modal = document.getElementById('modal-analytics-post');
+    if (!modal) return;
+
+    const imgElement = document.getElementById('modal-analytics-img');
+    const fallbackElement = document.getElementById('modal-analytics-img-fallback');
+
+    // Reset the display from previous onerror triggers
+    imgElement.style.display = '';
+
+    imgElement.src = postResumo.print || '';
+    if (!postResumo.print) {
+        fallbackElement.classList.remove('hidden');
+    } else {
+        fallbackElement.classList.add('hidden');
+    }
+
+    // Formatar "26/02/2026 22:50" -> "26/02/2026"
+    function fmtPub(d) {
+        if (!d) return 'N/A';
+        return d.split(' ')[0];
+    }
+
+    document.getElementById('modal-analytics-data-pub').textContent = fmtPub(postResumo.data_pub);
+    document.getElementById('modal-analytics-link').href = postResumo.url_post;
+
+    const limpo = perfilSelecionado.replace('@', '').toLowerCase();
+    const brutos = (window.dadosHistoricosDB.posts_brutos || []).filter(p => p.perfil.toLowerCase() === limpo && p.url_post === postResumo.url_post);
+
+    // Ordem cronológica
+    brutos.sort((a, b) => (a.data_extracao > b.data_extracao ? 1 : -1));
+
+    let labels = [];
+    let dados = [];
+    let bgColors = [];
+
+    brutos.forEach(p => {
+        let fmtExt = p.data_extracao;
+        try {
+            const partes = p.data_extracao.split(' ');
+            const d = partes[0].split('-');
+            const hora = partes[1] ? partes[1].substring(0, 5) : '';
+            fmtExt = `${d[2]}/${d[1]} às ${hora}`;
+        } catch (e) { }
+
+        labels.push(["EXTRAÍDO", fmtExt]);
+        dados.push(p.curtidas);
+        bgColors.push('#ec4899'); // Rosa
+    });
+
+    if (window.chartAnalyticsPost) window.chartAnalyticsPost.destroy();
+    const ctx = document.getElementById('graficoAnalyticsPost').getContext('2d');
+
+    window.chartAnalyticsPost = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Curtidas',
+                data: dados,
+                backgroundColor: bgColors,
+                borderRadius: 4,
+                barThickness: 40,
+                maxBarThickness: 50
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        title: function (context) {
+                            return context[0].label.replace(',', ' - ');
+                        },
+                        label: function (context) {
+                            return ' ' + context.raw.toLocaleString('pt-BR') + ' curtidas extraídas';
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: { display: false },
+                    ticks: {
+                        font: { size: 10, weight: 'bold' },
+                        color: '#ec4899'
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function (val) { return val.toLocaleString('pt-BR'); }
+                    }
+                }
+            }
+        }
+    });
+
+    modal.classList.remove('hidden');
+    if (window.lucide) lucide.createIcons();
+}
+
+function fecharModalAnalyticsPost() {
+    const modal = document.getElementById('modal-analytics-post');
+    if (modal) modal.classList.add('hidden');
+}
+window.abrirModalAnalyticsPost = abrirModalAnalyticsPost;
+window.fecharModalAnalyticsPost = fecharModalAnalyticsPost;

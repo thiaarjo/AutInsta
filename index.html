@@ -428,6 +428,67 @@
         </div>
     </div>
 
+    <!-- MODAL ANALYTICS POST -->
+    <div id="modal-analytics-post" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-zinc-900/40 backdrop-blur-sm transition-opacity"
+            onclick="fecharModalAnalyticsPost()"></div>
+        <div
+            class="bg-white rounded-2xl shadow-xl w-full max-w-6xl flex flex-col md:flex-row overflow-hidden relative z-10 animate-in fade-in zoom-in-95 duration-200 h-[85vh] md:h-[700px]">
+            <button type="button" onclick="fecharModalAnalyticsPost()"
+                class="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-black/10 hover:bg-black/20 text-white transition-colors z-20 md:text-zinc-500 md:bg-zinc-100 md:hover:bg-zinc-200">
+                <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+
+            <!-- ESQUERDA: FOTO DO POST -->
+            <div
+                class="w-full md:w-[450px] lg:w-[500px] h-64 md:h-full bg-zinc-100 flex items-center justify-center relative shrink-0 border-r border-zinc-200">
+                <img id="modal-analytics-img" src="" class="w-full h-full object-cover"
+                    onerror="this.style.display='none'; document.getElementById('modal-analytics-img-fallback').classList.remove('hidden');">
+                <div id="modal-analytics-img-fallback"
+                    class="absolute inset-0 flex flex-col items-center justify-center text-zinc-500 hidden bg-zinc-100">
+                    <i data-lucide="image-off" class="w-10 h-10 mb-2 text-zinc-300"></i>
+                    <span class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mt-2">Sem Imagem</span>
+                </div>
+            </div>
+
+            <!-- DIREITA: DADOS E GRÁFICO -->
+            <div class="flex-1 flex flex-col bg-white overflow-y-auto w-full">
+                <div class="p-8 border-b border-zinc-100 shrink-0">
+                    <h2 class="text-2xl font-black text-zinc-900 tracking-tight mb-4" id="modal-analytics-titulo">
+                        Desempenho da Publicação</h2>
+                    <div class="flex flex-col gap-3">
+                        <div
+                            class="flex items-center gap-2 bg-pink-50 text-pink-700 px-3 py-2 rounded-lg border border-pink-100 w-fit">
+                            <i data-lucide="calendar" class="w-4 h-4"></i>
+                            <span class="text-sm font-bold">Publicado em: <span id="modal-analytics-data-pub"
+                                    class="text-pink-900 font-black">...</span></span>
+                        </div>
+                        <a id="modal-analytics-link" href="#" target="_blank"
+                            class="text-xs font-bold text-blue-500 hover:text-blue-600 hover:underline flex items-center gap-1 w-fit"><i
+                                data-lucide="external-link" class="w-4 h-4"></i> Ver postagem original no Instagram</a>
+                    </div>
+                </div>
+
+                <div class="p-8 flex-1 flex flex-col min-h-0">
+                    <h3 class="text-xs font-black text-zinc-800 uppercase tracking-widest mb-6 flex items-center gap-2">
+                        <i data-lucide="bot" class="w-4 h-4 text-pink-500"></i> Histórico de Extração do Robô
+                    </h3>
+
+                    <div
+                        class="w-full h-[300px] relative mt-auto mx-auto max-w-2xl border-t border-b border-dashed border-zinc-200 py-4">
+                        <canvas id="graficoAnalyticsPost"></canvas>
+                    </div>
+                </div>
+
+                <div
+                    class="p-5 bg-zinc-50 border-t border-zinc-100 flex items-center gap-3 text-xs text-zinc-600 font-medium shrink-0">
+                    <i data-lucide="info" class="w-6 h-6 text-pink-500 flex-shrink-0"></i>
+                    <p>As colunas apontam os exatos momentos em que o <strong>robô realizou a extração desses
+                            dados</strong> e a quantidade de curtidas encontradas.</p>
+                </div>
+            </div>
+        </div>
+    </div>
     <main id="view-lista" class="hidden max-w-[1440px] mx-auto py-12 px-6">
         <div class="flex items-center justify-between mb-6 pb-4 border-b border-zinc-200">
             <div>

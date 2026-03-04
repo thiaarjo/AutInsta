@@ -12,7 +12,8 @@ O sistema utiliza uma arquitetura modularizada em camadas, separando as responsa
 - **Backend (API FastAPI):** O arquivo `main.py` hospeda o servidor Uvicorn. Provê todas as rotas de API RESTful para operação dos scripts, CRUD no banco de dados e manipulação de arquivos estáticos. Inclui endpoint dedicado `/api/perfis` para listar todos os perfis já extraídos.
 - **Motor de Extração (Scraper Feed):** Módulo `scraper.py` contendo as rotinas em Selenium para acessar o Instagram, driblar pop-ups e extrair dados do feed usando estratégias de tolerância a falhas.
 - **Motor de Extração (Scraper Stories):** Módulo `scraper_stories.py` dedicado à extração de stories. Implementa **deduplicação inteligente**: antes de capturar um screenshot, verifica no banco se a `media_url` (src da mídia) já foi registrada. Se já existir, reutiliza o print anterior, evitando arquivos duplicados na pasta `prints/`.
-- **Gerenciador de Trabalhos em Segundo Plano (O Vigia):** Implementado no `main.py` utilizando `APScheduler`. Acorda periodicamente (a cada 1 minuto) e checa a fila de postagens pendentes no banco.
+- **Motor de Postagem Automatizada (Selenium Poster):** Implementado no `ig_poster_selenium.py`. Realiza o fluxo completo de publicação (Login → Criar → Upload → Legenda → Compartilhar) simulando um usuário real. Suporta **múltiplas mídias (carrossel)** e **vídeos**, contornando limitações da API oficial. Fornece feedback em tempo real via logs persistidos no banco de dados.
+- **Gerenciador de Trabalhos em Segundo Plano (O Vigia):** Implementado no `main.py` utilizando `APScheduler`. Acorda periodicamente (a cada 1 minuto) e checa a fila de postagens pendentes no banco. Utiliza o motor Selenium para disparar as publicações agendadas.
 
 ---
 
@@ -41,21 +42,29 @@ Módulo dedicado à captura de stories com deduplicação.
 ### database.py (Camada de Dados)
 Implementado em SQLite3 com `PRAGMA foreign_keys = ON`.
 - `conectar()`: Context Manager seguro para conexões.
-- `buscar_todos_perfis()`: Retorna todos os perfis únicos já extraídos (alimenta o dropdown dinâmico).
+- `buscar_todos_perfis()`: Retorna todos os perfis únicos já extraídos (alimenta o dropdown dinâmico do dashboard).
 - `buscar_stories_por_perfil()`: Deduplicação inteligente por `media_url` (GROUP BY). Stories legado (sem `media_url`) retornam apenas da extração mais recente. Inclui campo `vezes_visto` contando capturas.
 - `buscar_print_story_existente()`: Verifica se já existe um print para uma `media_url`, incluindo checagem de existência do arquivo no disco.
 - `obter_ranking_horarios()`: Análise de dias da semana com maior engajamento.
+- `inserir_log_postagem()` / `buscar_logs_postagem()`: Gerencia os logs detalhados de cada tentativa de publicação via Selenium.
+
+### ig_poster_selenium.py (Automação de Postagem)
+Módulo que utiliza Selenium para interagir frontalmente com o Instagram.
+- **Fluxo de Publicação:** Realiza login automático, lida com pop-ups de segurança, acessa o modal de criação e injeta mídias via input direto.
+- **Suporte a Carrossel:** Permite o envio de múltiplas imagens separadas por quebra de linha, que o Chrome interpreta como multi-upload.
+- **Logs de Depuração:** Cada etapa (clique, upload, erro) é registrada no banco de dados, permitindo que o frontend exiba o progresso ao vivo para o usuário.
+- **Limpeza de Processos:** Implementa a função `_aniquilar_chrome` para garantir que instâncias do navegador não fiquem órfãs em caso de falha.
 
 ### Frontend JS (Módulos ES6)
 
 | Arquivo | Responsabilidade |
 |---|---|
 | `main.js` | Ponto de entrada, orquestra imports com cache-busting |
-| `dashboard.js` | Dashboard de crescimento, gráficos, galeria de stories/posts, dropdown dinâmico |
+| `dashboard.js` | Dashboard de crescimento, gráficos, galeria de stories/posts e **dropdown dinâmico de perfis** extraídos do banco |
 | `scraper.js` | Interface da extração em tempo real, cards de resultado |
-| `modals.js` | Sistema de modais customizados (substituindo `alert()`/`confirm()` nativos) |
-| `agendamentos.js` | CRUD de agendamentos de posts |
-| `calendar.js` | Calendário de conteúdo |
+| `modals.js` | Sistema de modais customizados para agendamento, confirmações e rascunhos |
+| `agendamentos.js` | Gestão de posts, **polling de logs de postagem** e integração com o motor Selenium |
+| `calendar.js` | Calendário de conteúdo com **otimização de renderização (ícones sem sobreposição)** |
 | `dragDrop.js` | Drag & Drop de agendamentos e lembretes |
 | `toast.js` | Notificações toast (sucesso/erro/info) |
 | `ui.js` | Navegação de abas, UI geral |

@@ -5,10 +5,11 @@ O AutPost é um sistema corporativo de monitoramento e automação de extração
 ## Funcionalidades Principais
 
 - **Extração de Dados Avançada:** Coleta estruturada de engajamento em perfis-alvo (seguidores, publicações do feed e stories). Conta com roteamento direto para extração isolada e eficiente de stories.
+- **Automação via Selenium (Browser Automation):** Motor de postagem robusto que simula a navegação humana para publicar fotos, carrosséis e vídeos. Inclui sistema de logs detalhados vísiveis na UI para acompanhamento do progresso.
 - **Deduplicação Inteligente de Stories:** O sistema identifica stories já capturados pela URL da mídia (`media_url`), reutilizando prints existentes e evitando acúmulo de arquivos duplicados na pasta `prints/`.
 - **Dashboard Analítico:** Dropdown dinâmico alimentado diretamente do banco de dados, galeria horizontal de stories com scroll, gráficos de crescimento de seguidores e engajamento via ChartJS.
-- **Calendário de Conteúdo Interativo:** Interface avançada de agendamento em grid (Hub do Dia) permitindo manipulação via Drag & Drop e arquivamento em uma coluna de ideias persistente.
-- **Painel de Controle Escalonável:** Desenvolvido puramente em módulos JavaScript ES6, com notificações UI dinâmicas não obstrutivas (Toasts UI) e modais totalmente customizados (sem alertas nativos do navegador).
+- **Calendário de Conteúdo Interativo:** Interface avançada de agendamento em grid (Hub do Dia) permitindo manipulação via Drag & Drop, arquivamento de ideias e visualização otimizada sem sobreposição de ícones.
+- **Painel de Controle Escalonável:** Desenvolvido puramente em módulos JavaScript ES6, com notificações UI dinâmicas não obstrutivas (Toasts UI) e modais totalmente customizados.
 - **Armazenamento e Histórico Rígido:** Centralização dos dados extraídos e históricos de tarefas em um banco de dados relacional SQLite, modelado em cascata.
 - **Publicação Automatizada (Meta Cloud):** Motor em segundo plano que processa e despacha arquivos de mídia local diretamente por meio da Meta Graph API oficial.
 - **Relatórios Analíticos:** Exportação em datasets tabulares (CSV) e renderização matemática do crescimento dos perfis em gráficos.
