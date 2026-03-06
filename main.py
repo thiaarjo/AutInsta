@@ -40,7 +40,13 @@ app.add_middleware(
 
 app.mount("/fotos", StaticFiles(directory=PASTA_PRINTS), name="fotos")
 app.mount("/uploads", StaticFiles(directory=PASTA_UPLOADS), name="uploads")
-app.mount("/frontend", StaticFiles(directory="frontend"), name="frontend")
+# Serve o build do React (Vite) 
+REACT_DIST = os.path.join(DIRETORIO_BASE, "frontend-react", "dist")
+if os.path.isdir(os.path.join(REACT_DIST, "assets")):
+    app.mount("/assets", StaticFiles(directory=os.path.join(REACT_DIST, "assets")), name="react-assets")
+# Manter mount legado para compatibilidade durante a transição
+if os.path.isdir("frontend"):
+    app.mount("/frontend", StaticFiles(directory="frontend"), name="frontend")
 
 # Background Scheduler
 def verificar_fila_postagens():
@@ -84,7 +90,13 @@ async def desligar_servidor():
 
 @app.get("/")
 async def painel_html():
-    caminho_html = os.path.join(DIRETORIO_BASE, "index.html")
+    # Primeiro tenta servir o build React
+    caminho_react = os.path.join(REACT_DIST, "index.html")
+    # Fallback para o index.html legado
+    caminho_legado = os.path.join(DIRETORIO_BASE, "index.html")
+    
+    caminho_html = caminho_react if os.path.exists(caminho_react) else caminho_legado
+    
     if os.path.exists(caminho_html):
         with open(caminho_html, "r", encoding="utf-8") as arquivo:
             html_conteudo = arquivo.read()
@@ -97,7 +109,7 @@ async def painel_html():
             }
         )
     else:
-        return HTMLResponse(content=f"<h1>ERRO 404: Arquivo index.html não encontrado!</h1><p>Verifique a pasta: <b>{DIRETORIO_BASE}</b></p>")
+        return HTMLResponse(content=f"<h1>ERRO 404: index.html não encontrado!</h1><p>Execute 'npm run build' dentro de frontend-react/ ou verifique a pasta: <b>{DIRETORIO_BASE}</b></p>")
 
 # Route Helper para executar em Background
 def _executar_publicacao_bg(string_caminhos, legenda, post_id):
