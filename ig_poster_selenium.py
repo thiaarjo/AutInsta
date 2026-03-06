@@ -168,7 +168,7 @@ def _clicar_botao_criar(driver, post_id=None):
         return
     except Exception:
         msg = "Não foi possível encontrar o botão 'Criar' no menu lateral."
-        log_acao(post_id, f"[POSTER] ERRO: {msg}", "ERROR")
+        log_acao(post_id, f"[POSTER] ERRO: {msg}", "ERRO")
         raise Exception(f"[POSTER] ERRO: {msg}")
 
 
@@ -185,7 +185,7 @@ def _upload_midia(driver, caminhos_midia, post_id=None):
         caminho_abs = os.path.abspath(c)
         if not os.path.exists(caminho_abs):
             msg = f"Arquivo não encontrado: {caminho_abs}"
-            log_acao(post_id, f"[POSTER] ERRO: {msg}", "ERROR")
+            log_acao(post_id, f"[POSTER] ERRO: {msg}", "ERRO")
             raise FileNotFoundError(f"[POSTER] Arquivo não encontrado: {caminho_abs}")
         arquivos_validos.append(caminho_abs)
         
@@ -213,7 +213,7 @@ def _upload_midia(driver, caminhos_midia, post_id=None):
              
     except Exception as e:
         msg = f"ERRO ao localizar <input type='file'>: {e}"
-        log_acao(post_id, f"[POSTER] {msg}", "ERROR")
+        log_acao(post_id, f"[POSTER] {msg}", "ERRO")
         raise Exception(f"[POSTER] {msg}")
 
 
@@ -233,7 +233,7 @@ def _avancar_etapas_e_legendar(driver, legenda, post_id=None):
         sleep(3)
     except Exception as e:
         msg = f"ERRO ao avançar tela de corte: {e}"
-        log_acao(post_id, f"[POSTER] {msg}", "ERROR")
+        log_acao(post_id, f"[POSTER] {msg}", "ERRO")
         raise Exception(f"[POSTER] {msg}")
 
     # === ETAPA 2: Tela de Filtros -> Avançar ===
@@ -246,7 +246,7 @@ def _avancar_etapas_e_legendar(driver, legenda, post_id=None):
         sleep(3)
     except Exception as e:
         msg = f"ERRO ao avançar tela de filtros: {e}"
-        log_acao(post_id, f"[POSTER] {msg}", "ERROR")
+        log_acao(post_id, f"[POSTER] {msg}", "ERRO")
         raise Exception(f"[POSTER] {msg}")
 
     # === ETAPA 3: Tela de Legenda -> Escrever e Compartilhar ===
@@ -262,7 +262,7 @@ def _avancar_etapas_e_legendar(driver, legenda, post_id=None):
         log_acao(post_id, f"[POSTER] Legenda inserida com sucesso.", "INFO")
         sleep(2)
     except Exception as e:
-        log_acao(post_id, f"[POSTER] AVISO: Não foi possível inserir a legenda: {e}", "ERROR")
+        log_acao(post_id, f"[POSTER] AVISO: Não foi possível inserir a legenda: {e}", "ERRO")
 
     # === ETAPA 4: Clicar em "Compartilhar" ===
     log_acao(post_id, "[POSTER] Clicando em 'Compartilhar'...", "INFO")
@@ -277,7 +277,7 @@ def _avancar_etapas_e_legendar(driver, legenda, post_id=None):
         sleep(DELAY_BASE * 4) 
     except Exception as e:
         msg = f"ERRO ao clicar em 'Compartilhar': {e}"
-        log_acao(post_id, f"[POSTER] {msg}", "ERROR")
+        log_acao(post_id, f"[POSTER] {msg}", "ERRO")
         raise Exception(f"[POSTER] {msg}")
 
     # === ETAPA 5: Verificar confirmação "Post compartilhado" ===
@@ -306,7 +306,7 @@ def publicar_no_instagram_local(caminho_foto: str, legenda: str, post_id: int = 
     senha = config.get("senha", "")
 
     if not usuario or not senha:
-        log_acao(post_id, "[POSTER] ERRO: Credenciais ausentes no banco. Vá em Configurações e salve-as.", "ERROR")
+        log_acao(post_id, "[POSTER] ERRO: Credenciais ausentes no banco. Vá em Configurações e salve-as.", "ERRO")
         return False
 
     driver = None
@@ -331,14 +331,14 @@ def publicar_no_instagram_local(caminho_foto: str, legenda: str, post_id: int = 
         # 5. Avançar etapas e inserir legenda
         _avancar_etapas_e_legendar(driver, legenda, post_id)
 
-        log_acao(post_id, "[POSTER] ✔ PUBLICAÇÃO FINALIZADA COM SUCESSO!", "INFO")
+        log_acao(post_id, "[POSTER] ✔ PUBLICAÇÃO FINALIZADA COM SUCESSO!", "SUCESSO")
         return True
 
     except FileNotFoundError as e:
-        log_acao(post_id, f"[POSTER] ✖ Arquivo não encontrado: {e}", "ERROR")
+        log_acao(post_id, f"[POSTER] ✖ Arquivo não encontrado: {e}", "ERRO")
         return False
     except Exception as e:
-        log_acao(post_id, f"[POSTER] ✖ Falha inesperada durante a automação: {e}", "ERROR")
+        log_acao(post_id, f"[POSTER] ✖ Falha inesperada durante a automação: {e}", "ERRO")
         return False
     finally:
         # Limpeza garantida

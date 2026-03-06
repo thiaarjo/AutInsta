@@ -9,21 +9,23 @@ O AutPost é um sistema completo desenvolvido em Python para automação, monito
 O sistema utiliza uma arquitetura modularizada em camadas, separando as responsabilidades de extração de dados, armazenamento, agendamento de tarefas e interface visual.
 
 - **Frontend (Painel de Controle e Calendário):** Interface visual construída com HTML5 e estilizada com Tailwind CSS + Vanilla CSS. O Javascript foi **completamente refatorado em Módulos ES6** (`dashboard.js`, `scraper.js`, `modals.js`, `agendamentos.js`, `calendar.js`, `dragDrop.js`, `toast.js`, `ui.js`, `config.js`, `globals.js`, `lembretes.js`) orquestrados pelo arquivo `main.js`. Permite interações ricas como **Drag & Drop**, gestão do calendário de posts, acompanhamento ao vivo via polling e sistema de **Notificações Toast** não-obstrutivas. Utiliza **cache-busting por versão** (`?v=X.0`) nos imports para evitar problemas de cache agressivo do navegador.
-- **Backend (API FastAPI):** O arquivo `main.py` hospeda o servidor Uvicorn. Provê todas as rotas de API RESTful para operação dos scripts, CRUD no banco de dados e manipulação de arquivos estáticos. Inclui endpoint dedicado `/api/perfis` para listar todos os perfis já extraídos.
-- **Motor de Extração (Scraper Feed):** Módulo `scraper.py` contendo as rotinas em Selenium para acessar o Instagram, driblar pop-ups e extrair dados do feed usando estratégias de tolerância a falhas.
-- **Motor de Extração (Scraper Stories):** Módulo `scraper_stories.py` dedicado à extração de stories. Implementa **deduplicação inteligente**: antes de capturar um screenshot, verifica no banco se a `media_url` (src da mídia) já foi registrada. Se já existir, reutiliza o print anterior, evitando arquivos duplicados na pasta `prints/`.
-- **Motor de Postagem Automatizada (Selenium Poster):** Implementado no `ig_poster_selenium.py`. Realiza o fluxo completo de publicação (Login → Criar → Upload → Legenda → Compartilhar) simulando um usuário real. Suporta **múltiplas mídias (carrossel)** e **vídeos**, contornando limitações da API oficial. Fornece feedback em tempo real via logs persistidos no banco de dados.
-- **Gerenciador de Trabalhos em Segundo Plano (O Vigia):** Implementado no `main.py` utilizando `APScheduler`. Acorda periodicamente (a cada 1 minuto) e checa a fila de postagens pendentes no banco. Utiliza o motor Selenium para disparar as publicações agendadas.
+- **Backend (API FastAPI):** O arquivo `main.py` hospeda o servidor Uvicorn. Provê todas as rotas RESTful para operação dos scripts, CRUD no banco de dados e arquivos estáticos. O backend **não executa tarefas pesadas sozinho**; ele delega essas operações para uma fila assíncrona.
+- **Broker de Fila (Redis):** Servidor local na porta `6379` que recebe os comandos da API (ex: "rodar_robo", "publicar_no_instagram") e organiza a fila de execução.
+- **Trabalhadores em Segundo Plano (Celery Workers):** Processos paralelos que rodam de forma totalmente independente da API. O `celery_app.py` consome a fila do Redis e aciona os arquivos em `tasks/` (`bot_tasks.py` e `post_tasks.py`). Isso impede que lentidões do Selenium interfiram no carregamento do site.
+- **Motores de Automação (Selenium):** Scripts pesados executados exclusivamente pelos Celery Workers:
+  - `scraper.py` e `scraper_stories.py` (com **deduplicação inteligente** e tolerância a falhas).
+  - `ig_poster_selenium.py` (fluxo de publicação UI completa, suporte a carrossel e logs salvos no DB a cada passo).
+- **Gerenciador de Agendamentos (O Vigia do APScheduler):** Rodando junto da API, ele acorda a cada minuto, varre o BD por posts "PENDENTES" vencidos e despacha as ordens para a fila do Celery.
 
 ---
 
 ## 2. Módulos e Funcionalidades
 
-### main.py (O Cérebro)
-Ponto de entrada do projeto. Inicia a FastAPI e carrega middlewares CORS.
-- Gerencia o "estado ativo" do painel via polling (`/api/status_tarefa`).
-- Recebe requisições de extração via IDs de Tarefa únicos (`task_id`) e executa em thread paralela (`asyncio.to_thread`).
-- Servir arquivos estáticos (`/fotos`, `/uploads`, `/frontend`).
+### main.py (A Porta de Entrada)
+Ponto de conexão que Inicia a FastAPI, carrega middlewares CORS e hospeda o APScheduler.
+- **Delegação de Tarefas:** Rotas pesadas (`/executar_bot`, `/api/publicar_agora`) apenas despacham ordens para a Fila (`.delay()`) e retornam imediatamente o `task_id` ao frontend.
+- **Status em Tempo Real:** A rota `/api/status_tarefa/{task_id}` monitora diretamente o Celery (`AsyncResult.state`), atualizando entre "PROGRESS" > "SUCESSO"/"ERRO" dinamicamente.
+- Servir arquivos estáticos (`/fotos`, `/uploads`, `/frontend-react/dist`).
 - **Rotas analíticas:** `/api/perfis`, `/api/historico_graficos`, `/api/stories/{perfil}`, `/api/historico_detalhado/{perfil}`.
 
 ### scraper.py (Extração do Feed)
@@ -166,16 +168,15 @@ erDiagram
 
 ---
 
-## 4. Fluxograma de Execução (Modo Scraper)
+## 4. Fluxograma de Execução (Modo Assíncrono Celery + Redis)
 
 1. Usuário configura credenciais na aba "Configurações Globais".
-2. Usuário clica em "Iniciar Extração", enviando um `task_id`.
-3. O servidor executa `scraper.py` (feed) e/ou `scraper_stories.py` (stories) em thread assíncrona.
-4. O Frontend faz polling a cada 1 segundo via `/api/status_tarefa/{task_id}`.
-5. O Selenium navega de forma oculta ou visível (Headless), extrai dados para memória.
-6. **Para stories:** Antes de capturar screenshot, verifica deduplicação por `media_url`.
-7. Se não cancelado, salva tudo via `database.salvar_lote()` em transação única.
-8. Backend envia status "100%", Frontend renderiza os dados e atualiza gráficos/galeria.
+2. **Requisição:** Usuário clica em "Iniciar", mandando payload pro backend (`main.py`).
+3. **Delegação:** A API joga a tarefa pra fila do **Redis** e devolve um HTTP 202 ("Recebido") com o `task_id` gerado pelo Celery.
+4. **Polling:** A UI do React reage ao 202 ligando o aviso de load e faz polling `/api/status_tarefa/{task_id}` à cada 1s.
+5. **Execução Isolada:** O processo separadado do **Celery Worker** pesca a `task` na fila, abre o Selenium em background, processa a tarefa pesada e salva o resultado via `database.salvar_lote()`. 
+6. **Desbloqueio Constante:** Graças ao status na Fila, o painel Front-End nunca trava.
+7. Backend avisa `"SUCCESS"`; a UI destrava sozinha, limpando o cache e puxando os novos dados.
 
 ---
 
@@ -199,9 +200,20 @@ A galeria de stories exibe cada story **uma única vez**, com um badge "Nx visto
 
 ---
 
-## 6. Como Contribuir e Modificar
+## 6. Como Inicializar a "Fábrica" de Processos
+
+O sistema agora lida com 3 macro-serviços que foram orquestrados em um arquivo `start.bat` automático:
+
+1. Requer-se a pasta **"redis"** acoplada no RootDir (com o aplicativo Windows Memurai/Redis);
+2. Dando 2 cliques no `start.bat`, ele:
+    - Builda o front-end React novo se houver alterações.
+    - Sobe o terminal `Redis Server` (se detectado) escutando solicitações;
+    - Sobe o terminal do **Celery Worker AutInsta**, ativando ativamente as libs do VENV Python no background.
+    - Sobe a instância final FastAPI principal para acesso Web.
+
+## 7. Como Contribuir e Modificar
 
 - **Adicionar Coluna Nova de Raspagem:** Adicione o extrator XPath no `scraper.py` ou `scraper_stories.py`. Inclua ao dicionário retornado e ao insert SQL no `database.py`. Use `ALTER TABLE` com `try/except` na `criar_tabelas()` para migração automática.
-- **Modificar Frontend:** Edite o módulo JS correspondente em `frontend/js/`. Os estilos visuais ficam em `frontend/css/style.css` e o esqueleto em `index.html`. **Lembre-se de incrementar a versão** nos imports de `main.js` e na tag `<script>` de `index.html` para quebrar o cache.
-- **Criar Novos Gráficos:** Implemente um getter SQL em `database.py` e atualize o ChartJS em `dashboard.js`.
+- **Configurar Novas Tarefas Celery:** Adicione nova classe `@celery_app.task` na pasta `/tasks/`, depois lembre-se de importar o módulo no `core/celery_app.py` > `include=['tasks.sua_nova_pasta']`.
+- **Modificar Frontend:** Edite as View Models em `frontend-react/`. Rode npm build pelo `.bat`.
 - **Adicionar Novo Perfil:** Perfis são adicionados automaticamente ao banco na primeira extração e aparecem no dropdown do dashboard via `/api/perfis`.

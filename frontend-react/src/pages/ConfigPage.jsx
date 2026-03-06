@@ -43,100 +43,117 @@ export default function ConfigPage() {
     };
 
     return (
-        <main className="max-w-[1400px] mx-auto py-16 px-12">
-            {/* Header titles */}
-            <div className="mb-14">
-                <h1 className="text-4xl font-black text-zinc-900 mb-3 tracking-tight">Painel de Controle</h1>
-                <p className="text-lg font-medium text-pink-900/60">Configure as credenciais e parâmetros de conexão do sistema.</p>
+        <main className="flex-1 px-6 py-12 lg:px-20 max-w-5xl mx-auto w-full">
+            {/* Page Title Section */}
+            <div className="mb-12">
+                <h1 className="text-4xl font-black text-slate-900 mb-3 tracking-tight">Painel de Controle</h1>
+                <p className="text-slate-500 text-lg font-medium">Configure as credenciais e parâmetros de conexão do sistema.</p>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
 
-                {/* Side-by-side Cards */}
-                <div className="flex flex-col xl:flex-row items-stretch gap-12">
+                    {/* Instagram Credentials Card */}
+                    <div className="bg-white p-8 rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 flex flex-col gap-8 transition-all hover:shadow-2xl hover:shadow-pink-500/5">
+                        <div className="flex items-center gap-4">
+                            <div className="p-3 bg-pink-50 rounded-2xl">
+                                <KeyRound className="w-6 h-6 text-[#f4258c]" />
+                            </div>
+                            <h3 className="text-xl font-bold text-slate-900">Credenciais</h3>
+                        </div>
 
-                    {/* LEFT CARD: Credenciais */}
-                    <div className="flex-1 bg-white border border-zinc-100 rounded-[32px] p-16 shadow-sm flex flex-col">
-                        <h2 className="text-2xl font-black text-zinc-900 flex items-center gap-4 mb-12">
-                            <KeyRound className="w-8 h-8 text-pink-600" /> Credenciais de Acesso Instagram
-                        </h2>
-
-                        <div className="space-y-8 flex-1">
-                            {/* Input: Usuário */}
-                            <div>
-                                <label className="block text-sm font-bold text-[#1e293b] uppercase tracking-wider mb-3">Usuário Alvo</label>
-                                <div className="flex items-center bg-[#fdfafb] border border-pink-100/50 rounded-2xl px-5 py-4 focus-within:ring-2 focus-within:ring-pink-300 transition-all shadow-sm">
-                                    <span className="text-zinc-400 font-bold mr-3 text-base">@</span>
-                                    <input type="text" value={usuario} onChange={e => setUsuario(e.target.value)} required
-                                        className="flex-1 bg-transparent text-base font-semibold outline-none text-zinc-700 placeholder:text-zinc-400"
-                                        placeholder="Ex: seu_usuario" />
+                        <div className="flex flex-col gap-6">
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-slate-400 uppercase tracking-[0.2em] ml-1">Usuário Alvo</label>
+                                <div className="relative group">
+                                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-lg">@</span>
+                                    <input
+                                        className="w-full pl-11 pr-4 py-4 rounded-2xl border border-slate-200 bg-slate-50 text-slate-700 focus:ring-4 focus:ring-pink-500/10 focus:border-[#f4258c] outline-none transition-all font-semibold"
+                                        placeholder="seu_usuario"
+                                        type="text"
+                                        value={usuario}
+                                        onChange={e => setUsuario(e.target.value)}
+                                        required
+                                    />
                                 </div>
                             </div>
 
-                            {/* Input: Senha */}
-                            <div>
-                                <label className="block text-sm font-bold text-[#1e293b] uppercase tracking-wider mb-3">Senha do Agente</label>
-                                <div className="flex items-center bg-[#fdfafb] border border-pink-100/50 rounded-2xl px-5 py-4 focus-within:ring-2 focus-within:ring-pink-300 transition-all shadow-sm">
-                                    <svg className="w-5 h-5 text-zinc-400 mr-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                                    </svg>
-                                    <input type="password" value={senha} onChange={e => setSenha(e.target.value)} required
-                                        className="flex-1 bg-transparent text-base font-black tracking-widest outline-none text-zinc-700 placeholder:text-zinc-400"
-                                        placeholder="••••••••" />
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-slate-400 uppercase tracking-[0.2em] ml-1">Senha do Agente</label>
+                                <div className="relative group">
+                                    <KeyRound className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
+                                    <input
+                                        className="w-full pl-12 pr-4 py-4 rounded-2xl border border-slate-200 bg-slate-50 text-slate-700 focus:ring-4 focus:ring-pink-500/10 focus:border-[#f4258c] outline-none transition-all font-black tracking-widest placeholder:tracking-normal"
+                                        placeholder="••••••••"
+                                        type="password"
+                                        value={senha}
+                                        onChange={e => setSenha(e.target.value)}
+                                        required
+                                    />
                                 </div>
                             </div>
                         </div>
 
-                        {/* Optional decorative image placeholder from mockup */}
-                        <div className="mt-10 h-32 bg-gradient-to-br from-pink-100 to-orange-50 rounded-2xl overflow-hidden relative border border-zinc-100">
-                            <div className="absolute inset-x-10 -bottom-6 h-28 bg-white rounded-t-xl shadow-sm border border-zinc-200/50 flex flex-col items-center pt-4">
-                                <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-500 p-[2px]">
-                                    <div className="w-full h-full bg-white rounded-full flex items-center justify-center"><ImageIcon className="w-5 h-5 text-pink-500" /></div>
+                        {/* Decorative Placeholder */}
+                        <div className="mt-4 h-32 bg-gradient-to-br from-pink-500/5 to-purple-500/5 rounded-2xl overflow-hidden relative border border-slate-100">
+                            <div className="absolute inset-x-8 -bottom-8 h-32 bg-white rounded-t-2xl shadow-lg border border-slate-100 flex flex-col items-center pt-6">
+                                <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-500 p-[3px]">
+                                    <div className="w-full h-full bg-white rounded-[13px] flex items-center justify-center">
+                                        <ImageIcon className="w-6 h-6 text-pink-500" />
+                                    </div>
                                 </div>
-                                <div className="w-24 h-2 bg-zinc-200 mt-4 rounded-full"></div>
-                                <div className="w-36 h-2 bg-zinc-100 mt-2.5 rounded-full"></div>
+                                <div className="w-20 h-2 bg-slate-100 mt-5 rounded-full"></div>
+                                <div className="w-32 h-2 bg-slate-50 mt-2.5 rounded-full"></div>
                             </div>
                         </div>
                     </div>
 
-                    {/* RIGHT CARD: Parâmetros */}
-                    <div className="flex-1 bg-white border border-zinc-100 rounded-[32px] p-16 shadow-sm flex flex-col">
-                        <h2 className="text-2xl font-black text-zinc-900 flex items-center gap-4 mb-12">
-                            <Cpu className="w-8 h-8 text-pink-600" /> Parâmetros do Robô
-                        </h2>
+                    {/* Robot Parameters Card */}
+                    <div className="bg-white p-8 rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 flex flex-col gap-8 transition-all hover:shadow-2xl hover:shadow-pink-500/5">
+                        <div className="flex items-center gap-4">
+                            <div className="p-3 bg-pink-50 rounded-2xl">
+                                <Cpu className="w-6 h-6 text-[#f4258c]" />
+                            </div>
+                            <h3 className="text-xl font-bold text-slate-900">Parâmetros</h3>
+                        </div>
 
-                        <div className="space-y-8 flex-1">
-                            {/* Input: Delay */}
-                            <div>
-                                <label className="block text-sm font-bold text-[#1e293b] uppercase tracking-wider mb-3">Delay Base (Segundos)</label>
-                                <div className="flex items-center bg-[#fdfafb] border border-pink-100/50 rounded-2xl px-5 py-4 focus-within:ring-2 focus-within:ring-pink-300 transition-all shadow-sm">
-                                    <Clock className="w-5 h-5 text-zinc-400 mr-3 shrink-0" />
-                                    <input type="number" value={delayBase} onChange={e => setDelayBase(parseInt(e.target.value) || 1)} min="1" required
-                                        className="flex-1 bg-transparent text-base font-semibold outline-none text-zinc-700 placeholder:text-zinc-400" />
+                        <div className="flex flex-col gap-8 h-full">
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-slate-400 uppercase tracking-[0.2em] ml-1">Delay Base (segundos)</label>
+                                <div className="relative group">
+                                    <Clock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
+                                    <input
+                                        className="w-full pl-12 pr-4 py-4 rounded-2xl border border-slate-200 bg-slate-50 text-slate-700 focus:ring-4 focus:ring-pink-500/10 focus:border-[#f4258c] outline-none transition-all font-bold text-lg"
+                                        type="number"
+                                        value={delayBase}
+                                        onChange={e => setDelayBase(parseInt(e.target.value) || 1)}
+                                        min="1"
+                                        required
+                                    />
                                 </div>
-                                <p className="text-xs font-medium text-pink-900/50 mt-3 italic pl-1">Intervalo mínimo recomendado: 30s</p>
+                                <p className="text-xs text-slate-400 font-medium pl-1">Mínimo sugerido: 30s para evitar bloqueios.</p>
                             </div>
 
-                            {/* Toggle: Headless */}
-                            <label className="flex items-center gap-5 p-6 bg-pink-50/40 border border-pink-100 rounded-2xl cursor-pointer hover:bg-pink-50/70 transition-colors shadow-sm">
-                                {/* iOS style toggle */}
+                            <label className="flex items-center gap-5 p-6 bg-slate-50 border border-slate-100 rounded-3xl cursor-pointer hover:bg-slate-100 transition-all active:scale-[0.98]">
                                 <div className="relative shrink-0">
-                                    <input type="checkbox" className="sr-only peer" checked={modoInvisivel} onChange={e => setModoInvisivel(e.target.checked)} />
-                                    <div className="w-12 h-7 bg-zinc-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-pink-500"></div>
+                                    <input
+                                        type="checkbox"
+                                        className="sr-only peer"
+                                        checked={modoInvisivel}
+                                        onChange={e => setModoInvisivel(e.target.checked)}
+                                    />
+                                    <div className="w-14 h-8 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-6 peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-[#f4258c]"></div>
                                 </div>
-                                <div className="flex-1">
-                                    <span className="text-sm font-black text-zinc-900 uppercase tracking-widest block mb-1.5">Modo Invisível</span>
-                                    <p className="text-xs text-zinc-500 leading-relaxed font-medium">
-                                        Operar em segundo plano sem abrir janelas do navegador (Headless).
-                                    </p>
+                                <div className="flex flex-col">
+                                    <span className="text-sm font-bold text-slate-900 uppercase tracking-tight">Modo Invisível</span>
+                                    <p className="text-xs text-slate-500 leading-normal pt-1">Economiza recursos ocultando o Chrome.</p>
                                 </div>
                             </label>
 
-                            {/* Warning Box */}
-                            <div className="bg-[#fff9e6] border border-yellow-200/50 rounded-2xl p-5 flex gap-4 mt-auto">
-                                <AlertTriangle className="w-5 h-5 text-yellow-600 shrink-0 mt-0.5" />
-                                <p className="text-xs text-yellow-800 font-bold leading-relaxed">
-                                    Atenção: Uso de delays muito baixos podem levar a bloqueios ou restrições de ações na plataforma.
+                            <div className="mt-auto bg-amber-50 border border-amber-100 rounded-2xl p-5 flex gap-4">
+                                <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                                <p className="text-xs text-amber-800 font-semibold leading-relaxed">
+                                    Atenção: O Instagram monitora a frequência de ações. Delays baixos podem levar a suspensões.
                                 </p>
                             </div>
                         </div>
@@ -144,14 +161,25 @@ export default function ConfigPage() {
                 </div>
 
                 {/* Bottom Action */}
-                <div className="flex items-center justify-end mt-12">
-                    <span className={`text-base font-bold text-emerald-600 mr-8 transition-all duration-300 ${saved ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'}`}>
-                        Configurações salvas com sucesso!
-                    </span>
-                    <button type="submit" disabled={saving}
-                        className="bg-[#f01e82] hover:bg-[#d81974] text-white text-sm font-black uppercase tracking-widest px-12 py-6 rounded-2xl transition-all shadow-lg shadow-pink-500/25 flex items-center gap-3 disabled:opacity-50 hover:-translate-y-1 hover:shadow-pink-500/40">
-                        {saving ? <Loader2 className="w-6 h-6 animate-spin" /> : <Save className="w-6 h-6" />}
-                        Salvar Alterações
+                <div className="mt-12 flex flex-col md:flex-row justify-end items-center gap-6">
+                    <div className={`flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-600 rounded-full text-sm font-bold transition-all duration-500 ${saved ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-4 scale-95 pointer-events-none'}`}>
+                        <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></div>
+                        Configurações salvas!
+                    </div>
+
+                    <button
+                        type="submit"
+                        disabled={saving}
+                        className="group flex items-center justify-center gap-3 bg-[#f4258c] hover:bg-[#d81974] text-white font-bold py-5 px-12 rounded-[2rem] transition-all shadow-xl shadow-pink-500/25 hover:shadow-pink-500/40 active:scale-95 disabled:opacity-50 min-w-[280px]"
+                    >
+                        {saving ? (
+                            <Loader2 className="w-6 h-6 animate-spin" />
+                        ) : (
+                            <>
+                                <Save className="w-6 h-6 group-hover:scale-110 transition-transform" />
+                                <span className="tracking-widest text-sm font-black">SALVAR ALTERAÇÕES</span>
+                            </>
+                        )}
                     </button>
                 </div>
             </form>

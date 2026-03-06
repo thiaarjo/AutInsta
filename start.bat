@@ -18,7 +18,24 @@ cd ..
 echo [OK] Frontend compilado com sucesso.
 echo.
 
-:: Iniciar o servidor FastAPI
-echo [2/2] Iniciando o servidor FastAPI...
+:: Iniciar o Redis Server (Opcional se colocado na pasta 'redis' do projeto)
+if exist "redis\redis-server.exe" (
+    echo [1.5/3] Iniciando Servidor Redis local...
+    start cmd /k "title Redis Server AutInsta && cd redis && redis-server.exe"
+    echo [OK] Servidor Redis iniciado.
+    echo.
+) else (
+    echo [AVISO] 'redis-server.exe' nao encontrado na pasta 'redis' do projeto. Assume-se que ja esta rodando.
+    echo.
+)
+
+:: Iniciar o Worker do Celery (Background Tasks)
+echo [2/3] Iniciando Celery Worker em background...
+start cmd /k "title Celery Worker AutInsta && cd /d "%~dp0" && echo [Worker Iniciado] && venv\Scripts\activate.bat && celery -A core.celery_app worker -l info --pool=solo"
+echo [OK] Janela do Celery Worker aberta.
 echo.
-python -m uvicorn main:app --host 0.0.0.0 --port 8000
+
+:: Iniciar o servidor FastAPI
+echo [3/3] Iniciando o servidor FastAPI...
+echo.
+venv\Scripts\python -m uvicorn main:app --host 0.0.0.0 --port 8000

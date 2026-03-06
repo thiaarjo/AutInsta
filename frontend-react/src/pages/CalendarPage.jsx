@@ -228,7 +228,10 @@ export default function CalendarPage() {
             const data = await publicarAgoraApi(formData);
 
             if (data.post_id) {
+                let attempts = 0;
+                const maxAttempts = 100; // ~5 minutos de segurança
                 const interval = setInterval(async () => {
+                    attempts++;
                     try {
                         const logs = await getLogsPostagem(data.post_id);
                         if (logs?.length > 0) {
@@ -236,6 +239,8 @@ export default function CalendarPage() {
                             const ended = logs.find(l => l.tipo === 'SUCESSO' || l.tipo === 'ERRO' || l.tipo === 'ERROR');
                             if (ended) {
                                 clearInterval(interval);
+                                setPublishing(false);
+                                setPublishMsg('');
                                 if (ended.tipo === 'SUCESSO') {
                                     mostrarToast('Publicado com sucesso no Instagram!', 'sucesso');
                                     setLegenda('');
@@ -244,11 +249,16 @@ export default function CalendarPage() {
                                 } else {
                                     mostrarToast('Erro na publicação automática.', 'erro');
                                 }
-                                setPublishing(false);
-                                setPublishMsg('');
                             }
                         }
-                    } catch { /* silent */ }
+                    } catch { /* erro na api de logs, ignora algumas vezes */ }
+
+                    if (attempts > maxAttempts) {
+                        clearInterval(interval);
+                        setPublishing(false);
+                        setPublishMsg('');
+                        mostrarToast('Tempo de espera excedido. Verifique o status no painel.', 'erro');
+                    }
                 }, 3000);
             }
         } catch {

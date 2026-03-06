@@ -35,8 +35,8 @@ export default function Header({ activeTab, onTabChange }) {
                     return (
                         <button key={tab.id} onClick={() => onTabChange(tab.id)}
                             className={`pb-3 text-sm font-bold flex items-center gap-2 transition-all whitespace-nowrap border-b-2 ${isActive
-                                    ? 'text-pink-600 border-pink-600'
-                                    : 'text-zinc-400 hover:text-zinc-800 border-transparent hover:border-zinc-300'
+                                ? 'text-pink-600 border-pink-600'
+                                : 'text-zinc-400 hover:text-zinc-800 border-transparent hover:border-zinc-300'
                                 } ${tab.mlAuto ? 'ml-auto' : ''}`}>
                             <tab.Icon className="w-4 h-4" />
                             {tab.label}

@@ -21,7 +21,12 @@ from apscheduler.schedulers.background import BackgroundScheduler
 # Modulos locais
 import database
 from config import ConfigBot, DIRETORIO_BASE, PASTA_PRINTS, gerenciador_tarefas
-from scraper import rodar_robo
+
+# Celery
+from celery.result import AsyncResult
+from core.celery_app import celery_app
+from tasks.bot_tasks import run_scraper_bot_task
+from tasks.post_tasks import run_instagram_poster_task
 
 # Diretorio de uploads
 PASTA_UPLOADS = os.path.join(DIRETORIO_BASE, "uploads_postagens")
@@ -58,16 +63,15 @@ def verificar_fila_postagens():
         
         for post in pendentes:
             post_id, caminho_foto, legenda, data_agendada = post
-            print(f"[*] Preparando disparo -> ID: {post_id} | Data Marcada: {data_agendada}", flush=True)
+            print(f"[*] Repassando disparo para o Celery -> ID: {post_id} | Data Marcada: {data_agendada}", flush=True)
             
-            sucesso = ig_poster_selenium.publicar_no_instagram_local(caminho_foto, legenda, post_id=post_id)
+            # Marca como PUBLICANDO para evitar duplo disparo
+            database.atualizar_status_post(post_id, 'PUBLICANDO')
             
-            if sucesso:
-                database.atualizar_status_post(post_id, 'PUBLICADO')
-                print(f"[+] Post {post_id} finalizado e marcado como PUBLICADO no banco.\n", flush=True)
-            else:
-                database.atualizar_status_post(post_id, 'ERRO')
-                print(f"[-] Falha no disparo do Post {post_id}. Marcado com ERRO.\n", flush=True)
+            # Envia para a Fila do Celery
+            run_instagram_poster_task.delay(caminho_foto, legenda, post_id)
+            
+            print(f"[+] Post {post_id} enviado para o Worker.\n", flush=True)
 
 agendador = BackgroundScheduler()
 agendador.add_job(verificar_fila_postagens, 'interval', minutes=1)
@@ -111,27 +115,14 @@ async def painel_html():
     else:
         return HTMLResponse(content=f"<h1>ERRO 404: index.html não encontrado!</h1><p>Execute 'npm run build' dentro de frontend-react/ ou verifique a pasta: <b>{DIRETORIO_BASE}</b></p>")
 
-# Route Helper para executar em Background
-def _executar_publicacao_bg(string_caminhos, legenda, post_id):
-    try:
-        sucesso = ig_poster_selenium.publicar_no_instagram_local(string_caminhos, legenda, post_id)
-        if sucesso:
-            database.atualizar_status_post(post_id, 'PUBLICADO')
-        else:
-            database.atualizar_status_post(post_id, 'ERRO')
-    except Exception as e:
-        print(f"[BG TASK ERRO] {e}", flush=True)
-        database.atualizar_status_post(post_id, 'ERRO')
-
-# Rota de Publicação Imediata (Selenium)
+# Rota de Publicação Imediata (Selenium via Celery)
 @app.post("/api/publicar_agora")
 async def publicar_agora(
-    bg_tasks: BackgroundTasks,
     midias: List[UploadFile] = File(...),
     legenda: str = Form("")
 ):
     try:
-        print(f"\n[*] Solicitação de PUBLICAÇÃO IMEDIATA recebida!", flush=True)
+        print(f"\n[*] Solicitação de PUBLICAÇÃO IMEDIATA recebida. Repassando ao Celery Worker...", flush=True)
         
         if not midias or len(midias) == 0:
             raise HTTPException(status_code=400, detail="Nenhuma imagem enviada.")
@@ -139,13 +130,13 @@ async def publicar_agora(
         caminhos_salvos = []
         for index, midia in enumerate(midias):
             if midia and midia.filename:
-                # Add index to avoid name collision if the user uploads 2 files with the same name
+                # Add index to avoid name collision Se o autor da foto subir 2 iguais
                 nome_seguro = f"{int(datetime.now().timestamp())}_{index}_{midia.filename}"
                 caminho_arquivo = os.path.join(PASTA_UPLOADS, nome_seguro)
                 with open(caminho_arquivo, "wb") as buffer:
                     shutil.copyfileobj(midia.file, buffer)
                 caminhos_salvos.append(caminho_arquivo)
-                print(f"[+] Imagem/Vídeo {index+1} salvo: {caminho_arquivo}", flush=True)
+                print(f"[+] Imagem/Vídeo {index+1} salvo localmente: {caminho_arquivo}", flush=True)
         
         string_caminhos = ",".join(caminhos_salvos)
 
@@ -154,16 +145,15 @@ async def publicar_agora(
         post_id = database.agendar_novo_post(string_caminhos, legenda, data_agora)
         database.atualizar_status_post(post_id, 'PUBLICANDO')
         
-        # Executa o Selenium em background task para não travar a UI
-        bg_tasks.add_task(_executar_publicacao_bg, string_caminhos, legenda, post_id)
+        # Cria e Executa a Tarefa Assíncrona via Celery
+        run_instagram_poster_task.delay(string_caminhos, legenda, post_id)
         
-        return {"status": "Publicação iniciada! Acompanhe os logs.", "sucesso": True, "post_id": post_id}
-            
+        return {"status": "Publicação enfileirada no Worker! Acompanhe os logs.", "sucesso": True, "post_id": post_id}
             
     except HTTPException:
         raise
     except Exception as e:
-        print(f"[!] Erro na publicação imediata: {e}", flush=True)
+        print(f"[!] Erro ao enfileirar publicação imediata: {e}", flush=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 # Rotas de Agendamento
@@ -299,59 +289,71 @@ async def mover_lembrete(lembrete_id: int, body: MoverLembreteRequest):
 # Status Tracker
 @app.get("/api/status_tarefa/{task_id}")
 async def status_tarefa(task_id: str):
-    # Atualiza o status do frontend
-    tarefa = gerenciador_tarefas.get(task_id, {"progresso": 0, "mensagem": "Aguardando inicialização..."})
-    return {"progresso": tarefa.get("progresso", 0), "mensagem": tarefa.get("mensagem", "")}
+    # Consulta o status da tarefa diretamente no Broker do Celery (Redis)
+    resultado = AsyncResult(task_id, app=celery_app)
+    
+    # Valores padroes
+    progresso = 0
+    mensagem = "Aguardando fila de processamento..."
+    status = resultado.state
+
+    if status == 'PENDING':
+        mensagem = "Na fila aguardando um Worker disponível..."
+    elif status == 'PROGRESS':
+        progresso = resultado.info.get('progresso', 0) if resultado.info else 0
+        mensagem = resultado.info.get('mensagem', '') if resultado.info else "Em andamento..."
+    elif status == 'SUCCESS':
+        progresso = 100
+        mensagem = "Tarefa finalizada com sucesso."
+    elif status == 'FAILURE':
+        mensagem = f"Erro fatal no bot: {resultado.info.get('exc_message', 'Falha desconhecida')}" if resultado.info else "Erro na execução."
+        
+    return {"progresso": progresso, "mensagem": mensagem, "status": status}
 
 # Rotas de Extracao
 @app.post("/executar_bot")
 async def executar_bot(request: ConfigBot):
-    print("\n[API] Execucao do bot solicitada.", flush=True)
+    print(f"\n[API] Execucao assíncrona do bot solicitada. O Celery assumirá.", flush=True)
     
-    # Registra tarefa
     task_id = request.task_id
-    gerenciador_tarefas[task_id] = {"cancelar": False, "progresso": 2, "mensagem": "Preparando extração...", "pid": None}
+    
+    # Vamos buscar as credenciais reais no banco para passar por parâmetro para o Celery
+    try:
+        cfg = database.obter_configuracoes()
+        usuario_real = cfg.get("usuario", "")
+        senha_real = cfg.get("senha", "")
+        if not usuario_real or not senha_real:
+            raise HTTPException(status_code=400, detail="Credenciais não configuradas. Vá ao Painel de Controle.")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao ler configs: {str(e)}")
 
-    gerenciador_tarefas[task_id]["progresso"] = 5
-    gerenciador_tarefas[task_id]["mensagem"] = "Preparando motor de extração..."
-    
     alvos_brutos = request.alvo.replace(";", ",").split(",")
-    alvos_lista = [a.strip() for a in alvos_brutos if a.strip()][:3]
+    alvo_principal = alvos_brutos[0].strip() if alvos_brutos else ""
     
-    resultados_em_lote = []
+    limites = {
+        "delay": request.tempo_espera,
+        "posts": request.limite_posts,
+        "seguidores": request.limite_seguidores,
+        "coletar_feed": request.coletar_feed,
+        "coletar_stories": request.coletar_stories,
+        "seguir_alvo": request.seguir_alvo,
+        "modo_invisivel": request.modo_oculto
+    }
     
-    for perfil_atual in alvos_lista:
-        if gerenciador_tarefas[task_id]["cancelar"]: break
-        print(f"\n=========================================", flush=True)
-        print(f"[*] INICIANDO PERFIL LOTE: {perfil_atual}", flush=True)
-        print(f"=========================================\n", flush=True)
+    # Envia a ordem para o Celery via Message Broker (Redis) apontando para o task_id especifico
+    # O comando .apply_async permite forcar o task_id
+    run_scraper_bot_task.apply_async(
+        args=[alvo_principal, senha_real, usuario_real, limites],
+        task_id=task_id
+    )
         
-        request.alvo = perfil_atual
-        
-        # Executa em thread separada
-        try:
-            resultado = await asyncio.to_thread(rodar_robo, request)
-            resultados_em_lote.append(resultado)
-        except Exception as e:
-            print(f"[!] ERRO CRITICO AO EXECUTAR O ROBO EM {perfil_atual}: {e}", flush=True)
-            
-        if gerenciador_tarefas[task_id]["cancelar"]: break
-            
-    database.salvar_lote(resultados_em_lote)
-    print("\n[API] Lote finalizado no DB.", flush=True)
-    
-    # Limpa memoria
-    if task_id in gerenciador_tarefas:
-        del gerenciador_tarefas[task_id]
-        
-    return {"resultados": resultados_em_lote}
+    return {"status": "accepted", "mensagem": "Tarefa enviada à fila de processamento", "task_id": task_id}
 
 @app.post("/cancelar_bot/{task_id}")
 async def cancelar_bot(task_id: str):
-    # Cancela execucao especifica
-    if task_id in gerenciador_tarefas:
-        gerenciador_tarefas[task_id]["cancelar"] = True
-    return {"status": "Cancelamento solicitado!"}
+    # Envia um sinal SIGTERM para o worker que esta processando esta tarefa via Celery Control
+    celery_app.control.revoke(task_id, terminate=True, signal='SIGTERM')
+    return {"status": "Sinal de cancelamento (Revoke) enviado para a Fila."}
 
 @app.get("/estatisticas/ultimo_lote")
 async def estatisticas_ultimo_lote():

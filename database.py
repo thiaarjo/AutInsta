@@ -12,6 +12,7 @@ def conectar():
     """Context manager para o DB."""
     conexao = sqlite3.connect(DB_PATH)
     conexao.execute("PRAGMA foreign_keys = ON;")
+    conexao.execute("PRAGMA journal_mode=WAL;")
     try:
         yield conexao
     finally:
