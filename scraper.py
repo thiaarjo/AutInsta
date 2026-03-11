@@ -114,7 +114,7 @@ def extrair_seguidores_robusto(driver):
     return "N/A"
 
 # Loop principal do Robo
-def rodar_robo(config: ConfigBot):
+def rodar_robo(config: ConfigBot, celery_task=None):
     
     # Registra Tarefa
     task_id = config.task_id
@@ -149,14 +149,14 @@ def rodar_robo(config: ConfigBot):
     }
 
     try:
-        atualizar_status(task_id, 10, "Iniciando Navegador Invisível...")
+        atualizar_status(task_id, 10, "Iniciando Navegador Invisível...", celery_task)
         driver = webdriver.Chrome(options=chrome_options)
         
         # Armazena PID para limpeza
         gerenciador_tarefas[task_id]["pid"] = driver.service.process.pid
         
         # 1. Login
-        atualizar_status(task_id, 15, "Acessando Instagram.com e fazendo Login...")
+        atualizar_status(task_id, 15, "Acessando Instagram.com e fazendo Login...", celery_task)
         driver.get("https://www.instagram.com/")
         sleep_seguro(DELAY, task_id) 
 
@@ -168,7 +168,7 @@ def rodar_robo(config: ConfigBot):
         except: driver.find_element(By.CSS_SELECTOR, "input[type='password']").send_keys(SENHA)
         sleep_seguro(2, task_id)
 
-        atualizar_status(task_id, 25, "Bypass de Telas Iniciais...")
+        atualizar_status(task_id, 25, "Bypass de Telas Iniciais...", celery_task)
         try: driver.find_element(By.XPATH, "//*[text()='Entrar']").click()
         except: driver.find_element(By.CSS_SELECTOR, "button[type='submit']").click()
         sleep_seguro(DELAY * 2, task_id) 
@@ -183,10 +183,10 @@ def rodar_robo(config: ConfigBot):
 
         if somente_stories:
             # Atalho: vai direto pro Stories sem carregar o perfil inteiro
-            atualizar_status(task_id, 35, f"Modo Stories-Only: indo direto para @{config.alvo}...")
+            atualizar_status(task_id, 35, f"Modo Stories-Only: indo direto para @{config.alvo}...", celery_task)
         else:
             # Fluxo normal: abre o perfil primeiro
-            atualizar_status(task_id, 35, f"Buscando Perfil: @{config.alvo}...")
+            atualizar_status(task_id, 35, f"Buscando Perfil: @{config.alvo}...", celery_task)
             driver.get(PERFIL_ALVO)
             sleep_seguro(DELAY + 1, task_id)
 
@@ -200,13 +200,13 @@ def rodar_robo(config: ConfigBot):
                  
             # Follow
             if config.seguir_alvo:
-                atualizar_status(task_id, 40, "Processando Follow no Alvo...")
+                atualizar_status(task_id, 40, "Processando Follow no Alvo...", celery_task)
                 status_follow = realizar_acao_seguir(driver, task_id)
                 resultado["status_seguir"] = status_follow
 
             # Verifica Privacidade
             if verificar_perfil_privado(driver):
-                atualizar_status(task_id, 100, "Perfil Privado detectado. Operação concluída parcial.")
+                atualizar_status(task_id, 100, "Perfil Privado detectado. Operação concluída parcial.", celery_task)
                 resultado["privado"] = True
                 resultado["acessivel"] = False
                 resultado["status"] = "Profile Private and Blocked"
@@ -214,7 +214,7 @@ def rodar_robo(config: ConfigBot):
         
         # Analise de feed
         if config.coletar_feed:
-            atualizar_status(task_id, 45, "Mapeando Grade de Posts do Feed...")
+            atualizar_status(task_id, 45, "Mapeando Grade de Posts do Feed...", celery_task)
             xpath_posts = "//a[contains(@href, '/p/') or contains(@href, '/reel/')]"
             
             candidatos = []
@@ -240,7 +240,7 @@ def rodar_robo(config: ConfigBot):
                 
                 # Atualiza progresso
                 prog = int(45 + ((posts_coletados / config.limite_posts) * 35))
-                atualizar_status(task_id, prog, f"Extraindo dados do Post {posts_coletados+1} de {config.limite_posts}...")
+                atualizar_status(task_id, prog, f"Extraindo dados do Post {posts_coletados+1} de {config.limite_posts}...", celery_task)
                 
                 # Processa Post Fechado
                 try:
@@ -329,7 +329,7 @@ def rodar_robo(config: ConfigBot):
                     comentarios_vistos = set() 
                     
                     if config.qtd_comentarios > 0:
-                        atualizar_status(task_id, prog + 2, f"Raspando amostra de comentários do Post {posts_coletados+1}...")
+                        atualizar_status(task_id, prog + 2, f"Raspando amostra de comentários do Post {posts_coletados+1}...", celery_task)
                         try:
                             sleep_seguro(1.5, task_id)
                             
@@ -415,15 +415,15 @@ def rodar_robo(config: ConfigBot):
         if config.coletar_stories:
             extrair_stories_perfil(driver, config, task_id, resultado)
 
-        atualizar_status(task_id, 100, "Extração Finalizada. Salvando banco de dados...")
+        atualizar_status(task_id, 100, "Extração Finalizada. Salvando banco de dados...", celery_task)
 
     except Exception as e:
         if "CANCELADO_PELO_USUARIO" in str(e):
             resultado["status"] = "Interrompido manualmente"
-            atualizar_status(task_id, 0, "Operação Abortada pelo Usuário.")
+            atualizar_status(task_id, 0, "Operação Abortada pelo Usuário.", celery_task)
         else:
             resultado["status"] = f"Error: {str(e)}"
-            atualizar_status(task_id, 0, "Erro Crítico na Extração.")
+            atualizar_status(task_id, 0, "Erro Crítico na Extração.", celery_task)
             
     # Limpeza Final
     finally:

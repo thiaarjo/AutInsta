@@ -5,12 +5,19 @@ from time import sleep
 from config import gerenciador_tarefas
 
 # --- NOVA FUNÇÃO: O MEGAFONE DA BARRA DE PROGRESSO ---
-def atualizar_status(task_id, progresso, mensagem):
-    """Atualiza a % e a mensagem que vão aparecer na tela animada do usuário"""
+def atualizar_status(task_id, progresso, mensagem, celery_task=None):
+    """Atualiza a % e a mensagem que vão aparecer na tela animada do usuário.
+    Se celery_task for fornecido, grava no Redis via Celery para que a API consiga ler.
+    """
     if task_id in gerenciador_tarefas:
         gerenciador_tarefas[task_id]["progresso"] = progresso
         gerenciador_tarefas[task_id]["mensagem"] = mensagem
-        print(f"[{progresso}%] {mensagem}", flush=True)
+    
+    # Grava no Redis (visível pela API FastAPI via AsyncResult)
+    if celery_task:
+        celery_task.update_state(state='PROGRESS', meta={'progresso': progresso, 'mensagem': mensagem})
+    
+    print(f"[{progresso}%] {mensagem}", flush=True)
 
 def sleep_seguro(segundos, task_id="default"):
     """

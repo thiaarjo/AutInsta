@@ -29,10 +29,11 @@ if exist "redis\redis-server.exe" (
     echo.
 )
 
-:: Iniciar o Worker do Celery (Background Tasks)
-echo [2/3] Iniciando Celery Worker em background...
-start cmd /k "title Celery Worker AutInsta && cd /d "%~dp0" && echo [Worker Iniciado] && venv\Scripts\activate.bat && celery -A core.celery_app worker -l info --pool=solo"
-echo [OK] Janela do Celery Worker aberta.
+:: Iniciar os Workers do Celery (Background Tasks) - 2 workers para extrações paralelas
+echo [2/3] Iniciando Celery Workers em background (x2 para paralelismo)...
+start cmd /k "title Celery Worker 1 AutInsta && cd /d "%~dp0" && echo [Worker 1 Iniciado] && venv\Scripts\activate.bat && celery -A core.celery_app worker -l info --pool=solo -n worker1@%%computername%%"
+start cmd /k "title Celery Worker 2 AutInsta && cd /d "%~dp0" && echo [Worker 2 Iniciado] && venv\Scripts\activate.bat && celery -A core.celery_app worker -l info --pool=solo -n worker2@%%computername%%"
+echo [OK] 2 janelas do Celery Worker abertas (extrações simultâneas habilitadas).
 echo.
 
 :: Iniciar o servidor FastAPI

@@ -31,6 +31,12 @@ export const getStatusTarefa = (taskId) =>
 export const getEstatisticasUltimoLote = () =>
     api.get('/estatisticas/ultimo_lote').then(r => r.data);
 
+export const getExtracoesHistorico = (perfil = null) =>
+    api.get('/api/extracoes_historico', { params: perfil ? { perfil } : {} }).then(r => r.data);
+
+export const getPerfisExtraidos = () =>
+    api.get('/api/perfis').then(r => r.data);
+
 // ===== Configurações =====
 export const getConfiguracoes = () =>
     api.get('/api/configuracoes').then(r => r.data);

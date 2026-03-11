@@ -164,6 +164,92 @@ def salvar_lote(resultados_em_lote):
             print(f"[DB] Erro: {e}")
             conexao.rollback()
 
+def buscar_extracoes_historico(perfil_filtro=None):
+    """Retorna extrações anteriores agrupadas por lote, com posts, comentários e stories completos.
+    Se perfil_filtro for fornecido, filtra apenas extrações desse perfil.
+    """
+    with conectar() as conexao:
+        cursor = conexao.cursor()
+        
+        # Busca lotes (mais recentes primeiro)
+        cursor.execute("SELECT id, data_execucao, qtd_alvos FROM execucoes_lote ORDER BY data_execucao DESC LIMIT 50")
+        lotes = cursor.fetchall()
+        
+        resultado = []
+        for lote_id, data_exec, qtd_alvos in lotes:
+            # Busca perfis desse lote
+            if perfil_filtro:
+                cursor.execute("""
+                    SELECT id, alvo, seguidores, seguidores_valor, conta_privada, status_execucao, status_seguir 
+                    FROM perfis_extraidos WHERE lote_id = ? AND alvo = ?
+                """, (lote_id, perfil_filtro))
+            else:
+                cursor.execute("""
+                    SELECT id, alvo, seguidores, seguidores_valor, conta_privada, status_execucao, status_seguir 
+                    FROM perfis_extraidos WHERE lote_id = ?
+                """, (lote_id,))
+            
+            perfis = cursor.fetchall()
+            if not perfis:
+                continue
+                
+            perfis_lista = []
+            for pid, alvo, seg, seg_val, privado, status, status_seguir in perfis:
+                # Posts do perfil
+                cursor.execute("""
+                    SELECT id, posicao_grade, url_post, tipo_midia, fixado, data_publicacao, 
+                           curtidas_texto, curtidas_valor, texto_referencia, caminho_imagem 
+                    FROM posts_feed WHERE perfil_id = ? ORDER BY posicao_grade ASC
+                """, (pid,))
+                posts_raw = cursor.fetchall()
+                
+                posts = []
+                for post_row in posts_raw:
+                    post_id = post_row[0]
+                    # Comentários do post
+                    cursor.execute("SELECT usuario_autor, texto_comentario FROM comentarios WHERE post_id = ?", (post_id,))
+                    comentarios = [{"usuario": c[0], "texto": c[1]} for c in cursor.fetchall()]
+                    
+                    posts.append({
+                        "posicao": post_row[1],
+                        "url_post": post_row[2],
+                        "tipo": post_row[3],
+                        "fixado": bool(post_row[4]),
+                        "data": post_row[5],
+                        "curtidas": post_row[6],
+                        "curtidas_matematica": post_row[7] or 0,
+                        "texto_original": post_row[8],
+                        "print_post": post_row[9],
+                        "comentarios": comentarios
+                    })
+                
+                # Stories do perfil
+                cursor.execute("""
+                    SELECT ordem, tipo_midia, tempo_publicacao, caminho_imagem 
+                    FROM stories WHERE perfil_id = ? ORDER BY ordem ASC
+                """, (pid,))
+                stories = [{"numero": s[0], "tipo": s[1], "tempo": s[2], "caminho_imagem": s[3]} for s in cursor.fetchall()]
+                
+                perfis_lista.append({
+                    "alvo": alvo,
+                    "seguidores": seg,
+                    "seguidores_matematica": seg_val or 0,
+                    "privado": bool(privado),
+                    "status": status,
+                    "status_seguir": status_seguir,
+                    "feed_posts": posts,
+                    "stories": stories
+                })
+            
+            resultado.append({
+                "lote_id": lote_id,
+                "data": data_exec,
+                "qtd_alvos": qtd_alvos,
+                "perfis": perfis_lista
+            })
+        
+        return resultado
+
 # Agendamento
 
 def agendar_novo_post(caminho_foto, legenda, data_agendada=None):

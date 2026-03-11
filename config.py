@@ -16,8 +16,9 @@ class ConfigBot(BaseModel):
     task_id: str = Field("default", description="ID isolado gerado pelo frontend")
     
     alvo: str = Field(..., description="Target profiles separated by comma (max 3)")
-    usuario: str = Field(..., description="Your Instagram username")
-    senha: str = Field(..., description="Your Instagram password")
+    usuario: str = Field("", description="Your Instagram username")
+    senha: str = Field("", description="Your Instagram password")
+    limite_seguidores: int = Field(20, description="Max followers to follow")
     
     # System Configs
     tempo_espera: int = Field(4, description="Base delay in seconds")

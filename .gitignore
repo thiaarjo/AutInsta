@@ -17,5 +17,6 @@ uploads_postagens/
 # Arquivos de Sistema
 .DS_Store
 
-# Variáveis de Ambiente
-.env
+# Logs e Redis Local
+logs/
+redis/

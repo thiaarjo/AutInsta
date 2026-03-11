@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
-import { SlidersHorizontal, Crosshair, Users, UserPlus, PlaySquare, LayoutGrid, Layers, MessageSquare, Play, Square, Bot, LayoutDashboard, Info, Calendar, ExternalLink, Pin, Film, Video, Image as ImageIcon, Grid, User, Scan, Heart, MessageCircle, Send, Bookmark, ImageOff } from 'lucide-react';
+import { SlidersHorizontal, Crosshair, Users, UserPlus, PlaySquare, LayoutGrid, Layers, MessageSquare, Play, Square, Bot, LayoutDashboard, Info, Calendar, ExternalLink, Pin, Film, Video, Image as ImageIcon, Grid, User, Scan, Heart, MessageCircle, Send, Bookmark, ImageOff, History, ChevronDown, Clock } from 'lucide-react';
 import { useToast } from '../components/Toast';
-import { executarBot, cancelarBot, getStatusTarefa, getConfiguracoes } from '../services/api';
+import { executarBot, cancelarBot, getStatusTarefa, getConfiguracoes, getExtracoesHistorico, getPerfisExtraidos } from '../services/api';
 import { getTimestamp } from '../utils/constants';
 
 export default function MonitorPage() {
@@ -22,12 +22,43 @@ export default function MonitorPage() {
     const [resultados, setResultados] = useState(null);
     const [dataAtualizacao, setDataAtualizacao] = useState('Aguardando Dados...');
 
+    // History state
+    const [historico, setHistorico] = useState([]);
+    const [perfisDisponiveis, setPerfisDisponiveis] = useState([]);
+    const [filtroPerfilHist, setFiltroPerfilHist] = useState('');
+    const [extracaoSelecionada, setExtracaoSelecionada] = useState(null);
+
     const taskIdRef = useRef(null);
     const pollingRef = useRef(null);
 
+    // Carrega histórico e perfis ao montar
     useEffect(() => {
+        carregarHistorico();
         return () => { if (pollingRef.current) clearInterval(pollingRef.current); };
     }, []);
+
+    // Recarrega histórico ao mudar filtro de perfil
+    useEffect(() => {
+        carregarHistorico();
+    }, [filtroPerfilHist]);
+
+    const carregarHistorico = async () => {
+        try {
+            const [histData, perfisData] = await Promise.all([
+                getExtracoesHistorico(filtroPerfilHist || null),
+                getPerfisExtraidos()
+            ]);
+            setHistorico(histData.extracoes || []);
+            setPerfisDisponiveis(perfisData.perfis || []);
+        } catch { /* silent */ }
+    };
+
+    const verExtracao = (extracao) => {
+        // Converte os perfis do lote para o formato do ResultadoPerfil
+        setResultados(extracao.perfis);
+        setDataAtualizacao(`Extração de ${extracao.data}`);
+        setExtracaoSelecionada(extracao.lote_id);
+    };
 
     const handleCancelar = async () => {
         if (taskIdRef.current) {
@@ -71,26 +102,48 @@ export default function MonitorPage() {
             coletar_stories: coletarStories,
         };
 
-        // Polling
+        // Enfileira a tarefa no Celery (retorna imediatamente)
+        try {
+            await executarBot(payload);
+        } catch (err) {
+            setIsRunning(false);
+            mostrarToast('Erro ao enviar tarefa para o servidor.', 'erro');
+            return;
+        }
+
+        // Polling: consulta o status a cada 1.5s até terminar
         pollingRef.current = setInterval(async () => {
             try {
                 const data = await getStatusTarefa(taskId);
                 setProgresso(data.progresso);
                 setStatusMsg(data.mensagem);
-            } catch { /* silent */ }
-        }, 3000);
 
-        try {
-            const data = await executarBot(payload);
-            clearInterval(pollingRef.current);
-            setIsRunning(false);
-            setResultados(data.resultados);
-            setDataAtualizacao('Atualizado: ' + getTimestamp());
-        } catch (err) {
-            clearInterval(pollingRef.current);
-            setIsRunning(false);
-            mostrarToast('Erro ao executar o bot.', 'erro');
-        }
+                // Tarefa terminou com sucesso
+                if (data.status === 'SUCCESS') {
+                    clearInterval(pollingRef.current);
+                    setIsRunning(false);
+                    setProgresso(100);
+                    setStatusMsg('Extração concluída!');
+                    setDataAtualizacao('Atualizado: ' + getTimestamp());
+
+                    // Monta os resultados a partir do retorno do Celery
+                    if (data.resultado && data.resultado.resultado) {
+                        setResultados([data.resultado.resultado]);
+                    }
+                    mostrarToast('✅ Extração finalizada com sucesso!', 'sucesso');
+                    // Recarrega o histórico para incluir a nova extração
+                    carregarHistorico();
+                }
+
+                // Tarefa falhou
+                if (data.status === 'FAILURE') {
+                    clearInterval(pollingRef.current);
+                    setIsRunning(false);
+                    setProgresso(0);
+                    mostrarToast('❌ Erro durante a extração. Verifique os logs.', 'erro');
+                }
+            } catch { /* silent */ }
+        }, 1500);
     };
 
     return (
@@ -187,20 +240,84 @@ export default function MonitorPage() {
                 )}
 
                 {!isRunning && !resultados && (
-                    <div className="flex-1 flex flex-col items-center justify-center text-zinc-400 bg-white rounded-xl border border-zinc-200 border-dashed p-10">
-                        <Info className="w-10 h-10 text-zinc-300 mb-4" />
-                        <p className="text-sm font-medium text-zinc-500">Configure os parâmetros e inicie uma extração para ver os resultados.</p>
+                    <div className="flex-1 bg-white rounded-xl border border-zinc-200 p-6">
+                        {historico.length > 0 ? (
+                            <>
+                                <div className="flex items-center justify-between mb-5">
+                                    <h3 className="text-sm font-bold text-zinc-700 uppercase tracking-wider flex items-center gap-2">
+                                        <History className="w-4 h-4 text-pink-500" /> Extrações Anteriores
+                                    </h3>
+                                    <div className="relative">
+                                        <select
+                                            value={filtroPerfilHist}
+                                            onChange={e => setFiltroPerfilHist(e.target.value)}
+                                            className="appearance-none bg-zinc-50 border border-zinc-200 text-xs font-bold text-zinc-700 rounded-lg pl-3 pr-8 py-2 outline-none focus:border-pink-500 cursor-pointer shadow-sm"
+                                        >
+                                            <option value="">Todos os Perfis</option>
+                                            {perfisDisponiveis.map(p => (
+                                                <option key={p} value={p}>@{p}</option>
+                                            ))}
+                                        </select>
+                                        <ChevronDown className="w-3.5 h-3.5 text-zinc-400 absolute right-2.5 top-2.5 pointer-events-none" />
+                                    </div>
+                                </div>
+                                <div className="space-y-2 max-h-[500px] overflow-y-auto pr-1 custom-scrollbar">
+                                    {historico.map((ext) => (
+                                        <button
+                                            key={ext.lote_id}
+                                            onClick={() => verExtracao(ext)}
+                                            className={`w-full text-left p-4 rounded-lg border transition-all hover:shadow-sm ${
+                                                extracaoSelecionada === ext.lote_id
+                                                    ? 'border-pink-300 bg-pink-50'
+                                                    : 'border-zinc-100 bg-zinc-50 hover:border-zinc-300 hover:bg-white'
+                                            }`}
+                                        >
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-yellow-400 to-pink-600 p-[2px] shrink-0">
+                                                        <div className="w-full h-full bg-white rounded-full flex items-center justify-center">
+                                                            <Scan className="w-4 h-4 text-zinc-400" />
+                                                        </div>
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-xs font-black text-zinc-800">
+                                                            {ext.perfis.map(p => `@${p.alvo}`).join(', ')}
+                                                        </p>
+                                                        <p className="text-[10px] text-zinc-400 font-medium flex items-center gap-1 mt-0.5">
+                                                            <Clock className="w-3 h-3" /> {ext.data}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-[10px] font-bold bg-zinc-200 text-zinc-600 px-2 py-0.5 rounded-full">
+                                                        {ext.perfis.reduce((a, p) => a + (p.feed_posts?.length || 0), 0)} posts
+                                                    </span>
+                                                    <span className="text-[10px] font-bold bg-pink-100 text-pink-600 px-2 py-0.5 rounded-full">
+                                                        {ext.perfis.reduce((a, p) => a + (p.stories?.length || 0), 0)} stories
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </button>
+                                    ))}
+                                </div>
+                            </>
+                        ) : (
+                            <div className="flex-1 flex flex-col items-center justify-center text-zinc-400 py-16">
+                                <Info className="w-10 h-10 text-zinc-300 mb-4" />
+                                <p className="text-sm font-medium text-zinc-500">Configure os parâmetros e inicie uma extração para ver os resultados.</p>
+                            </div>
+                        )}
                     </div>
                 )}
 
                 {!isRunning && resultados && (
-                    <div className="flex-1 space-y-8">
-                        <div className="hidden bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6 text-sm text-blue-800 flex items-start gap-3">
-                            <Info className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
-                            <div>
-                                <strong>Como ler o Engajamento:</strong> O sistema calcula a força do post dividindo as curtidas pelo número total de seguidores.
-                            </div>
-                        </div>
+                    <div className="flex-1 space-y-6">
+                        <button
+                            onClick={() => { setResultados(null); setExtracaoSelecionada(null); }}
+                            className="flex items-center gap-2 text-xs font-bold text-zinc-500 hover:text-pink-600 transition-colors uppercase tracking-wider"
+                        >
+                            <History className="w-4 h-4" /> ← Voltar ao Histórico
+                        </button>
                         {resultados.map((res, idx) => (
                             <ResultadoPerfil key={idx} resultado={res} coletarStories={coletarStories} />
                         ))}
@@ -369,12 +486,12 @@ function FeedPostCard({ post: p, seguidores }) {
                         <p className="text-sm font-black truncate">{eng}%</p>
                     </div>
                 </div>
-                {p.comentarios && p.comentarios.length > 0 && (
-                    <div className="mt-3 bg-zinc-50 rounded border border-zinc-200 p-3">
-                        <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-2 flex items-center gap-1">
-                            <MessageCircle className="w-3 h-3" /> Amostra de Comentários ({p.comentarios.length})
-                        </p>
-                        <div className="max-h-32 overflow-y-auto pr-2 custom-scrollbar">
+                <div className="mt-3 bg-zinc-50 rounded border border-zinc-200 p-3">
+                    <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-2 flex items-center gap-1">
+                        <MessageCircle className="w-3 h-3" /> Comentários {p.comentarios && p.comentarios.length > 0 ? `(${p.comentarios.length})` : ''}
+                    </p>
+                    {p.comentarios && p.comentarios.length > 0 ? (
+                        <div className="max-h-40 overflow-y-auto pr-2 custom-scrollbar">
                             {p.comentarios.map((c, i) => (
                                 <div key={i} className="py-2 border-b border-zinc-100 last:border-0">
                                     <span className="text-[10px] font-black text-zinc-700 block">{c.usuario}</span>
@@ -382,8 +499,10 @@ function FeedPostCard({ post: p, seguidores }) {
                                 </div>
                             ))}
                         </div>
-                    </div>
-                )}
+                    ) : (
+                        <p className="text-xs text-zinc-400 italic">Nenhum comentário extraído nesta publicação.</p>
+                    )}
+                </div>
             </div>
         </div>
     );

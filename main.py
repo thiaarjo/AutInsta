@@ -307,8 +307,14 @@ async def status_tarefa(task_id: str):
         mensagem = "Tarefa finalizada com sucesso."
     elif status == 'FAILURE':
         mensagem = f"Erro fatal no bot: {resultado.info.get('exc_message', 'Falha desconhecida')}" if resultado.info else "Erro na execução."
+    
+    resposta = {"progresso": progresso, "mensagem": mensagem, "status": status}
+    
+    # Quando a tarefa terminou, inclui o resultado completo para o frontend exibir
+    if status == 'SUCCESS' and resultado.result:
+        resposta["resultado"] = resultado.result
         
-    return {"progresso": progresso, "mensagem": mensagem, "status": status}
+    return resposta
 
 # Rotas de Extracao
 @app.post("/executar_bot")
@@ -337,7 +343,8 @@ async def executar_bot(request: ConfigBot):
         "coletar_feed": request.coletar_feed,
         "coletar_stories": request.coletar_stories,
         "seguir_alvo": request.seguir_alvo,
-        "modo_invisivel": request.modo_oculto
+        "modo_invisivel": request.modo_oculto,
+        "qtd_comentarios": request.qtd_comentarios
     }
     
     # Envia a ordem para o Celery via Message Broker (Redis) apontando para o task_id especifico
@@ -370,6 +377,14 @@ async def listar_perfis():
     try:
         perfis = database.buscar_todos_perfis()
         return {"perfis": perfis}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/extracoes_historico")
+async def listar_extracoes_historico(perfil: str = None):
+    try:
+        dados = database.buscar_extracoes_historico(perfil_filtro=perfil)
+        return {"extracoes": dados}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
